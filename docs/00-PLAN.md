@@ -8,7 +8,7 @@ recipient handle them automatically where possible.
 
 Supported recipient platforms:
 
-- **Android** via a native React Native app
+- **Android** via an installable **PWA**
 - **iOS** via a native React Native app
 - **macOS** via a **Brave/Chromium extension**
 
@@ -20,10 +20,12 @@ The central server runs on a **Raspberry Pi inside the Tailnet**.
 
 - **Text**
   - macOS / Brave: auto-open in a dedicated extension tab
-  - iOS / Android: show notification, tap opens app text screen
+  - iOS: show notification, tap opens app text screen
+  - Android: show notification, tap opens PWA text screen
 - **URL**
   - macOS / Brave: auto-open in a background tab
-  - iOS / Android: show notification, tap opens default browser
+  - iOS: show notification, tap opens default browser
+  - Android: show notification, tap opens browser
 - **File**
   - all platforms: show notification only
   - tap opens an item detail screen / UI where the file can be downloaded manually
@@ -41,8 +43,10 @@ The central server runs on a **Raspberry Pi inside the Tailnet**.
 
 Initial send surfaces should include:
 
-- **Mobile app UI**
-- **Mobile OS share sheet**
+- **iOS app UI**
+- **iOS share sheet**
+- **Android PWA UI**
+- **Android OS share sheet into the PWA**
 - **Brave extension UI**
 - **Brave toolbar / context menu**
 - **CLI**
@@ -76,10 +80,10 @@ Initial send surfaces should include:
 
 ## Platform behavior
 
-### iOS and Android
+### iOS
 
 - Build a **bare React Native app** from day one.
-- Use **direct APNs** for iOS and **direct FCM** for Android.
+- Use **direct APNs**.
 - Mobile behavior is **notification-first only**; no auto-open in the background.
 - Notifications should show:
   - text: **truncated preview**
@@ -92,10 +96,37 @@ Initial send surfaces should include:
 - If the app cannot reach the Pi over Tailnet when opening an item, it
   should **fail immediately with a clear error**.
 
-#### Mobile sending
+#### iOS sending
 
 - **Text/URLs**: upload directly from the share flow
 - **Files**: hand off from the share flow to the main app for upload
+
+### Android
+
+- Build Android as an installable **PWA**, not a native React Native app.
+- The PWA must support being a **share target** on Android for text,
+  URLs, and files if the platform/browser permits it.
+- Use **Web Push** for notifications if supported in the installed PWA.
+- Android behavior is **notification-first only**; no auto-open in the
+  background.
+- Notifications should show:
+  - text: **truncated preview**
+  - URL: **URL string**
+  - file: **filename**
+- Tapping notifications should:
+  - URL -> open the URL in the browser
+  - text -> open the PWA text screen
+  - file -> open the PWA file detail / download screen
+- If the PWA cannot reach the Pi over Tailnet when opening an item, it
+  should **fail immediately with a clear error**.
+
+#### Android sending
+
+- Primary Android send surface is the **OS share sheet into the PWA**.
+- The PWA should accept incoming shared **text**, **URLs**, and **files**
+  via the Web Share Target flow where supported.
+- If file-share behavior has browser-specific limitations, document the
+  exact fallback rather than silently failing.
 
 ### macOS / Brave
 
@@ -243,7 +274,15 @@ The Brave extension should support all of the following in v1:
 - manual paste/input UI
 - file upload from extension UI
 
-### Recipient local storage
+### iOS local storage
+
+- Do **not** keep a persistent local copy of delivered items in v1
+- Only minimal local state is needed, such as:
+  - device credentials
+  - handled delivery IDs for deduplication
+  - last-used targets
+
+### Android local storage
 
 - Do **not** keep a persistent local copy of delivered items in v1
 - Only minimal local state is needed, such as:
@@ -302,27 +341,50 @@ Deliverables:
 
 If Milestone 0 fails, replace this with the revised macOS architecture.
 
-### Milestone 4: Mobile app foundation
+### Milestone 4: Android PWA foundation
 
 Deliverables:
 
-- bare React Native project
+- Android PWA foundation
 - registration via invite link / QR / code
 - per-device token auth
-- APNs / FCM setup
+- Web Push setup for Android PWA
 - notification handling
 - item fetch on tap
 - text detail screen
 - file detail / download screen
+- proper error handling for Tailnet/server unavailability
 
-### Milestone 5: Mobile share flows
+### Milestone 5: Android sharing flows
 
 Deliverables:
 
-- share text/URL directly from share sheet
-- hand off file shares to main app for upload
+- Android PWA Web Share Target flow for text/URL/file where supported
+- Android PWA send UI
 - target confirmation UI with preselected last-used devices
+- documented fallback behavior for unsupported browser/file-share cases
+
+### Milestone 6: iOS app foundation
+
+Deliverables:
+
+- bare React Native iOS project
+- registration via invite link / QR / code
+- per-device token auth
+- APNs setup for iOS
+- notification handling
+- item fetch on tap
+- text detail screen
+- file detail / download screen
 - proper error handling for Tailnet/server unavailability
+
+### Milestone 7: iOS share flows
+
+Deliverables:
+
+- iOS share text/URL directly from share sheet
+- iOS hand off file shares to main app for upload
+- target confirmation UI with preselected last-used devices
 
 ## Initial API sketch
 
@@ -370,11 +432,12 @@ The system is successful when all of the following are true:
 1. A registered sender can send text, URLs, and files to one or more devices.
 2. The Pi stores every item locally and durably.
 3. Offline recipients receive pending items after reconnecting.
-4. Mobile recipients get useful notifications with preview content.
-5. Tapping mobile notifications opens the expected destination by payload type.
-6. Brave handles URL/text/file according to the chosen rules.
-7. Duplicate delivery attempts do not cause duplicate handling.
-8. Delivery and viewed state are tracked per target device.
+4. Android PWA recipients get useful notifications with preview content.
+5. iOS recipients get useful notifications with preview content.
+6. Tapping iOS and Android notifications opens the expected destination by payload type.
+7. Brave handles URL/text/file according to the chosen rules.
+8. Duplicate delivery attempts do not cause duplicate handling.
+9. Delivery and viewed state are tracked per target device.
 
 ## Recommended immediate next step
 

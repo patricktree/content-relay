@@ -106,24 +106,43 @@ starts.
 - Keep transport/client helpers thin and avoid pulling framework or UI
   concerns into shared packages.
 
-## Mobile apps
+## Android client
 
-### Platform and app structure
+### App structure
 
-- App model: bare React Native from day one
+- Android client model: installable **PWA** rather than a native React
+  Native app
+- The PWA should use a service worker and manifest-based installation
+  flow
+- The PWA should implement the Web Share Target pattern so Android can
+  share text, URLs, and files into it where browser support allows
+
+### Push notifications
+
+- Android push: standards-based **Web Push** for the installed PWA
+
+### Local storage
+
+- Android PWA local persistence: browser storage via IndexedDB/local
+  storage as appropriate
+- Android PWA credentials should use the best available browser storage
+  strategy; exact secret-handling guarantees differ from native keychain
+
+## iOS client
+
+### App structure
+
+- iOS app model: bare React Native from day one
 - Navigation: `react-navigation`
 
 ### Push notifications
 
-- Use platform-specific integrations rather than a cross-platform
-  abstraction.
-- Android push: `@react-native-firebase/messaging`
 - iOS push: direct native APNs integration in the React Native iOS app
 
 ### Local storage
 
-- General local persistence: `@react-native-async-storage/async-storage`
-- Secret storage for device credentials: `react-native-keychain`
+- iOS general local persistence: `@react-native-async-storage/async-storage`
+- iOS secret storage for device credentials: `react-native-keychain`
 
 ## Brave extension
 
@@ -160,10 +179,12 @@ starts.
 
 - No JWT-based device auth
 - No resumable upload protocol
+- No Android native app in v1
+- No cross-platform mobile abstraction for Android and iOS in v1
 - No extension framework such as `plasmo`
 - No separate queue system such as `bullmq`
 - No separate app logger such as `pino`
-- No mobile persistent archive of delivered items
+- No persistent recipient archive on Android or iOS in v1
 
 ## Open items not resolved here
 
@@ -171,5 +192,8 @@ starts.
 - Exact shared-package boundaries
 - Invite-link implementation details
 - Exact OpenTelemetry exporter and backend choice
+- Exact Android PWA feasibility limits for Web Share Target + file
+  handling + Web Push across the intended browser/install path
+- Exact iOS share-extension implementation details and constraints
 - Brave extension feasibility outcome for background receive with no
   visible page or tab
