@@ -3,8 +3,8 @@
 ## Purpose
 
 This document records the concrete technology choices made for the
-first implementation of the Remote Intent Dispatch system described in
-[00-PLAN.md](/Users/pkerschbaum/workspace/content-push/docs/00-PLAN.md).
+first implementation of the content-relay system described in
+[00-PLAN.md](./00-PLAN.md).
 
 The goal is to keep the stack explicit, reduce re-litigation, and make
 the intended architectural boundaries clear before implementation

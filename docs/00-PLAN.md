@@ -1,4 +1,4 @@
-# Remote Intent Dispatch Plan
+# content-relay Plan
 
 ## Goal
 
