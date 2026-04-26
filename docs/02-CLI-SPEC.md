@@ -2,12 +2,9 @@
 
 ## Purpose
 
-The CLI is the **primary early development and testing surface** for
-content-relay.
+The CLI is the **primary early development and testing surface** for content-relay.
 
-It should let the developer exercise the real server and the core
-product behavior without needing to run the macOS app, iOS app, or
-Android PWA.
+It should let the developer exercise the real server and the core product behavior without needing to run the macOS app, iOS app, or Android PWA.
 
 The CLI should cover:
 
@@ -20,13 +17,9 @@ The CLI should cover:
 - inspecting per-device delivery status
 - simulating platform behavior differences at a product level
 
-The CLI does **not** prove native platform integrations such as APNs,
-Web Push, Android Web Share Target, iOS share extensions, or macOS
-launch-at-login behavior.
+The CLI does **not** prove native platform integrations such as APNs, Web Push, Android Web Share Target, iOS share extensions, or macOS launch-at-login behavior.
 
-A future TUI is optional. If added, it must reuse the same headless
-client core and local state store as the CLI rather than implementing a
-separate protocol client.
+A future TUI is optional. If added, it must reuse the same headless client core and local state store as the CLI rather than implementing a separate protocol client.
 
 ## Name
 
@@ -37,8 +30,7 @@ separate protocol client.
 
 ### Local device profile
 
-A local device profile is a locally stored credential bundle for one
-registered server device.
+A local device profile is a locally stored credential bundle for one registered server device.
 
 Each profile stores:
 
@@ -60,15 +52,13 @@ Each local device profile has a platform profile:
 - `android-pwa`
 - `generic`
 
-Platform profiles affect **simulated receive behavior** only. They do
-not change the server protocol.
+Platform profiles affect **simulated receive behavior** only. They do not change the server protocol.
 
 ### Active device
 
 The CLI should support multiple local device profiles.
 
-One profile can be marked as the active device so commands do not need a
-repeated `--device` flag.
+One profile can be marked as the active device so commands do not need a repeated `--device` flag.
 
 ## Usage
 
@@ -183,8 +173,7 @@ Print the active local device profile.
 
 All send commands use the active device unless `--device` is provided.
 
-If `--to` is omitted, the CLI should use the active device's last-used
-targets.
+If `--to` is omitted, the CLI should use the active device's last-used targets.
 
 If `--to` is omitted and no last-used targets exist, then:
 
@@ -213,9 +202,7 @@ Rules:
 
 - If `[text]` and `--stdin` are both supplied, fail with usage error.
 - If `[text]` is omitted and stdin is piped, read stdin automatically.
-- If the final payload is a single-line valid URL, the command should fail and
-  instruct the user to use `relay send url` instead. The CLI should not silently
-  switch subcommands.
+- If the final payload is a single-line valid URL, the command should fail and instruct the user to use `relay send url` instead. The CLI should not silently switch subcommands.
 
 ### `relay send url <url>`
 
@@ -240,8 +227,7 @@ relay send file <path...> [--title <title>] [--to <device>...] [--no-remember-ta
 
 Rules:
 
-- One invocation creates exactly one file item, even when multiple files are
-  provided.
+- One invocation creates exactly one file item, even when multiple files are provided.
 - Preserve input file order in metadata.
 - Fail if any provided path does not exist or is not a regular file.
 - Do not silently skip unreadable files.
@@ -289,8 +275,7 @@ When `--simulate-platform` is enabled:
   - received `url` items should simulate auto-open in the default browser
   - received `text` items should simulate auto-open in a dedicated app window
   - received `file` items should remain notification-only
-  - if a URL or text item auto-opens successfully, the CLI should mark it
-    viewed automatically
+  - if a URL or text item auto-opens successfully, the CLI should mark it viewed automatically
 - `ios`
   - receiving creates a simulated notification event only
   - the item is marked viewed only after `relay delivery open ...`
@@ -359,14 +344,10 @@ relay delivery download <delivery-id> [--out <path>]
 
 Rules:
 
-- Single-file deliveries should default to the current directory using the
-  original filename.
-- Multi-file deliveries should default to a new directory named after the item
-  ID in the current directory.
-- `--out` may point to a destination directory. For single-file deliveries,
-  `--out` may also point to a file path.
-- Downloading does not replace the explicit `view` transition unless the command
-  also simulated opening the detail screen first.
+- Single-file deliveries should default to the current directory using the original filename.
+- Multi-file deliveries should default to a new directory named after the item ID in the current directory.
+- `--out` may point to a destination directory. For single-file deliveries, `--out` may also point to a file path.
+- Downloading does not replace the explicit `view` transition unless the command also simulated opening the detail screen first.
 
 ## Item commands
 
@@ -452,8 +433,7 @@ Rules:
 - Prompts are allowed only when stdin is a TTY.
 - `--no-input` disables prompts and confirmations.
 - `relay device remove` must prompt unless `--force` is supplied.
-- Destructive or state-changing commands must never silently target the wrong
-  device; always resolve against the active profile or explicit `--device`.
+- Destructive or state-changing commands must never silently target the wrong device; always resolve against the active profile or explicit `--device`.
 - The CLI must never print device auth secrets in normal human output.
 
 ## Config and environment
@@ -528,8 +508,7 @@ relay item show item_789
 
 ## Reserved future extension
 
-A future `relay tui` command is allowed, but it is **not required** for the
-first implementation.
+A future `relay tui` command is allowed, but it is **not required** for the first implementation.
 
 If added later, it must:
 

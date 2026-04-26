@@ -2,9 +2,7 @@
 
 ## Goal
 
-Build a personal cross-device system that lets the developer send **text**,
-**URLs**, and **files** from one device to another and have the
-recipient handle them automatically where possible.
+Build a personal cross-device system that lets the developer send **text**, **URLs**, and **files** from one device to another and have the recipient handle them automatically where possible.
 
 Supported recipient platforms:
 
@@ -28,14 +26,10 @@ The central server runs on a **Raspberry Pi inside the Tailnet**.
   - Android: show notification, tap opens browser
 - **File**
   - a file send may contain **one or more files**
-  - if the sender shares multiple files in one action, they must be
-    treated as **one logical unit/item**
-  - all platforms: show **one notification per file item**, not one
-    notification per file
-  - tap opens an item detail screen / UI where the file or file bundle
-    can be downloaded manually
-  - the detail UI should support a **one-click download-all** action
-    for multi-file sends
+  - if the sender shares multiple files in one action, they must be treated as **one logical unit/item**
+  - all platforms: show **one notification per file item**, not one notification per file
+  - tap opens an item detail screen / UI where the file or file bundle can be downloaded manually
+  - the detail UI should support a **one-click download-all** action for multi-file sends
 
 ### Delivery expectations
 
@@ -61,8 +55,7 @@ Initial send surfaces should include:
 
 - A send can target **one or more explicit devices**.
 - Default target selection uses the **last-used target(s)**.
-- Send flows should **preselect** the last-used target(s) but still
-  show a confirmation UI.
+- Send flows should **preselect** the last-used target(s) but still show a confirmation UI.
 
 ### Device identity
 
@@ -72,22 +65,15 @@ Initial send surfaces should include:
 ### Headless validation surface
 
 - The CLI is the **primary early development and testing surface**.
-- It must be possible to exercise the real server from the terminal
-  without running the macOS app, iOS app, or Android PWA.
-- The CLI should support multiple locally stored registered-device
-  profiles so the developer can simulate devices such as:
+- It must be possible to exercise the real server from the terminal without running the macOS app, iOS app, or Android PWA.
+- The CLI should support multiple locally stored registered-device profiles so the developer can simulate devices such as:
   - `cli`
   - `macos`
   - `ios`
   - `android-pwa`
-- The CLI should validate the protocol and product behavior,
-  including send, receive, ack, viewed, multi-target sends, and
-  multi-file bundles.
-- An optional future TUI may be added later, but it must wrap the same
-  headless client core and local state rather than becoming a separate
-  client implementation.
-- The detailed CLI contract lives in
-  [02-CLI-SPEC.md](./02-CLI-SPEC.md).
+- The CLI should validate the protocol and product behavior, including send, receive, ack, viewed, multi-target sends, and multi-file bundles.
+- An optional future TUI may be added later, but it must wrap the same headless client core and local state rather than becoming a separate client implementation.
+- The detailed CLI contract lives in [02-CLI-SPEC.md](./02-CLI-SPEC.md).
 
 ### Registration
 
@@ -108,12 +94,9 @@ Initial send surfaces should include:
 
 - The UI should be intentionally **minimal** across all app surfaces.
 - Use a **black-and-white visual language only** in v1.
-- Standard/default buttons should use a **white background**, **black text**,
-  and a **black border**.
-- Primary buttons should use a **black background**, **white text**, and a
-  **black border**.
-- Avoid decorative styling, colorful accents, gradients, or other visual
-  shenanigans.
+- Standard/default buttons should use a **white background**, **black text**, and a **black border**.
+- Primary buttons should use a **black background**, **white text**, and a **black border**.
+- Avoid decorative styling, colorful accents, gradients, or other visual shenanigans.
 
 ## Platform behavior
 
@@ -121,19 +104,16 @@ Initial send surfaces should include:
 
 - Build a **bare React Native app** from day one.
 - Use **direct APNs**.
-- Mobile behavior is **notification-first only**; no auto-open in the
-  background.
+- Mobile behavior is **notification-first only**; no auto-open in the background.
 - Notifications should show:
   - text: **truncated preview**
   - URL: **URL string**
-  - file: **filename** for single-file sends, or a summary such as
-    **"3 files"** for multi-file sends
+  - file: **filename** for single-file sends, or a summary such as **"3 files"** for multi-file sends
 - Tapping notifications should:
   - URL -> open default browser
   - text -> open app text screen
   - file -> open app file detail / download screen
-- If the app cannot reach the Pi over Tailnet when opening an item, it
-  should **fail immediately with a clear error**.
+- If the app cannot reach the Pi over Tailnet when opening an item, it should **fail immediately with a clear error**.
 
 #### iOS sending
 
@@ -143,63 +123,47 @@ Initial send surfaces should include:
 ### Android
 
 - Build Android as an installable **PWA**, not a native React Native app.
-- The PWA must support being a **share target** on Android for text,
-  URLs, and files if the platform/browser permits it.
+- The PWA must support being a **share target** on Android for text, URLs, and files if the platform/browser permits it.
 - Use **Web Push** for notifications if supported in the installed PWA.
-- Android behavior is **notification-first only**; no auto-open in the
-  background.
+- Android behavior is **notification-first only**; no auto-open in the background.
 - Notifications should show:
   - text: **truncated preview**
   - URL: **URL string**
-  - file: **filename** for single-file sends, or a summary such as
-    **"3 files"** for multi-file sends
+  - file: **filename** for single-file sends, or a summary such as **"3 files"** for multi-file sends
 - Tapping notifications should:
   - URL -> open the URL in the browser
   - text -> open the PWA text screen
   - file -> open the PWA file detail / download screen
-- If the PWA cannot reach the Pi over Tailnet when opening an item, it
-  should **fail immediately with a clear error**.
+- If the PWA cannot reach the Pi over Tailnet when opening an item, it should **fail immediately with a clear error**.
 
 #### Android sending
 
 - Primary Android send surface is the **OS share sheet into the PWA**.
-- The PWA should accept incoming shared **text**, **URLs**, and **files**
-  via the Web Share Target flow where supported.
-- If file-share behavior has browser-specific limitations, document the
-  exact fallback rather than silently failing.
+- The PWA should accept incoming shared **text**, **URLs**, and **files** via the Web Share Target flow where supported.
+- If file-share behavior has browser-specific limitations, document the exact fallback rather than silently failing.
 
 ### macOS app
 
-- Preferred macOS receiver is a native **menu bar app**, not a
-  browser extension.
-- The app should **launch at login** and continue running in the
-  background while the user session is active.
+- Preferred macOS receiver is a native **menu bar app**, not a browser extension.
+- The app should **launch at login** and continue running in the background while the user session is active.
 - If the app is running and receiving works, then:
   - URL -> auto-open in the **default browser**
   - text -> auto-open in a **dedicated app window**
   - file -> notification only
-- If URL/text auto-open already happened, do **not** also show a
-  macOS notification.
-- Browser-specific send affordances such as **send current tab**,
-  **send right-clicked link**, or **send selected text** are **not
-  required in v1** and can be added later via an optional Chromium
-  extension.
+- If URL/text auto-open already happened, do **not** also show a macOS notification.
+- Browser-specific send affordances such as **send current tab**, **send right-clicked link**, or **send selected text** are **not required in v1** and can be added later via an optional Chromium extension.
 
 ## Major risk / feasibility watchlist
 
-The earlier Brave-extension background-receive requirement is no longer
-relevant now that macOS uses a native menu bar app.
+The earlier Brave-extension background-receive requirement is no longer relevant now that macOS uses a native menu bar app.
 
 The most important remaining feasibility watch areas are:
 
-- Android installed-PWA support for **Web Share Target** with text,
-  URLs, and files across the intended browser/install path
+- Android installed-PWA support for **Web Share Target** with text, URLs, and files across the intended browser/install path
 - Android **Web Push** reliability for the installed PWA
-- iOS share-flow constraints for handing file uploads off to the main
-  app
+- iOS share-flow constraints for handing file uploads off to the main app
 
-The macOS app should still get a small early prototype, but it is no
-longer the architectural gate for the project.
+The macOS app should still get a small early prototype, but it is no longer the architectural gate for the project.
 
 ## Server architecture
 
@@ -220,8 +184,7 @@ Use SQLite for:
 - `push_tokens`
 - `file_metadata`
 
-For file items, `file_metadata` must support a **one-to-many** relationship from
-an `item` to one or more files in the same bundle.
+For file items, `file_metadata` must support a **one-to-many** relationship from an `item` to one or more files in the same bundle.
 
 Use the filesystem for:
 
@@ -242,8 +205,7 @@ For `file` items:
 
 - a single item may contain **one or more files**
 - multiple files shared in one send must remain a **single logical item/unit**
-- recipients should receive **one delivery record** and **one
-  notification** for that file item
+- recipients should receive **one delivery record** and **one notification** for that file item
 
 Rules:
 
@@ -252,9 +214,7 @@ Rules:
 - URL detection rule for senders with a **free-form text entry field**:
   - if payload is a **single-line valid URL**, treat it as a URL
   - otherwise treat it as text
-- Senders with **explicit typed actions** such as a dedicated
-  `send url` command should validate the chosen type instead of
-  silently coercing it
+- Senders with **explicit typed actions** such as a dedicated `send url` command should validate the chosen type instead of silently coercing it
 
 ### Delivery model
 
@@ -314,8 +274,7 @@ The macOS app should support all of the following in v1:
 - manual paste/input UI for text and URLs
 - file upload from the app UI
 
-Defer browser-specific send affordances such as the following to a
-possible future Chromium extension:
+Defer browser-specific send affordances such as the following to a possible future Chromium extension:
 
 - send current page URL
 - send right-clicked link URL
@@ -341,9 +300,7 @@ possible future Chromium extension:
 
 ### Milestone 0: Core backend foundation + headless CLI test harness
 
-Goal: build the first complete vertical slice through the system so the
-developer can validate the real server and core product behavior before
-native clients exist.
+Goal: build the first complete vertical slice through the system so the developer can validate the real server and core product behavior before native clients exist.
 
 Deliverables:
 
@@ -355,25 +312,19 @@ Deliverables:
 - per-device token auth
 - item creation API
 - delivery creation / status model
-- pending-item fetch, ack, viewed, inspection, and file-download
-  endpoints needed by the CLI
-- reusable headless client core shared by the CLI, automated tests,
-  and any future TUI
-- local device-profile storage with active-device selection,
-  last-used targets, and handled-delivery tracking
+- pending-item fetch, ack, viewed, inspection, and file-download endpoints needed by the CLI
+- reusable headless client core shared by the CLI, automated tests, and any future TUI
+- local device-profile storage with active-device selection, last-used targets, and handled-delivery tracking
 - CLI device registration using invite link or manual code
 - CLI send flows for text, URL, and file
 - CLI receive flows for pending fetch, ack, viewed, and file download
-- platform-profile simulation for `cli`, `macos`, `ios`, and
-  `android-pwa`
-- end-to-end test scenarios covering multi-target sends, offline
-  receive, delivery deduplication, and multi-file bundles
+- platform-profile simulation for `cli`, `macos`, `ios`, and `android-pwa`
+- end-to-end test scenarios covering multi-target sends, offline receive, delivery deduplication, and multi-file bundles
 - backend hardening around the first headless vertical slice
 
 ### Milestone 1: macOS app shell
 
-Goal: establish the native macOS receiver shell and basic UX after the
-headless harness proves the core behavior.
+Goal: establish the native macOS receiver shell and basic UX after the headless harness proves the core behavior.
 
 Deliverables:
 
@@ -392,8 +343,7 @@ Deliverables:
 - receive URL/text/file according to chosen behavior
 - deduplication by delivery ID
 - status updates back to server
-- browser-specific send integration explicitly deferred to a possible
-  future Chromium extension
+- browser-specific send integration explicitly deferred to a possible future Chromium extension
 
 ### Milestone 3: Android PWA foundation
 
@@ -442,8 +392,7 @@ Deliverables:
 
 ## Initial API sketch
 
-This is not final, but it is the shape the implementation should likely
-converge on.
+This is not final, but it is the shape the implementation should likely converge on.
 
 ### Registration endpoints
 
@@ -485,35 +434,25 @@ converge on.
 - Search/filtering beyond simple future listing
 - Encryption at rest
 - File auto-download or auto-open
-- Browser-specific macOS send integration such as current-tab or
-  selected-text capture
-- A polished TUI in the first implementation; the CLI is enough to
-  start, and any later TUI should wrap the same headless client core
+- Browser-specific macOS send integration such as current-tab or selected-text capture
+- A polished TUI in the first implementation; the CLI is enough to start, and any later TUI should wrap the same headless client core
 - Exact-once delivery guarantees
 
 ## Success criteria for v1
 
 The system is successful when all of the following are true:
 
-1. The CLI can exercise registration, sending, receiving, delivery
-   acknowledgements, viewed transitions, and file downloads without
-   needing any native client.
+1. The CLI can exercise registration, sending, receiving, delivery acknowledgements, viewed transitions, and file downloads without needing any native client.
 2. A registered sender can send text, URLs, and files to one or more devices.
 3. The Pi stores every item locally and durably.
 4. Offline recipients receive pending items after reconnecting.
 5. Android PWA recipients get useful notifications with preview content.
 6. iOS recipients get useful notifications with preview content.
-7. Tapping iOS and Android notifications opens the expected
-   destination by payload type.
-8. The macOS app handles URL/text/file according to the chosen
-   rules.
+7. Tapping iOS and Android notifications opens the expected destination by payload type.
+8. The macOS app handles URL/text/file according to the chosen rules.
 9. Duplicate delivery attempts do not cause duplicate handling.
 10. Delivery and viewed state are tracked per target device.
 
 ## Recommended immediate next step
 
-Implement **Milestone 0: Core backend foundation + headless CLI test
-harness** first as the initial vertical slice through the system. Build
-just enough backend surface and CLI capability to support real
-registration, send, receive, ack, viewed, inspection, and file-download
-flows from the terminal.
+Implement **Milestone 0: Core backend foundation + headless CLI test harness** first as the initial vertical slice through the system. Build just enough backend surface and CLI capability to support real registration, send, receive, ack, viewed, inspection, and file-download flows from the terminal.
