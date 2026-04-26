@@ -111,6 +111,18 @@ starts.
 - Keep transport/client helpers thin and avoid pulling framework or UI
   concerns into shared packages.
 
+## Shared UI direction
+
+- All interactive UIs should follow a deliberately **minimal** design.
+- Use a **black-and-white** visual language in v1.
+- Standard/default buttons should use a **white background**, **black text**,
+  and a **black border**.
+- Primary buttons should use a **black background**, **white text**, and a
+  **black border**.
+- Avoid decorative styling, colorful accents, gradients, or other visual
+  shenanigans unless platform conventions or accessibility requirements force a
+  deviation.
+
 ## Android client
 
 ### Android app structure

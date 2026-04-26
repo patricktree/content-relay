@@ -84,6 +84,17 @@ Initial send surfaces should include:
 - Clients still use **per-device secrets/tokens** after registration.
 - No public internet fallback for the Pi server.
 
+### UI design principles
+
+- The UI should be intentionally **minimal** across all app surfaces.
+- Use a **black-and-white visual language only** in v1.
+- Standard/default buttons should use a **white background**, **black text**,
+  and a **black border**.
+- Primary buttons should use a **black background**, **white text**, and a
+  **black border**.
+- Avoid decorative styling, colorful accents, gradients, or other visual
+  shenanigans.
+
 ## Platform behavior
 
 ### iOS
