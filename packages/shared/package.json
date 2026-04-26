@@ -1,0 +1,24 @@
+{
+  "name": "@content-relay/shared",
+  "private": true,
+  "files": [
+    "src/**"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build ./tsconfig.json",
+    "clean": "rm -rf tsconfig.tsbuildinfo",
+    "dev": "tsc --build ./tsconfig.json --watch",
+    "lint": "eslint --max-warnings 0 .",
+    "lint:fix": "pnpm run lint --fix"
+  },
+  "devDependencies": {
+    "@content-relay/config-eslint": "workspace:*",
+    "@content-relay/config-typescript": "workspace:*",
+    "eslint": "catalog:",
+    "typescript": "catalog:"
+  }
+}

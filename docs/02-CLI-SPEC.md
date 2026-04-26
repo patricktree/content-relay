@@ -98,18 +98,18 @@ relay
 
 ## Global flags
 
-| Flag | Type | Default | Notes |
-| --- | --- | --- | --- |
-| `--server <url>` | string | active profile value | Server base URL |
-| `--device <name-or-id>` | string | active profile | Local device profile to act as |
-| `--json` | boolean | `false` | Emit stable machine-readable JSON to stdout |
-| `--plain` | boolean | `false` | Emit stable line-oriented text with no decorations |
-| `-q, --quiet` | boolean | `false` | Suppress non-essential human output |
-| `-v, --verbose` | boolean | `false` | Include extra diagnostics on stderr |
-| `--no-input` | boolean | `false` | Disable prompts and confirmations |
-| `--no-color` | boolean | auto | Disable ANSI color |
-| `-h, --help` | boolean | n/a | Show help and ignore other args |
-| `--version` | boolean | n/a | Print version to stdout |
+| Flag                    | Type    | Default              | Notes                                              |
+| ----------------------- | ------- | -------------------- | -------------------------------------------------- |
+| `--server <url>`        | string  | active profile value | Server base URL                                    |
+| `--device <name-or-id>` | string  | active profile       | Local device profile to act as                     |
+| `--json`                | boolean | `false`              | Emit stable machine-readable JSON to stdout        |
+| `--plain`               | boolean | `false`              | Emit stable line-oriented text with no decorations |
+| `-q, --quiet`           | boolean | `false`              | Suppress non-essential human output                |
+| `-v, --verbose`         | boolean | `false`              | Include extra diagnostics on stderr                |
+| `--no-input`            | boolean | `false`              | Disable prompts and confirmations                  |
+| `--no-color`            | boolean | auto                 | Disable ANSI color                                 |
+| `-h, --help`            | boolean | n/a                  | Show help and ignore other args                    |
+| `--version`             | boolean | n/a                  | Print version to stdout                            |
 
 ## Device commands
 
@@ -123,12 +123,12 @@ relay device register --name <nickname> --platform <platform> --invite <invite>
 
 Options:
 
-| Flag | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `--name <nickname>` | string | yes | UI nickname shown in server history |
-| `--platform <platform>` | enum | yes | `cli`, `macos`, `ios`, `android-pwa`, `generic` |
-| `--invite <invite>` | string | yes | Invite URL or one-time code |
-| `--make-active` | boolean | `true` | Make the new profile the active device |
+| Flag                    | Type    | Required | Notes                                           |
+| ----------------------- | ------- | -------- | ----------------------------------------------- |
+| `--name <nickname>`     | string  | yes      | UI nickname shown in server history             |
+| `--platform <platform>` | enum    | yes      | `cli`, `macos`, `ios`, `android-pwa`, `generic` |
+| `--invite <invite>`     | string  | yes      | Invite URL or one-time code                     |
+| `--make-active`         | boolean | `true`   | Make the new profile the active device          |
 
 Behavior:
 
@@ -160,10 +160,10 @@ Remove a local device profile.
 
 Options:
 
-| Flag | Type | Default | Notes |
-| --- | --- | --- | --- |
+| Flag            | Type    | Default | Notes                                             |
+| --------------- | ------- | ------- | ------------------------------------------------- |
 | `--forget-only` | boolean | `false` | Remove local profile only; do not call the server |
-| `--force` | boolean | `false` | Skip confirmation |
+| `--force`       | boolean | `false` | Skip confirmation                                 |
 
 ### `relay device current`
 
@@ -190,13 +190,13 @@ relay send text [text] [--stdin] [--title <title>] [--to <device>...] [--no-reme
 
 Options:
 
-| Flag | Type | Default | Notes |
-| --- | --- | --- | --- |
-| `[text]` | string | none | Inline text payload |
-| `--stdin` | boolean | auto | Read text from stdin |
-| `--title <title>` | string | none | Optional custom title |
-| `--to <device>...` | string[] | last-used targets | One or more target devices |
-| `--no-remember-targets` | boolean | `false` | Do not update last-used targets |
+| Flag                    | Type     | Default           | Notes                           |
+| ----------------------- | -------- | ----------------- | ------------------------------- |
+| `[text]`                | string   | none              | Inline text payload             |
+| `--stdin`               | boolean  | auto              | Read text from stdin            |
+| `--title <title>`       | string   | none              | Optional custom title           |
+| `--to <device>...`      | string[] | last-used targets | One or more target devices      |
+| `--no-remember-targets` | boolean  | `false`           | Do not update last-used targets |
 
 Rules:
 
@@ -246,10 +246,10 @@ relay receive once [--no-ack] [--simulate-platform]
 
 Options:
 
-| Flag | Type | Default | Notes |
-| --- | --- | --- | --- |
-| `--no-ack` | boolean | `false` | Inspect without acknowledging delivery |
-| `--simulate-platform` | boolean | `true` | Apply platform-profile receive behavior |
+| Flag                  | Type    | Default | Notes                                   |
+| --------------------- | ------- | ------- | --------------------------------------- |
+| `--no-ack`            | boolean | `false` | Inspect without acknowledging delivery  |
+| `--simulate-platform` | boolean | `true`  | Apply platform-profile receive behavior |
 
 ### `relay receive watch`
 
@@ -261,11 +261,11 @@ relay receive watch [--interval <duration>] [--no-ack] [--simulate-platform]
 
 Options:
 
-| Flag | Type | Default | Notes |
-| --- | --- | --- | --- |
-| `--interval <duration>` | duration | `10s` | Poll interval |
-| `--no-ack` | boolean | `false` | Inspect without acknowledging delivery |
-| `--simulate-platform` | boolean | `true` | Apply platform-profile receive behavior |
+| Flag                    | Type     | Default | Notes                                   |
+| ----------------------- | -------- | ------- | --------------------------------------- |
+| `--interval <duration>` | duration | `10s`   | Poll interval                           |
+| `--no-ack`              | boolean  | `false` | Inspect without acknowledging delivery  |
+| `--simulate-platform`   | boolean  | `true`  | Apply platform-profile receive behavior |
 
 ### Platform-profile receive behavior
 
@@ -298,10 +298,10 @@ relay delivery list [--state <state>] [--limit <n>]
 
 Options:
 
-| Flag | Type | Default | Notes |
-| --- | --- | --- | --- |
-| `--state <state>` | enum | `pending` | `pending`, `delivered`, `viewed`, `all` |
-| `--limit <n>` | number | `50` | Max rows to render |
+| Flag              | Type   | Default   | Notes                                   |
+| ----------------- | ------ | --------- | --------------------------------------- |
+| `--state <state>` | enum   | `pending` | `pending`, `delivered`, `viewed`, `all` |
+| `--limit <n>`     | number | `50`      | Max rows to render                      |
 
 ### `relay delivery show <delivery-id>`
 
@@ -412,15 +412,15 @@ Examples:
 
 ## Error handling and exit codes
 
-| Code | Meaning |
-| --- | --- |
-| `0` | Success |
-| `1` | Generic runtime failure |
-| `2` | Invalid usage or validation failure |
-| `3` | Local device profile or config problem |
-| `4` | Authentication or authorization failure |
-| `5` | Server unreachable or network failure |
-| `6` | Requested resource not found |
+| Code | Meaning                                 |
+| ---- | --------------------------------------- |
+| `0`  | Success                                 |
+| `1`  | Generic runtime failure                 |
+| `2`  | Invalid usage or validation failure     |
+| `3`  | Local device profile or config problem  |
+| `4`  | Authentication or authorization failure |
+| `5`  | Server unreachable or network failure   |
+| `6`  | Requested resource not found            |
 
 Rules:
 
@@ -451,11 +451,11 @@ Store at least:
 
 ### Environment variables
 
-| Variable | Meaning |
-| --- | --- |
-| `RELAY_SERVER_URL` | Default server base URL |
-| `RELAY_DEVICE` | Default local device profile |
-| `RELAY_CONFIG_DIR` | Override config/state directory |
+| Variable              | Meaning                              |
+| --------------------- | ------------------------------------ |
+| `RELAY_SERVER_URL`    | Default server base URL              |
+| `RELAY_DEVICE`        | Default local device profile         |
+| `RELAY_CONFIG_DIR`    | Override config/state directory      |
 | `RELAY_POLL_INTERVAL` | Default interval for `receive watch` |
 
 ### Precedence

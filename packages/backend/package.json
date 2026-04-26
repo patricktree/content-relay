@@ -1,0 +1,31 @@
+{
+  "name": "@content-relay/backend",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#pkg/*": "./src/*"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build ./tsconfig.json",
+    "clean": "rm -rf tsconfig.tsbuildinfo",
+    "dev": "tsc --build ./tsconfig.json --watch",
+    "lint": "eslint --max-warnings 0 .",
+    "lint:fix": "pnpm run lint --fix"
+  },
+  "dependencies": {
+    "@content-relay/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@content-relay/config-eslint": "workspace:*",
+    "@content-relay/config-typescript": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": "^24"
+  }
+}

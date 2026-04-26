@@ -1,0 +1,32 @@
+{
+  "name": "content-relay",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "turbo run build",
+    "clean": "turbo run clean",
+    "dev": "turbo run dev",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "oxfmt": "^0.46.0",
+    "turbo": "2.9.6"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^24.15.0",
+      "onFail": "download"
+    }
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": "10.33.2"
+  },
+  "packageManager": "pnpm@10.33.2"
+}

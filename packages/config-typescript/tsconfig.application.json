@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    /* disable declaration emit */
+    "declaration": false,
+    "isolatedDeclarations": false
+  }
+}
