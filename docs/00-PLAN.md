@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build a personal cross-device system that lets Patrick send **text**,
+Build a personal cross-device system that lets the developer send **text**,
 **URLs**, and **files** from one device to another and have the
 recipient handle them automatically where possible.
 
@@ -68,6 +68,26 @@ Initial send surfaces should include:
 
 - Devices use **custom nicknames only** in the UI/history.
 - The CLI is its **own registered device**.
+
+### Headless validation surface
+
+- The CLI is the **primary early development and testing surface**.
+- It must be possible to exercise the real server from the terminal
+  without running the macOS app, iOS app, or Android PWA.
+- The CLI should support multiple locally stored registered-device
+  profiles so the developer can simulate devices such as:
+  - `cli`
+  - `macos`
+  - `ios`
+  - `android-pwa`
+- The CLI should validate the protocol and product behavior,
+  including send, receive, ack, viewed, multi-target sends, and
+  multi-file bundles.
+- An optional future TUI may be added later, but it must wrap the same
+  headless client core and local state rather than becoming a separate
+  client implementation.
+- The detailed CLI contract lives in
+  [02-CLI-SPEC.md](./02-CLI-SPEC.md).
 
 ### Registration
 
@@ -229,9 +249,12 @@ Rules:
 
 - No URL metadata fetching in v1
 - Optional custom title supported
-- URL detection rule for senders:
+- URL detection rule for senders with a **free-form text entry field**:
   - if payload is a **single-line valid URL**, treat it as a URL
   - otherwise treat it as text
+- Senders with **explicit typed actions** such as a dedicated
+  `send url` command should validate the chosen type instead of
+  silently coercing it
 
 ### Delivery model
 
@@ -316,9 +339,41 @@ possible future Chromium extension:
 
 ## Suggested milestone plan
 
-### Milestone 0: macOS app shell
+### Milestone 0: Core backend foundation + headless CLI test harness
 
-Goal: establish the native macOS receiver shell and basic UX early.
+Goal: build the first complete vertical slice through the system so the
+developer can validate the real server and core product behavior before
+native clients exist.
+
+Deliverables:
+
+- CLI spec locked in [02-CLI-SPEC.md](./02-CLI-SPEC.md)
+- Node.js / TypeScript server
+- SQLite schema
+- filesystem blob storage
+- invite creation + device registration
+- per-device token auth
+- item creation API
+- delivery creation / status model
+- pending-item fetch, ack, viewed, inspection, and file-download
+  endpoints needed by the CLI
+- reusable headless client core shared by the CLI, automated tests,
+  and any future TUI
+- local device-profile storage with active-device selection,
+  last-used targets, and handled-delivery tracking
+- CLI device registration using invite link or manual code
+- CLI send flows for text, URL, and file
+- CLI receive flows for pending fetch, ack, viewed, and file download
+- platform-profile simulation for `cli`, `macos`, `ios`, and
+  `android-pwa`
+- end-to-end test scenarios covering multi-target sends, offline
+  receive, delivery deduplication, and multi-file bundles
+- backend hardening around the first headless vertical slice
+
+### Milestone 1: macOS app shell
+
+Goal: establish the native macOS receiver shell and basic UX after the
+headless harness proves the core behavior.
 
 Deliverables:
 
@@ -328,30 +383,7 @@ Deliverables:
 - native notification path tested
 - evidence that URL/text opening behavior works as intended
 
-### Milestone 1: Core backend foundation
-
-Deliverables:
-
-- Node.js / TypeScript server
-- SQLite schema
-- filesystem blob storage
-- invite creation + device registration
-- per-device token auth
-- item creation API
-- delivery creation / status model
-- basic pending-item fetch + ack endpoints
-
-### Milestone 2: CLI sender
-
-Deliverables:
-
-- CLI registered as its own device
-- send text, URL, file
-- target selection with last-used defaults
-- clear server-unreachable errors
-- optional title support
-
-### Milestone 3: macOS app sender + receiver
+### Milestone 2: macOS app sender + receiver
 
 Deliverables:
 
@@ -363,7 +395,7 @@ Deliverables:
 - browser-specific send integration explicitly deferred to a possible
   future Chromium extension
 
-### Milestone 4: Android PWA foundation
+### Milestone 3: Android PWA foundation
 
 Deliverables:
 
@@ -377,7 +409,7 @@ Deliverables:
 - file detail / download screen
 - proper error handling for Tailnet/server unavailability
 
-### Milestone 5: Android sharing flows
+### Milestone 4: Android sharing flows
 
 Deliverables:
 
@@ -386,7 +418,7 @@ Deliverables:
 - target confirmation UI with preselected last-used devices
 - documented fallback behavior for unsupported browser/file-share cases
 
-### Milestone 6: iOS app foundation
+### Milestone 5: iOS app foundation
 
 Deliverables:
 
@@ -400,7 +432,7 @@ Deliverables:
 - file detail / download screen
 - proper error handling for Tailnet/server unavailability
 
-### Milestone 7: iOS share flows
+### Milestone 6: iOS share flows
 
 Deliverables:
 
@@ -427,8 +459,16 @@ converge on.
 ### Delivery
 
 - `GET /deliveries/pending`
+- `GET /deliveries`
+- `GET /deliveries/:deliveryId`
 - `POST /deliveries/:deliveryId/ack`
 - `POST /deliveries/:deliveryId/viewed`
+
+### Item inspection / download
+
+- `GET /items`
+- `GET /items/:itemId`
+- `GET /deliveries/:deliveryId/download`
 
 ### Device metadata
 
@@ -447,26 +487,33 @@ converge on.
 - File auto-download or auto-open
 - Browser-specific macOS send integration such as current-tab or
   selected-text capture
+- A polished TUI in the first implementation; the CLI is enough to
+  start, and any later TUI should wrap the same headless client core
 - Exact-once delivery guarantees
 
 ## Success criteria for v1
 
 The system is successful when all of the following are true:
 
-1. A registered sender can send text, URLs, and files to one or more devices.
-2. The Pi stores every item locally and durably.
-3. Offline recipients receive pending items after reconnecting.
-4. Android PWA recipients get useful notifications with preview content.
-5. iOS recipients get useful notifications with preview content.
-6. Tapping iOS and Android notifications opens the expected
+1. The CLI can exercise registration, sending, receiving, delivery
+   acknowledgements, viewed transitions, and file downloads without
+   needing any native client.
+2. A registered sender can send text, URLs, and files to one or more devices.
+3. The Pi stores every item locally and durably.
+4. Offline recipients receive pending items after reconnecting.
+5. Android PWA recipients get useful notifications with preview content.
+6. iOS recipients get useful notifications with preview content.
+7. Tapping iOS and Android notifications opens the expected
    destination by payload type.
-7. The macOS app handles URL/text/file according to the chosen
+8. The macOS app handles URL/text/file according to the chosen
    rules.
-8. Duplicate delivery attempts do not cause duplicate handling.
-9. Delivery and viewed state are tracked per target device.
+9. Duplicate delivery attempts do not cause duplicate handling.
+10. Delivery and viewed state are tracked per target device.
 
 ## Recommended immediate next step
 
-Implement **Milestone 1: Core backend foundation** first. The previous
-Brave-only feasibility gate is gone; build **Milestone 0: macOS app
-shell** early in parallel if it helps de-risk the native app UX.
+Implement **Milestone 0: Core backend foundation + headless CLI test
+harness** first as the initial vertical slice through the system. Build
+just enough backend surface and CLI capability to support real
+registration, send, receive, ack, viewed, inspection, and file-download
+flows from the terminal.

@@ -193,11 +193,25 @@ starts.
 - Browser-specific send affordances are out of scope for v1 and may be
   added later via an optional Chromium extension
 
-## CLI
+## CLI / headless client
 
+- The CLI is the **primary early development and testing surface**;
+  see [02-CLI-SPEC.md](./02-CLI-SPEC.md).
+- CLI binary name: `relay`
 - CLI framework: `commander`
 - Typing support: `@commander-js/extra-typings`
 - HTTP client: built-in `fetch`
+- Build a reusable headless client core that is shared by the CLI,
+  automated end-to-end tests, and any future TUI.
+- Support multiple locally stored registered-device profiles so the CLI
+  can simulate `cli`, `macos`, `ios`, `android-pwa`, and `generic`
+  device behavior at the product-logic level.
+- Persist CLI-local state outside the repo, including device
+  credentials, active-device selection, last-used targets, and handled
+  delivery IDs.
+- A future TUI is optional and must reuse the same headless client core
+  and local profile store rather than implementing a second protocol
+  client.
 
 ## Testing
 
@@ -209,6 +223,8 @@ starts.
 
 - Exercise a real started HTTP server.
 - Use `fetch` in tests rather than framework-specific request helpers.
+- Prefer driving the system through the shared headless client core so
+  end-to-end tests match the CLI behavior used for manual validation.
 
 ## Explicit non-choices for v1
 
@@ -225,7 +241,8 @@ starts.
 ## Open items not resolved here
 
 - Exact package/workspace layout
-- Exact shared-package boundaries
+- Exact shared-package boundaries, including where the reusable
+  headless client core lives
 - Invite-link implementation details
 - Exact OpenTelemetry exporter and backend choice
 - Exact Android PWA feasibility limits for Web Share Target + file
