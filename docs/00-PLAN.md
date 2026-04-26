@@ -27,8 +27,11 @@ The central server runs on a **Raspberry Pi inside the Tailnet**.
   - iOS: show notification, tap opens default browser
   - Android: show notification, tap opens browser
 - **File**
-  - all platforms: show notification only
-  - tap opens an item detail screen / UI where the file can be downloaded manually
+  - a file send may contain **one or more files**
+  - if the sender shares multiple files in one action, they must be treated as **one logical unit/item**
+  - all platforms: show **one notification per file item**, not one notification per file
+  - tap opens an item detail screen / UI where the file or file bundle can be downloaded manually
+  - the detail UI should support a **one-click download-all** action for multi-file sends
 
 ### Delivery expectations
 
@@ -88,7 +91,7 @@ Initial send surfaces should include:
 - Notifications should show:
   - text: **truncated preview**
   - URL: **URL string**
-  - file: **filename**
+  - file: **filename** for single-file sends, or a summary such as **"3 files"** for multi-file sends
 - Tapping notifications should:
   - URL -> open default browser
   - text -> open app text screen
@@ -112,7 +115,7 @@ Initial send surfaces should include:
 - Notifications should show:
   - text: **truncated preview**
   - URL: **URL string**
-  - file: **filename**
+  - file: **filename** for single-file sends, or a summary such as **"3 files"** for multi-file sends
 - Tapping notifications should:
   - URL -> open the URL in the browser
   - text -> open the PWA text screen
@@ -190,6 +193,9 @@ Use SQLite for:
 - `push_tokens`
 - `file_metadata`
 
+For file items, `file_metadata` must support a **one-to-many** relationship from
+an `item` to one or more files in the same bundle.
+
 Use the filesystem for:
 
 - uploaded file contents / blobs
@@ -204,6 +210,12 @@ Each shared item should have:
 - source device ID
 - original payload data
 - created timestamp
+
+For `file` items:
+
+- a single item may contain **one or more files**
+- multiple files shared in one send must remain a **single logical item/unit**
+- recipients should receive **one delivery record** and **one notification** for that file item
 
 Rules:
 
@@ -400,7 +412,7 @@ converge on.
 
 - `POST /items/text`
 - `POST /items/url`
-- `POST /items/file`
+- `POST /items/file` (accepts one or more uploaded files as a single file item)
 
 ### Delivery
 

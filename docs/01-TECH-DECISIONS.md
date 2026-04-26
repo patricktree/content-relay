@@ -96,6 +96,9 @@ starts.
 ### Uploads
 
 - File uploads use standard `multipart/form-data`.
+- A single file-upload request may contain **one or more files**.
+- Multiple files uploaded in one send must be stored and delivered as **one logical item/unit**.
+- The server data model must support a **one-to-many** relationship from a file item to its contained files.
 - Do not use a resumable upload protocol such as `tus` in v1.
 
 ## Shared contracts
