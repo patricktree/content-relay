@@ -10,7 +10,7 @@ Supported recipient platforms:
 
 - **Android** via an installable **PWA**
 - **iOS** via a native React Native app
-- **macOS** via a **Brave/Chromium extension**
+- **macOS** via a native **menu bar app**
 
 The central server runs on a **Raspberry Pi inside the Tailnet**.
 
@@ -19,19 +19,23 @@ The central server runs on a **Raspberry Pi inside the Tailnet**.
 ### Payload types
 
 - **Text**
-  - macOS / Brave: auto-open in a dedicated extension tab
+  - macOS / app: auto-open in a dedicated app window
   - iOS: show notification, tap opens app text screen
   - Android: show notification, tap opens PWA text screen
 - **URL**
-  - macOS / Brave: auto-open in a background tab
+  - macOS / app: auto-open in the default browser
   - iOS: show notification, tap opens default browser
   - Android: show notification, tap opens browser
 - **File**
   - a file send may contain **one or more files**
-  - if the sender shares multiple files in one action, they must be treated as **one logical unit/item**
-  - all platforms: show **one notification per file item**, not one notification per file
-  - tap opens an item detail screen / UI where the file or file bundle can be downloaded manually
-  - the detail UI should support a **one-click download-all** action for multi-file sends
+  - if the sender shares multiple files in one action, they must be
+    treated as **one logical unit/item**
+  - all platforms: show **one notification per file item**, not one
+    notification per file
+  - tap opens an item detail screen / UI where the file or file bundle
+    can be downloaded manually
+  - the detail UI should support a **one-click download-all** action
+    for multi-file sends
 
 ### Delivery expectations
 
@@ -50,8 +54,7 @@ Initial send surfaces should include:
 - **iOS share sheet**
 - **Android PWA UI**
 - **Android OS share sheet into the PWA**
-- **Brave extension UI**
-- **Brave toolbar / context menu**
+- **macOS app UI**
 - **CLI**
 
 ### Targeting
@@ -87,11 +90,13 @@ Initial send surfaces should include:
 
 - Build a **bare React Native app** from day one.
 - Use **direct APNs**.
-- Mobile behavior is **notification-first only**; no auto-open in the background.
+- Mobile behavior is **notification-first only**; no auto-open in the
+  background.
 - Notifications should show:
   - text: **truncated preview**
   - URL: **URL string**
-  - file: **filename** for single-file sends, or a summary such as **"3 files"** for multi-file sends
+  - file: **filename** for single-file sends, or a summary such as
+    **"3 files"** for multi-file sends
 - Tapping notifications should:
   - URL -> open default browser
   - text -> open app text screen
@@ -115,7 +120,8 @@ Initial send surfaces should include:
 - Notifications should show:
   - text: **truncated preview**
   - URL: **URL string**
-  - file: **filename** for single-file sends, or a summary such as **"3 files"** for multi-file sends
+  - file: **filename** for single-file sends, or a summary such as
+    **"3 files"** for multi-file sends
 - Tapping notifications should:
   - URL -> open the URL in the browser
   - text -> open the PWA text screen
@@ -131,48 +137,38 @@ Initial send surfaces should include:
 - If file-share behavior has browser-specific limitations, document the
   exact fallback rather than silently failing.
 
-### macOS / Brave
+### macOS app
 
-- Preferred macOS receiver is a **Brave extension**, not a native app.
-- If Brave is **closed**, delivery can wait until Brave is opened again.
-- If Brave is **open** and receiving works, then:
-  - URL -> auto-open in a **background tab**
-  - text -> auto-open in a **dedicated extension tab**
+- Preferred macOS receiver is a native **menu bar app**, not a
+  browser extension.
+- The app should **launch at login** and continue running in the
+  background while the user session is active.
+- If the app is running and receiving works, then:
+  - URL -> auto-open in the **default browser**
+  - text -> auto-open in a **dedicated app window**
   - file -> notification only
-- If URL/text auto-open already happened, do **not** also show a browser notification.
-- Assume **Brave is the default browser** on this device in v1.
+- If URL/text auto-open already happened, do **not** also show a
+  macOS notification.
+- Browser-specific send affordances such as **send current tab**,
+  **send right-clicked link**, or **send selected text** are **not
+  required in v1** and can be added later via an optional Chromium
+  extension.
 
-## Major risk / feasibility gate
+## Major risk / feasibility watchlist
 
-The highest-risk requirement is:
+The earlier Brave-extension background-receive requirement is no longer
+relevant now that macOS uses a native menu bar app.
 
-> The Brave extension must be able to receive deliveries in the
-> background with **no visible page or tab open**.
+The most important remaining feasibility watch areas are:
 
-This is a **must-pass feasibility gate** before the rest of the macOS
-architecture is considered committed.
+- Android installed-PWA support for **Web Share Target** with text,
+  URLs, and files across the intended browser/install path
+- Android **Web Push** reliability for the installed PWA
+- iOS share-flow constraints for handing file uploads off to the main
+  app
 
-### Current direction
-
-- Keep researching an **extension-only** solution first.
-- It is acceptable for the extension to depend on
-  **Chromium/Web Push infrastructure** for wakeups/previews.
-- Actual item data still comes from the **Pi over Tailnet**.
-
-### Open question
-
-The exact success criteria for the feasibility spike were not finalized
-in the interview.
-
-**Proposed success bar:**
-
-1. Brave extension wakes in the background with no visible page/tab
-2. Extension authenticates to the Pi
-3. Extension fetches pending items over Tailnet
-4. Extension deduplicates by delivery ID
-5. Extension auto-opens URL/text appropriately
-
-If this is not possible, the macOS architecture must be revisited.
+The macOS app should still get a small early prototype, but it is no
+longer the architectural gate for the project.
 
 ## Server architecture
 
@@ -215,7 +211,8 @@ For `file` items:
 
 - a single item may contain **one or more files**
 - multiple files shared in one send must remain a **single logical item/unit**
-- recipients should receive **one delivery record** and **one notification** for that file item
+- recipients should receive **one delivery record** and **one
+  notification** for that file item
 
 Rules:
 
@@ -276,15 +273,19 @@ Semantics:
 
 ## Client-specific notes
 
-### Brave sender capabilities
+### macOS sender capabilities
 
-The Brave extension should support all of the following in v1:
+The macOS app should support all of the following in v1:
+
+- manual paste/input UI for text and URLs
+- file upload from the app UI
+
+Defer browser-specific send affordances such as the following to a
+possible future Chromium extension:
 
 - send current page URL
 - send right-clicked link URL
 - send selected text
-- manual paste/input UI
-- file upload from extension UI
 
 ### iOS local storage
 
@@ -304,19 +305,17 @@ The Brave extension should support all of the following in v1:
 
 ## Suggested milestone plan
 
-### Milestone 0: Brave feasibility spike
+### Milestone 0: macOS app shell
 
-Goal: prove or disprove the extension-only macOS receive architecture.
+Goal: establish the native macOS receiver shell and basic UX early.
 
 Deliverables:
 
-- minimal Brave extension prototype
-- background wake mechanism identified and tested
+- minimal menu bar app prototype
+- launch-at-login behavior identified and tested
 - ability to fetch from Pi over Tailnet
-- evidence of whether auto-open is possible with no visible page/tab
-- written conclusion and fallback recommendation if it fails
-
-This milestone gates the macOS receiver architecture.
+- native notification path tested
+- evidence that URL/text opening behavior works as intended
 
 ### Milestone 1: Core backend foundation
 
@@ -341,17 +340,17 @@ Deliverables:
 - clear server-unreachable errors
 - optional title support
 
-### Milestone 3: Brave sender + receiver
+### Milestone 3: macOS app sender + receiver
 
 Deliverables:
 
-- sender flows from toolbar/context menu/manual UI
-- file upload from extension UI
+- sender flows from the app UI
+- file upload from the app UI
 - receive URL/text/file according to chosen behavior
 - deduplication by delivery ID
 - status updates back to server
-
-If Milestone 0 fails, replace this with the revised macOS architecture.
+- browser-specific send integration explicitly deferred to a possible
+  future Chromium extension
 
 ### Milestone 4: Android PWA foundation
 
@@ -435,6 +434,8 @@ converge on.
 - Search/filtering beyond simple future listing
 - Encryption at rest
 - File auto-download or auto-open
+- Browser-specific macOS send integration such as current-tab or
+  selected-text capture
 - Exact-once delivery guarantees
 
 ## Success criteria for v1
@@ -446,13 +447,15 @@ The system is successful when all of the following are true:
 3. Offline recipients receive pending items after reconnecting.
 4. Android PWA recipients get useful notifications with preview content.
 5. iOS recipients get useful notifications with preview content.
-6. Tapping iOS and Android notifications opens the expected destination by payload type.
-7. Brave handles URL/text/file according to the chosen rules.
+6. Tapping iOS and Android notifications opens the expected
+   destination by payload type.
+7. The macOS app handles URL/text/file according to the chosen
+   rules.
 8. Duplicate delivery attempts do not cause duplicate handling.
 9. Delivery and viewed state are tracked per target device.
 
 ## Recommended immediate next step
 
-Implement **Milestone 0: Brave feasibility spike** first, because it is
-the main architectural unknown. Everything else can proceed once that
-constraint is either proven or rejected.
+Implement **Milestone 1: Core backend foundation** first. The previous
+Brave-only feasibility gate is gone; build **Milestone 0: macOS app
+shell** early in parallel if it helps de-risk the native app UX.

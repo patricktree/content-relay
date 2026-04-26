@@ -36,7 +36,7 @@ starts.
     hashing, and HTTP adapters
 - `interfaces`
   - `Hono` route handlers, CLI wiring, React Native integration, and
-    Brave extension integration
+    macOS app integration
 
 ## Server
 
@@ -97,8 +97,10 @@ starts.
 
 - File uploads use standard `multipart/form-data`.
 - A single file-upload request may contain **one or more files**.
-- Multiple files uploaded in one send must be stored and delivered as **one logical item/unit**.
-- The server data model must support a **one-to-many** relationship from a file item to its contained files.
+- Multiple files uploaded in one send must be stored and delivered as
+  **one logical item/unit**.
+- The server data model must support a **one-to-many** relationship
+  from a file item to its contained files.
 - Do not use a resumable upload protocol such as `tus` in v1.
 
 ## Shared contracts
@@ -111,7 +113,7 @@ starts.
 
 ## Android client
 
-### App structure
+### Android app structure
 
 - Android client model: installable **PWA** rather than a native React
   Native app
@@ -120,11 +122,11 @@ starts.
 - The PWA should implement the Web Share Target pattern so Android can
   share text, URLs, and files into it where browser support allows
 
-### Push notifications
+### Android push notifications
 
 - Android push: standards-based **Web Push** for the installed PWA
 
-### Local storage
+### Android local storage
 
 - Android PWA local persistence: browser storage via IndexedDB/local
   storage as appropriate
@@ -133,33 +135,51 @@ starts.
 
 ## iOS client
 
-### App structure
+### iOS app structure
 
 - iOS app model: bare React Native from day one
 - Navigation: `react-navigation`
 
-### Push notifications
+### iOS push notifications
 
 - iOS push: direct native APNs integration in the React Native iOS app
 
-### Local storage
+### iOS local storage
 
 - iOS general local persistence: `@react-native-async-storage/async-storage`
 - iOS secret storage for device credentials: `react-native-keychain`
 
-## Brave extension
+## macOS app
 
-### Implementation approach
+### macOS app structure
 
-- Language: plain `TypeScript`
-- Extension APIs: native Chromium extension APIs
-- Build tooling: `vite`
+- macOS client model: native **menu bar app**
+- Language: **Swift**
+- UI framework: **SwiftUI**, with AppKit interop where menu bar or
+  window-management details require it
 
-### Rationale
+### Delivery / wake model
 
-- The extension feasibility spike is the main technical risk.
-- Avoid an abstraction layer such as `plasmo` during the initial spike
-  so background/wakeup behavior is easier to reason about and debug.
+- macOS delivery remains pull-based with the server as source of truth
+- The app should launch at login and remain available in the
+  background during the user session
+- Fetch pending deliveries on launch, on reconnect, and on a simple
+  periodic timer
+- Do not depend on Chromium extension lifecycle or Web Push for macOS
+  receive in v1
+
+### Notifications and storage
+
+- macOS notifications: native `UserNotifications`
+- macOS secret storage for device credentials: Keychain Services
+- macOS lightweight local persistence: app-native storage for handled
+  delivery IDs and last-used targets
+
+### Browser integration
+
+- Open received URLs in the default browser
+- Browser-specific send affordances are out of scope for v1 and may be
+  added later via an optional Chromium extension
 
 ## CLI
 
@@ -184,7 +204,8 @@ starts.
 - No resumable upload protocol
 - No Android native app in v1
 - No cross-platform mobile abstraction for Android and iOS in v1
-- No extension framework such as `plasmo`
+- No Chromium extension in v1
+- No Electron- or Tauri-based macOS client in v1
 - No separate queue system such as `bullmq`
 - No separate app logger such as `pino`
 - No persistent recipient archive on Android or iOS in v1
@@ -198,5 +219,6 @@ starts.
 - Exact Android PWA feasibility limits for Web Share Target + file
   handling + Web Push across the intended browser/install path
 - Exact iOS share-extension implementation details and constraints
-- Brave extension feasibility outcome for background receive with no
-  visible page or tab
+- Exact macOS app window/popover UX for received text and file items
+- Whether a future Chromium extension should talk directly to the
+  server or hand off to the macOS app for send actions
