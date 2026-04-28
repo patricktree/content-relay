@@ -1,6 +1,9 @@
 {
   "name": "@content-relay/backend",
   "private": true,
+  "bin": {
+    "relay-server": "./src/bin.ts"
+  },
   "type": "module",
   "imports": {
     "#pkg/*": "./src/*"
@@ -16,11 +19,26 @@
     "lint:fix": "pnpm run lint --fix"
   },
   "dependencies": {
-    "@content-relay/shared": "workspace:*"
+    "@commander-js/extra-typings": "^14.0.0",
+    "@content-relay/o11y.logs": "workspace:*",
+    "@content-relay/o11y.node-sdk": "workspace:*",
+    "@content-relay/shared": "workspace:*",
+    "@hono/node-server": "^2.0.0",
+    "@hono/zod-validator": "^0.7.6",
+    "@patricktree/commons-ecma": "^3.1.1",
+    "@patricktree/commons-node": "^3.1.1",
+    "better-sqlite3": "^12.9.0",
+    "commander": "^14.0.3",
+    "dioma": "^0.4.6",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.12.15",
+    "temporal-polyfill": "^0.3.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@content-relay/config-eslint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:"

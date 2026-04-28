@@ -1,1 +1,1 @@
-export type RelayItemType = "text" | "url" | "file";
+export * from "#pkg/contracts.ts";

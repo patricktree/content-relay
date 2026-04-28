@@ -8,9 +8,6 @@
   "imports": {
     "#pkg/*": "./src/*"
   },
-  "exports": {
-    ".": "./src/index.ts"
-  },
   "scripts": {
     "build": "tsc --build ./tsconfig.json",
     "clean": "rm -rf tsconfig.tsbuildinfo",
@@ -19,7 +16,14 @@
     "lint:fix": "pnpm run lint --fix"
   },
   "dependencies": {
-    "@content-relay/shared": "workspace:*"
+    "@commander-js/extra-typings": "^14.0.0",
+    "@content-relay/client": "workspace:*",
+    "@content-relay/o11y.logs": "workspace:*",
+    "@content-relay/o11y.node-sdk": "workspace:*",
+    "@content-relay/shared": "workspace:*",
+    "@patricktree/commons-ecma": "^3.1.1",
+    "@patricktree/commons-node": "^3.1.1",
+    "commander": "^14.0.3"
   },
   "devDependencies": {
     "@content-relay/config-eslint": "workspace:*",

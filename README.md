@@ -4,19 +4,16 @@ Headless-first content relay for sending text, URLs, and file bundles between pe
 
 ## Status
 
-This repository is in the initial scaffold phase.
+Milestone 0 is implemented:
 
-Current implementation:
+- `relay-server` starts the real backend with SQLite metadata storage and filesystem blob storage
+- invite creation and device registration work against the real server
+- per-device token auth is enforced on item, delivery, and device endpoints
+- `relay` implements the headless CLI contract for device management, send, receive, ack, viewed, open, download, and inspection flows
+- a reusable headless client core and local device-profile store live in `@content-relay/shared`
+- end-to-end tests exercise the real server flow for registration, multi-target send, receive, viewed transitions, deduplication, and multi-file download
 
-- monorepo wiring with `pnpm` + Turborepo
-- shared TypeScript and ESLint configs
-- placeholder packages for:
-  - `@content-relay/backend`
-  - `@content-relay/cli`
-  - `@content-relay/shared`
-- a minimal `relay` CLI entrypoint that currently prints `cli ready`
-
-Product behavior, architecture, and CLI requirements are defined in `docs/` and should be treated as the source of truth while implementation catches up.
+The `docs/` files remain the source of truth for behavior and architecture.
 
 ## What this project is for
 
@@ -102,6 +99,25 @@ pnpm install
 pnpm build
 ```
 
+Start the backend:
+
+```bash
+pnpm --filter backend exec relay-server --port 4000 --data-dir ./.relay-data
+```
+
+Create an invite and register devices through the implemented HTTP + CLI flow. For example, once the server is running you can create an invite with `curl` and then register a CLI device:
+
+```bash
+INVITE=$(curl -s http://127.0.0.1:4000/invites \
+  -H 'content-type: application/json' \
+  -d '{"expiresInSeconds":900}' | jq -r '.inviteCode')
+
+relay --server http://127.0.0.1:4000 device register \
+  --name "Developer CLI" \
+  --platform cli \
+  --invite "$INVITE"
+```
+
 ## Workspace commands
 
 From the repo root:
@@ -114,6 +130,7 @@ pnpm lint:fix
 pnpm format
 pnpm format:check
 pnpm clean
+pnpm test
 ```
 
 ### Package-specific commands
@@ -132,6 +149,7 @@ Current pre-commit checks:
 pnpm run format:check
 pnpm run lint
 pnpm run build
+pnpm run test
 ```
 
 ## Key project documents

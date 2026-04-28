@@ -2,7 +2,9 @@
   "extends": ["@content-relay/config-typescript/tsconfig.defaults.json"],
   "compilerOptions": {
     /* Modules */
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "declaration": false,
+    "isolatedDeclarations": false
   },
   "include": ["src/**/*"]
 }

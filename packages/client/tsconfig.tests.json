@@ -1,0 +1,12 @@
+{
+  "extends": [
+    "@content-relay/config-typescript/tsconfig.defaults.json",
+    "@content-relay/config-typescript/tsconfig.vitest.json"
+  ],
+  "compilerOptions": {
+    /* Modules */
+    "rootDir": ".",
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "test/**/*"]
+}

@@ -16,7 +16,16 @@
     "lint": {
       "cache": true,
       "dependsOn": ["^build"],
+      "outputs": [],
+    },
+    "lint:fix": {
+      "cache": true,
+      "dependsOn": ["^build"],
       "outputs": ["src/**"],
+    },
+    "test": {
+      "cache": true,
+      "dependsOn": ["build"],
     },
   },
 }

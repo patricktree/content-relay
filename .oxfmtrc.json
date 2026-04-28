@@ -1,0 +1,24 @@
+{
+  "ignorePatterns": ["/pnpm-workspace.yaml"],
+  "sortImports": {
+    "customGroups": [
+      {
+        "groupName": "content-relay-packages",
+        "elementNamePattern": ["@content-relay/**"]
+      },
+      {
+        "groupName": "subpath-imports",
+        "elementNamePattern": ["#pkg/**"]
+      }
+    ],
+    "groups": [
+      ["value-builtin", "value-external"],
+      "value-external",
+      "value-internal",
+      "content-relay-packages",
+      "subpath-imports",
+      ["value-parent", "value-sibling", "value-index"],
+      "unknown"
+    ]
+  }
+}

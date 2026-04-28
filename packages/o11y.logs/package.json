@@ -1,0 +1,32 @@
+{
+  "name": "@content-relay/o11y.logs",
+  "private": true,
+  "files": [
+    "src/**"
+  ],
+  "type": "module",
+  "imports": {
+    "#pkg/*": "./src/*"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build ./tsconfig.json",
+    "clean": "rm -rf tsconfig.tsbuildinfo",
+    "dev": "tsc --build ./tsconfig.json --watch",
+    "lint": "eslint --max-warnings 0 .",
+    "lint:fix": "pnpm run lint --fix"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/api-logs": "^0.215.0",
+    "@patricktree/commons-ecma": "^3.1.1"
+  },
+  "devDependencies": {
+    "@content-relay/config-eslint": "workspace:*",
+    "@content-relay/config-typescript": "workspace:*",
+    "eslint": "catalog:",
+    "typescript": "catalog:"
+  }
+}

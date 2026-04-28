@@ -5,6 +5,9 @@
     "src/**"
   ],
   "type": "module",
+  "imports": {
+    "#pkg/*": "./src/*"
+  },
   "exports": {
     ".": "./src/index.ts"
   },
@@ -15,10 +18,16 @@
     "lint": "eslint --max-warnings 0 .",
     "lint:fix": "pnpm run lint --fix"
   },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
   "devDependencies": {
     "@content-relay/config-eslint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
     "eslint": "catalog:",
     "typescript": "catalog:"
+  },
+  "engines": {
+    "node": "^24"
   }
 }

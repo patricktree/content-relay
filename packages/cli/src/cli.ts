@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
-import { createCliStatusMessage } from "#pkg/index.ts";
+// OpenTelemetry must initialize before the rest of the application module graph.
+// The static import runs instrumentation setup first, and the dynamic import then
+// starts a fresh ESM evaluation phase for the actual CLI entrypoint.
+import "#pkg/observability/instrumentation.ts";
 
-process.stdout.write(`${createCliStatusMessage()}\n`);
+await import("#pkg/cli-main.ts");

@@ -1,0 +1,38 @@
+{
+  "name": "@content-relay/client",
+  "private": true,
+  "files": [
+    "src/**"
+  ],
+  "type": "module",
+  "imports": {
+    "#pkg/*": "./src/*"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build ./tsconfig.json",
+    "clean": "rm -rf tsconfig.tsbuildinfo",
+    "dev": "tsc --build ./tsconfig.json --watch",
+    "test": "vitest run",
+    "lint": "eslint --max-warnings 0 .",
+    "lint:fix": "pnpm run lint --fix"
+  },
+  "dependencies": {
+    "@content-relay/backend": "workspace:*",
+    "@content-relay/shared": "workspace:*",
+    "temporal-polyfill": "^0.3.2"
+  },
+  "devDependencies": {
+    "@content-relay/config-eslint": "workspace:*",
+    "@content-relay/config-typescript": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": "^24"
+  }
+}

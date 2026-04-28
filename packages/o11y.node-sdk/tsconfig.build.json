@@ -1,0 +1,9 @@
+{
+  "extends": ["@content-relay/config-typescript/tsconfig.defaults.json"],
+  "compilerOptions": {
+    /* Modules */
+    "rootDir": "./src",
+    "types": ["node"]
+  },
+  "include": ["src/**/*"]
+}
