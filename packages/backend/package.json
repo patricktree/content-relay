@@ -12,9 +12,9 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc --build ./tsconfig.json",
+    "build": "tsgo --build ./tsconfig.json",
     "clean": "rm -rf tsconfig.tsbuildinfo",
-    "dev": "tsc --build ./tsconfig.json --watch",
+    "dev": "tsgo --build ./tsconfig.json --watch",
     "lint": "eslint --max-warnings 0 .",
     "lint:fix": "pnpm run lint --fix"
   },
@@ -40,6 +40,7 @@
     "@content-relay/config-typescript": "workspace:*",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "catalog:",
+    "@typescript/native-preview": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:"
   },
