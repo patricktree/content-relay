@@ -1,15 +1,23 @@
-import { zValidator } from "@hono/zod-validator";
-import { type Context, Hono } from "hono";
+import { $, createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { type Context, type MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { z } from "zod";
 
 import { createLogger } from "@content-relay/o11y.logs";
 import {
   createInviteRequestSchema,
+  createInviteResponseSchema,
+  createItemResponseSchema,
   createTextItemRequestSchema,
   createUrlItemRequestSchema,
+  deliveryActionResponseSchema,
+  deliveryListResponseSchema,
+  deviceListResponseSchema,
+  downloadDeliveryResponseSchema,
+  errorResponseSchema,
+  itemListResponseSchema,
   pushTokenRequestSchema,
   registerDeviceRequestSchema,
+  registerDeviceResponseSchema,
   updateDeviceRequestSchema,
 } from "@content-relay/shared";
 
@@ -26,8 +34,6 @@ import {
   presentDeviceList,
   presentDeviceSummary,
   presentDownloadDeliveryOutput,
-  presentEmptyResponse,
-  presentErrorResponse,
   presentLoadedItem,
   presentRegisterDeviceOutput,
   presentItemList,
@@ -54,6 +60,54 @@ import { upsertPushToken } from "#pkg/use-cases/upsert-push-token.ts";
 
 const logger = createLogger(instrumentationScopeFromModuleURL(import.meta.url));
 
+const API_TAGS = {
+  deliveries: "Deliveries",
+  devices: "Devices",
+  invites: "Invites",
+  items: "Items",
+} as const;
+
+const AUTH_SECURITY = [{ BearerAuth: [], RelayDeviceIdHeader: [] }];
+
+const deliveryIdParamsSchema = z.object({
+  deliveryId: z
+    .string()
+    .min(1)
+    .openapi({
+      param: {
+        name: "deliveryId",
+        in: "path",
+      },
+      example: "delivery_123",
+    }),
+});
+
+const deviceIdParamsSchema = z.object({
+  deviceId: z
+    .string()
+    .min(1)
+    .openapi({
+      param: {
+        name: "deviceId",
+        in: "path",
+      },
+      example: "device_123",
+    }),
+});
+
+const itemIdParamsSchema = z.object({
+  itemId: z
+    .string()
+    .min(1)
+    .openapi({
+      param: {
+        name: "itemId",
+        in: "path",
+      },
+      example: "item_123",
+    }),
+});
+
 const deliveryListQuerySchema = z.object({
   state: z.enum(["pending", "delivered", "viewed", "all"]).optional(),
   limit: z.coerce.number().int().positive().max(500).optional(),
@@ -71,8 +125,37 @@ type HonoEnvironment = {
 
 type AuthenticatedContext = Context<HonoEnvironment>;
 
+const authenticateProtectedRoute: MiddlewareHandler<HonoEnvironment> = async (context, next) => {
+  await authenticateRequest(context);
+  await next();
+};
+
 export async function createHonoApp() {
-  const app = new Hono<HonoEnvironment>();
+  const app = new OpenAPIHono<HonoEnvironment>({
+    defaultHook: (result, context) => {
+      if (result.success) {
+        return;
+      }
+
+      return context.json(
+        {
+          error: getValidationErrorMessage(result.error),
+        },
+        400,
+      );
+    },
+  });
+
+  app.openAPIRegistry.registerComponent("securitySchemes", "BearerAuth", {
+    type: "http",
+    scheme: "bearer",
+  });
+
+  app.openAPIRegistry.registerComponent("securitySchemes", "RelayDeviceIdHeader", {
+    type: "apiKey",
+    in: "header",
+    name: "x-relay-device-id",
+  });
 
   app.onError((error, context) => {
     const status = getHttpStatus(error);
@@ -83,215 +166,1024 @@ export async function createHonoApp() {
       status,
     });
 
-    return context.json(presentErrorResponse(error), status);
+    return context.json({ error: getErrorMessage(error) }, status);
   });
 
-  const authenticateDeviceRoutes = async (
-    context: AuthenticatedContext,
-    next: () => Promise<void>,
-  ) => {
-    if (context.req.path === "/devices/register") {
-      await next();
+  app.doc("/doc", (context) => ({
+    openapi: "3.0.0",
+    info: {
+      title: "Content Relay API",
+      version: "1.0.0",
+    },
+    servers: [
+      {
+        url: new URL(context.req.url).origin,
+        description: "Current environment",
+      },
+    ],
+  }));
 
-      return;
-    }
+  const publicRoutes = app
+    .openapi(
+      createRoute({
+        method: "post",
+        path: "/invites",
+        tags: [API_TAGS.invites],
+        request: {
+          body: {
+            content: {
+              "application/json": {
+                schema: createInviteRequestSchema,
+              },
+            },
+            required: true,
+          },
+        },
+        responses: {
+          201: {
+            content: {
+              "application/json": {
+                schema: createInviteResponseSchema,
+              },
+            },
+            description: "Invite created.",
+          },
+          400: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Invalid request.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const { expiresInSeconds } = context.req.valid("json");
+        const invite = await createInvite(expiresInSeconds);
 
-    await authenticateRequest(context);
-    await next();
-  };
-
-  const authenticateProtectedRoutes = async (
-    context: AuthenticatedContext,
-    next: () => Promise<void>,
-  ) => {
-    await authenticateRequest(context);
-    await next();
-  };
-
-  const routes = app
-    .use("/devices", authenticateDeviceRoutes)
-    .use("/devices/*", authenticateDeviceRoutes)
-    .use("/items", authenticateProtectedRoutes)
-    .use("/items/*", authenticateProtectedRoutes)
-    .use("/deliveries", authenticateProtectedRoutes)
-    .use("/deliveries/*", authenticateProtectedRoutes)
-    .post("/invites", validateJsonRequest(createInviteRequestSchema), async (context) => {
-      const { expiresInSeconds } = context.req.valid("json");
-      const invite = await createInvite(expiresInSeconds);
-
-      return context.json(presentCreateInviteOutput(invite), 201);
-    })
-    .post(
-      "/devices/register",
-      validateJsonRequest(registerDeviceRequestSchema),
+        return context.json(presentCreateInviteOutput(invite), 201);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "post",
+        path: "/devices/register",
+        tags: [API_TAGS.devices],
+        request: {
+          body: {
+            content: {
+              "application/json": {
+                schema: registerDeviceRequestSchema,
+              },
+            },
+            required: true,
+          },
+        },
+        responses: {
+          201: {
+            content: {
+              "application/json": {
+                schema: registerDeviceResponseSchema,
+              },
+            },
+            description: "Device registered.",
+          },
+          400: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Invalid request.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          404: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Invite not found.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
       async (context) => {
         const registration = await registerDevice(context.req.valid("json"));
 
         return context.json(presentRegisterDeviceOutput(registration), 201);
       },
-    )
-    .get("/devices", async (context) => {
-      const devices = await listDevices();
+    );
 
-      return context.json(presentDeviceList(devices));
-    })
-    .patch(
-      "/devices/:deviceId",
-      validateJsonRequest(updateDeviceRequestSchema),
+  const routes = $(
+    publicRoutes
+      .use("/devices", authenticateProtectedRoute)
+      .use("/devices/:deviceId", authenticateProtectedRoute)
+      .use("/devices/:deviceId/push-token", authenticateProtectedRoute)
+      .use("/items", authenticateProtectedRoute)
+      .use("/items/*", authenticateProtectedRoute)
+      .use("/deliveries", authenticateProtectedRoute)
+      .use("/deliveries/*", authenticateProtectedRoute),
+  )
+    .openapi(
+      createRoute({
+        method: "get",
+        path: "/devices",
+        tags: [API_TAGS.devices],
+        security: AUTH_SECURITY,
+        request: {},
+        responses: {
+          200: {
+            content: {
+              "application/json": {
+                schema: deviceListResponseSchema,
+              },
+            },
+            description: "Devices listed.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const devices = await listDevices();
+
+        return context.json(presentDeviceList(devices), 200);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "patch",
+        path: "/devices/{deviceId}",
+        tags: [API_TAGS.devices],
+        security: AUTH_SECURITY,
+        request: {
+          params: deviceIdParamsSchema,
+          body: {
+            content: {
+              "application/json": {
+                schema: updateDeviceRequestSchema,
+              },
+            },
+            required: true,
+          },
+        },
+        responses: {
+          200: {
+            content: {
+              "application/json": {
+                schema: deviceListResponseSchema.element,
+              },
+            },
+            description: "Device renamed.",
+          },
+          400: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Invalid request.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          403: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Forbidden.",
+          },
+          404: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Device not found.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
       async (context) => {
         const authenticatedDeviceId = context.get("authenticatedDeviceId");
-        const { deviceId } = context.req.param();
-        if (deviceId !== authenticatedDeviceId) {
-          throw new HTTPException(403, { message: "Cannot rename another device." });
-        }
+        const { deviceId } = context.req.valid("param");
+
+        assertAuthenticatedDeviceMatchesTargetDevice(
+          authenticatedDeviceId,
+          deviceId,
+          "Cannot rename another device.",
+        );
 
         const device = await renameDevice(deviceId, context.req.valid("json").nickname);
 
-        return context.json(presentDeviceSummary(device));
+        return context.json(presentDeviceSummary(device), 200);
       },
     )
-    .delete("/devices/:deviceId", async (context) => {
-      const authenticatedDeviceId = context.get("authenticatedDeviceId");
-      const { deviceId } = context.req.param();
-      if (deviceId !== authenticatedDeviceId) {
-        throw new HTTPException(403, { message: "Cannot remove another device." });
-      }
-
-      await deleteDevice(deviceId);
-
-      return context.body(presentEmptyResponse(), 204);
-    })
-    .post(
-      "/devices/:deviceId/push-token",
-      validateJsonRequest(pushTokenRequestSchema),
+    .openapi(
+      createRoute({
+        method: "delete",
+        path: "/devices/{deviceId}",
+        tags: [API_TAGS.devices],
+        security: AUTH_SECURITY,
+        request: {
+          params: deviceIdParamsSchema,
+        },
+        responses: {
+          204: {
+            description: "Device deleted.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          403: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Forbidden.",
+          },
+          404: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Device not found.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
       async (context) => {
         const authenticatedDeviceId = context.get("authenticatedDeviceId");
-        const { deviceId } = context.req.param();
-        if (deviceId !== authenticatedDeviceId) {
-          throw new HTTPException(403, { message: "Cannot update another device." });
-        }
+        const { deviceId } = context.req.valid("param");
+
+        assertAuthenticatedDeviceMatchesTargetDevice(
+          authenticatedDeviceId,
+          deviceId,
+          "Cannot remove another device.",
+        );
+
+        await deleteDevice(deviceId);
+
+        return context.body(null, 204);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "post",
+        path: "/devices/{deviceId}/push-token",
+        tags: [API_TAGS.devices],
+        security: AUTH_SECURITY,
+        request: {
+          params: deviceIdParamsSchema,
+          body: {
+            content: {
+              "application/json": {
+                schema: pushTokenRequestSchema,
+              },
+            },
+            required: true,
+          },
+        },
+        responses: {
+          204: {
+            description: "Push token upserted.",
+          },
+          400: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Invalid request.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          403: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Forbidden.",
+          },
+          404: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Device not found.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const authenticatedDeviceId = context.get("authenticatedDeviceId");
+        const { deviceId } = context.req.valid("param");
+
+        assertAuthenticatedDeviceMatchesTargetDevice(
+          authenticatedDeviceId,
+          deviceId,
+          "Cannot update another device.",
+        );
 
         await upsertPushToken(deviceId, context.req.valid("json").token);
 
-        return context.body(presentEmptyResponse(), 204);
+        return context.body(null, 204);
       },
     )
-    .post("/items/text", validateJsonRequest(createTextItemRequestSchema), async (context) => {
-      const authenticatedDeviceId = context.get("authenticatedDeviceId");
-      const input = context.req.valid("json");
-      const result = await createTextItem(authenticatedDeviceId, {
-        text: input.text,
-        targetDeviceIds: input.targetDeviceIds,
-        ...(input.title !== undefined ? { title: input.title } : {}),
-      });
+    .openapi(
+      createRoute({
+        method: "post",
+        path: "/items/text",
+        tags: [API_TAGS.items],
+        security: AUTH_SECURITY,
+        request: {
+          body: {
+            content: {
+              "application/json": {
+                schema: createTextItemRequestSchema,
+              },
+            },
+            required: true,
+          },
+        },
+        responses: {
+          201: {
+            content: {
+              "application/json": {
+                schema: createItemResponseSchema,
+              },
+            },
+            description: "Text item created.",
+          },
+          400: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Invalid request.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const authenticatedDeviceId = context.get("authenticatedDeviceId");
+        const input = context.req.valid("json");
+        const result = await createTextItem(authenticatedDeviceId, {
+          text: input.text,
+          targetDeviceIds: input.targetDeviceIds,
+          ...(input.title !== undefined ? { title: input.title } : {}),
+        });
 
-      return context.json(presentCreateItemOutput(result), 201);
-    })
-    .post("/items/url", validateJsonRequest(createUrlItemRequestSchema), async (context) => {
-      const authenticatedDeviceId = context.get("authenticatedDeviceId");
-      const input = context.req.valid("json");
-      const result = await createUrlItem(authenticatedDeviceId, {
-        url: input.url,
-        targetDeviceIds: input.targetDeviceIds,
-        ...(input.title !== undefined ? { title: input.title } : {}),
-      });
+        return context.json(presentCreateItemOutput(result), 201);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "post",
+        path: "/items/url",
+        tags: [API_TAGS.items],
+        security: AUTH_SECURITY,
+        request: {
+          body: {
+            content: {
+              "application/json": {
+                schema: createUrlItemRequestSchema,
+              },
+            },
+            required: true,
+          },
+        },
+        responses: {
+          201: {
+            content: {
+              "application/json": {
+                schema: createItemResponseSchema,
+              },
+            },
+            description: "URL item created.",
+          },
+          400: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Invalid request.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const authenticatedDeviceId = context.get("authenticatedDeviceId");
+        const input = context.req.valid("json");
+        const result = await createUrlItem(authenticatedDeviceId, {
+          url: input.url,
+          targetDeviceIds: input.targetDeviceIds,
+          ...(input.title !== undefined ? { title: input.title } : {}),
+        });
 
-      return context.json(presentCreateItemOutput(result), 201);
-    })
-    .post("/items/file", async (context) => {
-      const authenticatedDeviceId = context.get("authenticatedDeviceId");
-      const formData = await context.req.formData();
-      const targetDeviceIds = parseTargetDeviceIds(formData.get("targetDeviceIds"));
-      const titleValue = formData.get("title");
-      const uploadedFiles = formData.getAll("files");
+        return context.json(presentCreateItemOutput(result), 201);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "post",
+        path: "/items/file",
+        tags: [API_TAGS.items],
+        security: AUTH_SECURITY,
+        request: {},
+        responses: {
+          201: {
+            content: {
+              "application/json": {
+                schema: createItemResponseSchema,
+              },
+            },
+            description: "File item created.",
+          },
+          400: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Invalid request.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const authenticatedDeviceId = context.get("authenticatedDeviceId");
+        const formData = await context.req.formData();
+        const targetDeviceIds = parseTargetDeviceIds(formData.get("targetDeviceIds"));
+        const titleValue = formData.get("title");
+        const uploadedFiles = formData.getAll("files");
 
-      const files = await Promise.all(
-        uploadedFiles.map(async (uploadedFile) => {
-          if (!(uploadedFile instanceof File)) {
-            throw new HTTPException(400, {
-              message: "Expected file uploads in the `files` form field.",
-            });
-          }
+        const files = await Promise.all(
+          uploadedFiles.map(async (uploadedFile) => {
+            if (!(uploadedFile instanceof File)) {
+              throw new HTTPException(400, {
+                message: "Expected file uploads in the `files` form field.",
+              });
+            }
 
-          const arrayBuffer = await uploadedFile.arrayBuffer();
+            const arrayBuffer = await uploadedFile.arrayBuffer();
 
-          return {
-            fileName: uploadedFile.name,
-            contentType: uploadedFile.type || "application/octet-stream",
-            content: new Uint8Array(arrayBuffer),
-          };
-        }),
-      );
+            return {
+              fileName: uploadedFile.name,
+              contentType: uploadedFile.type || "application/octet-stream",
+              content: new Uint8Array(arrayBuffer),
+            };
+          }),
+        );
 
-      const result = await createFileItem(authenticatedDeviceId, {
-        ...(typeof titleValue === "string" && titleValue.trim() !== ""
-          ? { title: titleValue }
-          : {}),
-        targetDeviceIds,
-        files,
-      });
+        const result = await createFileItem(authenticatedDeviceId, {
+          ...(typeof titleValue === "string" && titleValue.trim() !== ""
+            ? { title: titleValue }
+            : {}),
+          targetDeviceIds,
+          files,
+        });
 
-      return context.json(presentCreateItemOutput(result), 201);
-    })
-    .get("/deliveries/pending", async (context) => {
-      const authenticatedDeviceId = context.get("authenticatedDeviceId");
-      const deliveries = await listPendingDeliveries(authenticatedDeviceId);
+        return context.json(presentCreateItemOutput(result), 201);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "get",
+        path: "/deliveries/pending",
+        tags: [API_TAGS.deliveries],
+        security: AUTH_SECURITY,
+        request: {},
+        responses: {
+          200: {
+            content: {
+              "application/json": {
+                schema: deliveryListResponseSchema,
+              },
+            },
+            description: "Pending deliveries listed.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const authenticatedDeviceId = context.get("authenticatedDeviceId");
+        const deliveries = await listPendingDeliveries(authenticatedDeviceId);
 
-      return context.json(presentDeliveryList(deliveries));
-    })
-    .get("/deliveries", validateQueryRequest(deliveryListQuerySchema), async (context) => {
-      const authenticatedDeviceId = context.get("authenticatedDeviceId");
-      const query = context.req.valid("query");
-      const deliveries = await listDeliveries(
-        authenticatedDeviceId,
-        query.state ?? "pending",
-        query.limit ?? 50,
-      );
+        return context.json(presentDeliveryList(deliveries), 200);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "get",
+        path: "/deliveries",
+        tags: [API_TAGS.deliveries],
+        security: AUTH_SECURITY,
+        request: {
+          query: deliveryListQuerySchema,
+        },
+        responses: {
+          200: {
+            content: {
+              "application/json": {
+                schema: deliveryListResponseSchema,
+              },
+            },
+            description: "Deliveries listed.",
+          },
+          400: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Invalid request.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const authenticatedDeviceId = context.get("authenticatedDeviceId");
+        const query = context.req.valid("query");
+        const deliveries = await listDeliveries(
+          authenticatedDeviceId,
+          query.state ?? "pending",
+          query.limit ?? 50,
+        );
 
-      return context.json(presentDeliveryList(deliveries));
-    })
-    .get("/deliveries/:deliveryId", async (context) => {
-      const authenticatedDeviceId = context.get("authenticatedDeviceId");
-      const { deliveryId } = context.req.param();
-      const delivery = await getDelivery(authenticatedDeviceId, deliveryId);
+        return context.json(presentDeliveryList(deliveries), 200);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "get",
+        path: "/deliveries/{deliveryId}",
+        tags: [API_TAGS.deliveries],
+        security: AUTH_SECURITY,
+        request: {
+          params: deliveryIdParamsSchema,
+        },
+        responses: {
+          200: {
+            content: {
+              "application/json": {
+                schema: deliveryActionResponseSchema,
+              },
+            },
+            description: "Delivery loaded.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          404: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Delivery not found.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const authenticatedDeviceId = context.get("authenticatedDeviceId");
+        const { deliveryId } = context.req.valid("param");
+        const delivery = await getDelivery(authenticatedDeviceId, deliveryId);
 
-      return context.json(presentDeliveryAction(delivery));
-    })
-    .post("/deliveries/:deliveryId/ack", async (context) => {
-      const authenticatedDeviceId = context.get("authenticatedDeviceId");
-      const { deliveryId } = context.req.param();
-      const delivery = await acknowledgeDelivery(authenticatedDeviceId, deliveryId);
+        return context.json(presentDeliveryAction(delivery), 200);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "post",
+        path: "/deliveries/{deliveryId}/ack",
+        tags: [API_TAGS.deliveries],
+        security: AUTH_SECURITY,
+        request: {
+          params: deliveryIdParamsSchema,
+        },
+        responses: {
+          200: {
+            content: {
+              "application/json": {
+                schema: deliveryActionResponseSchema,
+              },
+            },
+            description: "Delivery acknowledged.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          404: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Delivery not found.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const authenticatedDeviceId = context.get("authenticatedDeviceId");
+        const { deliveryId } = context.req.valid("param");
+        const delivery = await acknowledgeDelivery(authenticatedDeviceId, deliveryId);
 
-      return context.json(presentDeliveryAction(delivery));
-    })
-    .post("/deliveries/:deliveryId/viewed", async (context) => {
-      const authenticatedDeviceId = context.get("authenticatedDeviceId");
-      const { deliveryId } = context.req.param();
-      const delivery = await markDeliveryViewed(authenticatedDeviceId, deliveryId);
+        return context.json(presentDeliveryAction(delivery), 200);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "post",
+        path: "/deliveries/{deliveryId}/viewed",
+        tags: [API_TAGS.deliveries],
+        security: AUTH_SECURITY,
+        request: {
+          params: deliveryIdParamsSchema,
+        },
+        responses: {
+          200: {
+            content: {
+              "application/json": {
+                schema: deliveryActionResponseSchema,
+              },
+            },
+            description: "Delivery marked as viewed.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          404: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Delivery not found.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const authenticatedDeviceId = context.get("authenticatedDeviceId");
+        const { deliveryId } = context.req.valid("param");
+        const delivery = await markDeliveryViewed(authenticatedDeviceId, deliveryId);
 
-      return context.json(presentDeliveryAction(delivery));
-    })
-    .get("/deliveries/:deliveryId/download", async (context) => {
-      const authenticatedDeviceId = context.get("authenticatedDeviceId");
-      const { deliveryId } = context.req.param();
-      const result = await downloadDelivery(authenticatedDeviceId, deliveryId);
+        return context.json(presentDeliveryAction(delivery), 200);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "get",
+        path: "/deliveries/{deliveryId}/download",
+        tags: [API_TAGS.deliveries],
+        security: AUTH_SECURITY,
+        request: {
+          params: deliveryIdParamsSchema,
+        },
+        responses: {
+          200: {
+            content: {
+              "application/json": {
+                schema: downloadDeliveryResponseSchema,
+              },
+            },
+            description: "Delivery content downloaded.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          404: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Delivery not found.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const authenticatedDeviceId = context.get("authenticatedDeviceId");
+        const { deliveryId } = context.req.valid("param");
+        const result = await downloadDelivery(authenticatedDeviceId, deliveryId);
 
-      return context.json(presentDownloadDeliveryOutput(result));
-    })
-    .get("/items", validateQueryRequest(itemListQuerySchema), async (context) => {
-      const authenticatedDeviceId = context.get("authenticatedDeviceId");
-      const { limit = 50 } = context.req.valid("query");
-      const items = await listItems(authenticatedDeviceId, limit);
+        return context.json(presentDownloadDeliveryOutput(result), 200);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "get",
+        path: "/items",
+        tags: [API_TAGS.items],
+        security: AUTH_SECURITY,
+        request: {
+          query: itemListQuerySchema,
+        },
+        responses: {
+          200: {
+            content: {
+              "application/json": {
+                schema: itemListResponseSchema,
+              },
+            },
+            description: "Items listed.",
+          },
+          400: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Invalid request.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const authenticatedDeviceId = context.get("authenticatedDeviceId");
+        const { limit = 50 } = context.req.valid("query");
+        const items = await listItems(authenticatedDeviceId, limit);
 
-      return context.json(presentItemList(items));
-    })
-    .get("/items/:itemId", async (context) => {
-      const authenticatedDeviceId = context.get("authenticatedDeviceId");
-      const { itemId } = context.req.param();
-      const item = await getItem(authenticatedDeviceId, itemId);
+        return context.json(presentItemList(items), 200);
+      },
+    )
+    .openapi(
+      createRoute({
+        method: "get",
+        path: "/items/{itemId}",
+        tags: [API_TAGS.items],
+        security: AUTH_SECURITY,
+        request: {
+          params: itemIdParamsSchema,
+        },
+        responses: {
+          200: {
+            content: {
+              "application/json": {
+                schema: itemListResponseSchema.shape.items.element,
+              },
+            },
+            description: "Item loaded.",
+          },
+          401: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Authentication failed.",
+          },
+          404: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Item not found.",
+          },
+          500: {
+            content: {
+              "application/json": {
+                schema: errorResponseSchema,
+              },
+            },
+            description: "Unexpected server error.",
+          },
+        },
+      }),
+      async (context) => {
+        const authenticatedDeviceId = context.get("authenticatedDeviceId");
+        const { itemId } = context.req.valid("param");
+        const item = await getItem(authenticatedDeviceId, itemId);
 
-      return context.json(presentLoadedItem(item));
-    });
+        return context.json(presentLoadedItem(item), 200);
+      },
+    );
 
   return routes;
 }
@@ -311,28 +1203,16 @@ async function authenticateRequest(context: AuthenticatedContext): Promise<void>
   context.set("authenticatedDeviceId", deviceId);
 }
 
-function validateJsonRequest<TSchema extends z.ZodType>(schema: TSchema) {
-  return zValidator("json", schema, (result) => {
-    if (result.success) {
-      return;
-    }
+function assertAuthenticatedDeviceMatchesTargetDevice(
+  authenticatedDeviceId: string,
+  targetDeviceId: string,
+  errorMessage: string,
+): void {
+  if (authenticatedDeviceId === targetDeviceId) {
+    return;
+  }
 
-    throw new HTTPException(400, {
-      message: getValidationErrorMessage(result.error),
-    });
-  });
-}
-
-function validateQueryRequest<TSchema extends z.ZodType>(schema: TSchema) {
-  return zValidator("query", schema, (result) => {
-    if (result.success) {
-      return;
-    }
-
-    throw new HTTPException(400, {
-      message: getValidationErrorMessage(result.error),
-    });
-  });
+  throw new HTTPException(403, { message: errorMessage });
 }
 
 function parseTargetDeviceIds(value: FormDataEntryValue | null): string[] {
@@ -397,4 +1277,12 @@ function getHttpStatus(error: unknown): 400 | 401 | 403 | 404 | 500 {
   }
 
   return 500;
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim() !== "") {
+    return error.message;
+  }
+
+  return "Unexpected server error.";
 }

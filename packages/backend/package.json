@@ -24,6 +24,7 @@
     "@content-relay/o11y.node-sdk": "workspace:*",
     "@content-relay/shared": "workspace:*",
     "@hono/node-server": "^2.0.0",
+    "@hono/zod-openapi": "^1.3.0",
     "@hono/zod-validator": "^0.7.6",
     "@patricktree/commons-ecma": "^3.1.1",
     "@patricktree/commons-node": "^3.1.1",
