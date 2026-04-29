@@ -1,5 +1,4 @@
 {
-  "js/ts.experimental.useTsgo": true,
   "oxc.path.oxfmt": "./node_modules/.bin/oxfmt",
   "editor.formatOnSaveMode": "file",
   "[css]": {

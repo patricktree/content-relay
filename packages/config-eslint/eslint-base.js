@@ -13,6 +13,12 @@ export const config = defineConfig(
     rules: {
       /* covered by TypeScript anyways */
       "n/no-missing-import": "off",
+    },
+  },
+  {
+    files: ["**/*"],
+    ignores: ["test/**", "**/*.spec.ts"],
+    rules: {
       "n/no-restricted-import": [
         "error",
         [

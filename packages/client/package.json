@@ -32,6 +32,7 @@
   "dependencies": {
     "@content-relay/backend": "workspace:*",
     "@content-relay/shared": "workspace:*",
+    "hono": "catalog:",
     "temporal-polyfill": "^0.3.2"
   },
   "devDependencies": {
