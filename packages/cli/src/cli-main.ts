@@ -1,731 +1,631 @@
-import { Command, CommanderError } from "@commander-js/extra-typings";
-import { assertIsUnreachable } from "@patricktree/commons-ecma/util/assert";
-import { processUtil } from "@patricktree/commons-node/utils/process";
+import { Command, InvalidOptionArgumentError, Option } from "@commander-js/extra-typings";
+import { parseResponse } from "hono/client";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
 import {
   LocalDeviceProfileStore,
-  RelayRpcClient,
+  rpcClient,
+  simulatePlatformDelivery,
   type LocalDeviceProfile,
+  type SimulatedDeliveryResult,
 } from "@content-relay/client";
-import { createLogger } from "@content-relay/o11y.logs";
 import {
   assertValidAbsoluteUrl,
-  deliveryListStateSchema,
-  devicePlatformSchema,
-  isValidAbsoluteUrl,
-  type DeliveryListState,
+  deliveryListStates,
+  devicePlatforms,
   type DeliveryResource,
-  type DevicePlatform,
+  type DownloadDeliveryResponse,
 } from "@content-relay/shared";
 
-import { instrumentationScopeFromModuleURL } from "#pkg/observability/instrumentation-scope.ts";
-
-const RELAY_CLI_NAME = "relay";
-
-type GlobalOptions = {
-  server?: string;
-  device?: string;
-  json?: boolean;
-  plain?: boolean;
-  quiet?: boolean;
-  verbose?: boolean;
-  noInput?: boolean;
-  noColor?: boolean;
+type ReceivedDeliveryResult = {
+  delivery: DeliveryResource;
+  wasDuplicate: boolean;
+  simulation: SimulatedDeliveryResult | null;
 };
 
-type OutputMode = "human" | "json" | "plain";
+type OpenDeliveryResponse = {
+  delivery: DeliveryResource;
+  action: string;
+};
 
-const EXIT_CODES = {
-  success: 0,
-  genericFailure: 1,
-  invalidUsage: 2,
-  localConfigProblem: 3,
-  authenticationFailure: 4,
-  networkFailure: 5,
-  notFound: 6,
-} as const;
+type DownloadDeliveryCommandResponse = {
+  itemId: string;
+  outputPaths: string[];
+};
 
-const logger = createLogger(instrumentationScopeFromModuleURL(import.meta.url));
+type SerializedProfile = Pick<
+  LocalDeviceProfile,
+  | "profileId"
+  | "nickname"
+  | "platform"
+  | "deviceId"
+  | "serverBaseUrl"
+  | "createdAt"
+  | "updatedAt"
+  | "lastUsedTargetDeviceIds"
+> & {
+  isActive: boolean;
+  handledDeliveryCount: number;
+};
+
+const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]);
 
 const program = new Command()
-  .name(RELAY_CLI_NAME)
-  .description("Headless content-relay client and test harness")
-  .version(readVersion())
-  .option("--server <url>", "server base URL")
-  .option("--device <name-or-id>", "local device profile to act as")
-  .option("--json", "emit machine-readable JSON")
-  .option("--plain", "emit stable line-oriented text")
-  .option("-q, --quiet", "suppress non-essential human output")
-  .option("-v, --verbose", "include extra diagnostics on stderr")
-  .option("--no-input", "disable prompts and confirmations")
-  .option("--no-color", "disable ANSI color")
-  .showHelpAfterError();
-
-program.exitOverride();
-
-program
-  .command("device")
-  .description("Manage local device profiles")
-  .addCommand(
-    new Command("register")
-      .requiredOption("--name <nickname>", "nickname")
-      .requiredOption("--platform <platform>", "platform profile")
-      .requiredOption("--invite <invite>", "invite URL or code")
-      .option("--make-active", "make the registered profile active", true)
-      .action(async (options) => {
-        const context = createExecutionContext();
-        const client = new RelayRpcClient();
-        const store = createProfileStore();
-        const serverBaseUrl = resolveServerBaseUrl(context);
-        const platform = devicePlatformSchema.parse(options.platform);
-        const registration = await client.registerDevice(serverBaseUrl, {
-          nickname: options.name,
-          platform,
-          invite: options.invite,
-        });
-        const profile = await store.createProfile(registration, {
-          makeActive: options.makeActive,
-        });
-
-        emit(context, {
-          profileId: profile.profileId,
-          deviceId: profile.deviceId,
-          nickname: profile.nickname,
-          platform: profile.platform,
-          serverBaseUrl: profile.serverBaseUrl,
-        });
-      }),
+  .name("relay")
+  .description("CLI for content-relay")
+  .showHelpAfterError()
+  .addOption(new Option("--json", "emit JSON responses"))
+  .addOption(
+    new Option("--server <url>", "server base URL for registration").argParser((value) =>
+      assertValidAbsoluteUrl(value),
+    ),
   )
-  .addCommand(
-    new Command("list").action(async () => {
-      const context = createExecutionContext();
-      const store = createProfileStore();
-      const profiles = await store.listProfiles();
-      const activeProfile = await store.getActiveProfile();
+  .addOption(new Option("--device <profile>", "profile id, device id, or nickname to use"));
 
-      if (context.outputMode === "plain") {
-        logger.info(
-          profiles
-            .map(
-              (profile) =>
-                `${profile.profileId}\t${profile.nickname}\t${profile.platform}\t${profile.deviceId}\t${activeProfile?.profileId === profile.profileId ? "active" : "inactive"}`,
-            )
-            .join("\n"),
-        );
+const inviteCommand = program.command("invite").description("Manage invites");
+const deviceCommand = program.command("device").description("Manage local device profiles");
+const devicePushTokenCommand = deviceCommand
+  .command("push-token")
+  .description("Manage device push tokens");
+const sendCommand = program.command("send").description("Send content");
+const receiveCommand = program.command("receive").description("Receive deliveries");
+const deliveryCommand = program.command("delivery").description("Inspect and manage deliveries");
+const itemCommand = program.command("item").description("Inspect sent items");
 
-        return;
-      }
+inviteCommand
+  .command("create")
+  .description("Create an invite")
+  .option("--expires-in <seconds>", "invite expiration in seconds", parsePositiveInteger)
+  .action(async (options) => {
+    const serverBaseUrl = program.opts().server;
 
-      emit(context, {
-        profiles: profiles.map((profile) => ({
-          profileId: profile.profileId,
-          deviceId: profile.deviceId,
-          nickname: profile.nickname,
-          platform: profile.platform,
-          isActive: activeProfile?.profileId === profile.profileId,
-        })),
-      });
-    }),
-  )
-  .addCommand(
-    new Command("show").argument("[device]", "profile name or id").action(async (device) => {
-      const context = createExecutionContext();
-      const store = createProfileStore();
-      const profile = await store.resolveProfile(device ?? context.globalOptions.device);
-      const client = new RelayRpcClient();
-      const devices = await client.listDevices(profile);
-      const serverDevice = devices.find((entry) => entry.deviceId === profile.deviceId) ?? null;
-
-      emit(context, { profile, serverDevice });
-    }),
-  )
-  .addCommand(
-    new Command("use").argument("<device>", "profile name or id").action(async (device) => {
-      const context = createExecutionContext();
-      const store = createProfileStore();
-      const profile = await store.resolveProfile(device);
-      await store.setActiveProfile(profile.profileId);
-      emit(context, { activeProfileId: profile.profileId, nickname: profile.nickname });
-    }),
-  )
-  .addCommand(
-    new Command("rename")
-      .argument("<device>", "profile name or id")
-      .requiredOption("--name <nickname>", "new nickname")
-      .action(async (device, options) => {
-        const context = createExecutionContext();
-        const store = createProfileStore();
-        const client = new RelayRpcClient();
-        const profile = await store.resolveProfile(device);
-        const renamedDevice = await client.renameDevice(profile, options.name);
-        const updatedProfile = await store.renameProfile(profile.profileId, renamedDevice.nickname);
-
-        emit(context, { profile: updatedProfile, serverDevice: renamedDevice });
-      }),
-  )
-  .addCommand(
-    new Command("remove")
-      .argument("<device>", "profile name or id")
-      .option("--forget-only", "remove the local profile only", false)
-      .option("--force", "skip confirmation", false)
-      .action(async (device, options) => {
-        const context = createExecutionContext();
-        const store = createProfileStore();
-        const profile = await store.resolveProfile(device);
-        ensureConfirmationAllowed(context, options.force, "device remove");
-        const client = new RelayRpcClient();
-
-        if (!options.forgetOnly) {
-          await client.removeDevice(profile);
-        }
-        await store.removeProfile(profile.profileId);
-
-        emit(context, { removedProfileId: profile.profileId, forgetOnly: options.forgetOnly });
-      }),
-  )
-  .addCommand(
-    new Command("current").action(async () => {
-      const context = createExecutionContext();
-      const store = createProfileStore();
-      const profile = await store.requireActiveProfile();
-
-      emit(context, profile);
-    }),
-  );
-
-program
-  .command("send")
-  .description("Send items")
-  .addCommand(
-    new Command("text")
-      .argument("[text]", "text payload")
-      .option("--stdin", "read text from stdin")
-      .option("--title <title>", "optional custom title")
-      .option("--to <device...>", "one or more target devices")
-      .option("--no-remember-targets", "do not update last-used targets")
-      .action(async (textArgument, options) => {
-        const context = createExecutionContext();
-        const store = createProfileStore();
-        const client = new RelayRpcClient();
-        const profile = await resolveActingProfile(store, context.globalOptions.device);
-        const text = await resolveTextPayload(textArgument, Boolean(options.stdin));
-
-        if (textArgument !== undefined && options.stdin) {
-          throw new Error("Cannot provide both inline text and --stdin.");
-        }
-
-        if (text.trim().includes("\n") === false && isValidAbsoluteUrl(text.trim())) {
-          throw new Error(
-            "The text payload is a single-line valid URL. Use `relay send url <url>` instead.",
-          );
-        }
-
-        const targetDeviceIds = await resolveTargetDeviceIds(store, profile, options.to);
-        const payload = await client.sendText(profile, {
-          text,
-          title: options.title,
-          targetDeviceIds,
-        });
-
-        if (options.rememberTargets) {
-          await store.rememberTargets(profile.profileId, targetDeviceIds);
-        }
-
-        emit(context, payload);
-      }),
-  )
-  .addCommand(
-    new Command("url")
-      .argument("<url>", "absolute URL")
-      .option("--title <title>", "optional custom title")
-      .option("--to <device...>", "one or more target devices")
-      .option("--no-remember-targets", "do not update last-used targets")
-      .action(async (url, options) => {
-        const context = createExecutionContext();
-        const store = createProfileStore();
-        const client = new RelayRpcClient();
-        const profile = await resolveActingProfile(store, context.globalOptions.device);
-        const targetDeviceIds = await resolveTargetDeviceIds(store, profile, options.to);
-        const payload = await client.sendUrl(profile, {
-          url: assertValidAbsoluteUrl(url),
-          title: options.title,
-          targetDeviceIds,
-        });
-
-        if (options.rememberTargets) {
-          await store.rememberTargets(profile.profileId, targetDeviceIds);
-        }
-
-        emit(context, payload);
-      }),
-  )
-  .addCommand(
-    new Command("file")
-      .argument("<path...>", "one or more file paths")
-      .option("--title <title>", "optional custom title")
-      .option("--to <device...>", "one or more target devices")
-      .option("--no-remember-targets", "do not update last-used targets")
-      .action(async (filePaths, options) => {
-        const context = createExecutionContext();
-        const store = createProfileStore();
-        const client = new RelayRpcClient();
-        const profile = await resolveActingProfile(store, context.globalOptions.device);
-        const files = await Promise.all(
-          filePaths.map(async (filePath) => {
-            const fileStats = await fs.promises.stat(filePath);
-            if (!fileStats.isFile()) {
-              throw new Error(`Expected a regular file but received: ${filePath}`);
-            }
-
-            return {
-              filePath,
-              fileName: path.basename(filePath),
-            };
-          }),
-        );
-        const targetDeviceIds = await resolveTargetDeviceIds(store, profile, options.to);
-        const payload = await client.sendFiles(profile, {
-          files,
-          ...(options.title !== undefined ? { title: options.title } : {}),
-          targetDeviceIds,
-        });
-
-        if (options.rememberTargets) {
-          await store.rememberTargets(profile.profileId, targetDeviceIds);
-        }
-
-        emit(context, payload);
-      }),
-  );
-
-program
-  .command("receive")
-  .description("Receive pending deliveries")
-  .addCommand(
-    new Command("once")
-      .option("--no-ack", "inspect without acknowledging delivery")
-      .option("--simulate-platform", "apply platform-profile receive behavior", true)
-      .action(async (options) => {
-        const context = createExecutionContext();
-        const store = createProfileStore();
-        const profile = await resolveActingProfile(store, context.globalOptions.device);
-        const client = new RelayRpcClient();
-        const deliveries = await client.receivePendingDeliveries(profile, store, {
-          acknowledge: options.ack,
-          simulatePlatform: options.simulatePlatform,
-          deduplicate: true,
-        });
-
-        emit(context, {
-          deliveries: deliveries.map((entry) => ({
-            delivery: entry.delivery,
-            wasDuplicate: entry.wasDuplicate,
-            simulation: entry.simulation,
-          })),
-        });
-      }),
-  )
-  .addCommand(
-    new Command("watch")
-      .option("--interval <duration>", "poll interval", "10s")
-      .option("--no-ack", "inspect without acknowledging delivery")
-      .option("--simulate-platform", "apply platform-profile receive behavior", true)
-      .action(async (options) => {
-        const context = createExecutionContext();
-        const store = createProfileStore();
-        const profile = await resolveActingProfile(store, context.globalOptions.device);
-        const client = new RelayRpcClient();
-        const intervalMs = parseDurationToMilliseconds(options.interval);
-
-        for (;;) {
-          const deliveries = await client.receivePendingDeliveries(profile, store, {
-            acknowledge: options.ack,
-            simulatePlatform: options.simulatePlatform,
-            deduplicate: true,
-          });
-
-          if (deliveries.length > 0) {
-            emit(context, {
-              deliveries: deliveries.map((entry) => ({
-                delivery: entry.delivery,
-                wasDuplicate: entry.wasDuplicate,
-                simulation: entry.simulation,
-              })),
-            });
-          } else if (context.globalOptions.verbose) {
-            logger.info(`No pending deliveries for ${profile.nickname}.`);
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, intervalMs));
-        }
-      }),
-  );
-
-program
-  .command("delivery")
-  .description("Inspect and manage deliveries")
-  .addCommand(
-    new Command("list")
-      .option("--state <state>", "delivery state", "pending")
-      .option("--limit <n>", "max rows to render", "50")
-      .action(async (options) => {
-        const context = createExecutionContext();
-        const store = createProfileStore();
-        const profile = await resolveActingProfile(store, context.globalOptions.device);
-        const client = new RelayRpcClient();
-        const state = deliveryListStateSchema.parse(options.state) as DeliveryListState;
-        const limit = Number.parseInt(options.limit, 10);
-        const payload = await client.listDeliveries(profile, state, limit);
-
-        emit(context, payload);
-      }),
-  )
-  .addCommand(
-    new Command("show").argument("<delivery-id>").action(async (deliveryId) => {
-      const context = createExecutionContext();
-      const store = createProfileStore();
-      const profile = await resolveActingProfile(store, context.globalOptions.device);
-      const client = new RelayRpcClient();
-      const delivery = await client.getDelivery(profile, deliveryId);
-
-      emit(context, { delivery });
-    }),
-  )
-  .addCommand(
-    new Command("ack").argument("<delivery-id>").action(async (deliveryId) => {
-      const context = createExecutionContext();
-      const store = createProfileStore();
-      const profile = await resolveActingProfile(store, context.globalOptions.device);
-      const client = new RelayRpcClient();
-      const payload = await client.acknowledgeDelivery(profile, deliveryId);
-
-      emit(context, payload);
-    }),
-  )
-  .addCommand(
-    new Command("view").argument("<delivery-id>").action(async (deliveryId) => {
-      const context = createExecutionContext();
-      const store = createProfileStore();
-      const profile = await resolveActingProfile(store, context.globalOptions.device);
-      const client = new RelayRpcClient();
-      const payload = await client.markDeliveryViewed(profile, deliveryId);
-
-      emit(context, payload);
-    }),
-  )
-  .addCommand(
-    new Command("open").argument("<delivery-id>").action(async (deliveryId) => {
-      const context = createExecutionContext();
-      const store = createProfileStore();
-      const profile = await resolveActingProfile(store, context.globalOptions.device);
-      const client = new RelayRpcClient();
-      const delivery = await client.getDelivery(profile, deliveryId);
-      const summary = buildDeliveryOpenSummary(profile.platform, delivery);
-      const viewed = await client.markDeliveryViewed(profile, deliveryId);
-
-      emit(context, { opened: summary, delivery: viewed.delivery });
-    }),
-  )
-  .addCommand(
-    new Command("download")
-      .argument("<delivery-id>")
-      .option("--out <path>", "output file or directory path")
-      .action(async (deliveryId, options) => {
-        const context = createExecutionContext();
-        const store = createProfileStore();
-        const profile = await resolveActingProfile(store, context.globalOptions.device);
-        const client = new RelayRpcClient();
-        const download = await client.downloadDelivery(profile, deliveryId);
-        const outputPaths = await client.writeDownloadedDelivery(download, options.out);
-
-        emit(context, { itemId: download.item.itemId, outputPaths });
-      }),
-  );
-
-program
-  .command("item")
-  .description("Inspect sent items")
-  .addCommand(
-    new Command("list")
-      .option("--limit <n>", "max rows to render", "50")
-      .action(async (options) => {
-        const context = createExecutionContext();
-        const store = createProfileStore();
-        const profile = await resolveActingProfile(store, context.globalOptions.device);
-        const client = new RelayRpcClient();
-        const payload = await client.listItems(profile, Number.parseInt(options.limit, 10));
-
-        emit(context, payload);
-      }),
-  )
-  .addCommand(
-    new Command("show").argument("<item-id>").action(async (itemId) => {
-      const context = createExecutionContext();
-      const store = createProfileStore();
-      const profile = await resolveActingProfile(store, context.globalOptions.device);
-      const client = new RelayRpcClient();
-      const item = await client.getItem(profile, itemId);
-
-      emit(context, { item });
-    }),
-  );
-
-void main().then((exitCode) => {
-  processUtil.gracefulExit(exitCode);
-});
-
-async function main(): Promise<number> {
-  try {
-    await program.parseAsync(process.argv);
-
-    return EXIT_CODES.success;
-  } catch (error) {
-    if (error instanceof CommanderError) {
-      logger.error(error.message);
-
-      return error.exitCode === 0 ? EXIT_CODES.success : EXIT_CODES.invalidUsage;
+    if (serverBaseUrl === undefined) {
+      throw new Error("Missing required --server <url> option.");
     }
 
-    const exitCode = inferExitCode(error);
-    logger.error(formatErrorMessage(error));
+    const invite = await parseResponse(
+      rpcClient.createInvite(serverBaseUrl, { expiresInSeconds: options.expiresIn ?? 900 }),
+    );
 
-    return exitCode;
-  }
+    await writeSuccess(invite);
+  });
+
+deviceCommand
+  .command("register")
+  .description("Register a new device profile")
+  .requiredOption("--name <nickname>", "device nickname")
+  .addOption(
+    new Option("--platform <platform>", "device platform")
+      .choices([...devicePlatforms])
+      .makeOptionMandatory(true),
+  )
+  .requiredOption("--invite <inviteCode>", "invite code")
+  .action(async (options) => {
+    const serverBaseUrl = program.opts().server;
+
+    if (serverBaseUrl === undefined) {
+      throw new Error("Missing required --server <url> option.");
+    }
+
+    const registration = await parseResponse(
+      rpcClient.registerDevice(serverBaseUrl, {
+        nickname: options.name,
+        platform: options.platform,
+        invite: options.invite,
+      }),
+    );
+
+    const profile = await profileStore.createProfile(registration, { makeActive: true });
+    await writeSuccess(serializeProfile(profile, profile.profileId));
+  });
+
+deviceCommand
+  .command("current")
+  .description("Show the active device profile")
+  .action(async () => {
+    const activeProfile = await profileStore.requireActiveProfile();
+    const activeProfileId = await loadActiveProfileId();
+
+    await writeSuccess(serializeProfile(activeProfile, activeProfileId));
+  });
+
+deviceCommand
+  .command("use")
+  .description("Set the active device profile")
+  .argument("<profile>", "profile id, device id, or nickname")
+  .action(async (profileIdOrName: string) => {
+    const profile = await profileStore.resolveProfile(profileIdOrName);
+    await profileStore.setActiveProfile(profile.profileId);
+
+    await writeSuccess(serializeProfile(profile, profile.profileId));
+  });
+
+deviceCommand
+  .command("list")
+  .description("List registered devices from the server")
+  .action(async () => {
+    const profile = await resolveSelectedProfile();
+    const devices = await parseResponse(rpcClient.listDevices(profile));
+
+    await writeSuccess(devices);
+  });
+
+deviceCommand
+  .command("rename")
+  .description("Rename the selected device")
+  .argument("<nickname>", "new device nickname")
+  .action(async (nickname: string) => {
+    const profile = await resolveSelectedProfile();
+    await parseResponse(rpcClient.renameDevice(profile, nickname));
+    const renamedProfile = await profileStore.renameProfile(profile.profileId, nickname);
+    const activeProfileId = await loadActiveProfileId();
+
+    await writeSuccess(serializeProfile(renamedProfile, activeProfileId));
+  });
+
+deviceCommand
+  .command("delete")
+  .description("Delete the selected device")
+  .requiredOption("--yes", "confirm device deletion")
+  .action(async () => {
+    const profile = await resolveSelectedProfile();
+    await parseResponse(rpcClient.deleteDevice(profile));
+    await profileStore.removeProfile(profile.profileId);
+
+    await writeSuccess({
+      deleted: true,
+      deviceId: profile.deviceId,
+      profileId: profile.profileId,
+    } as const);
+  });
+
+devicePushTokenCommand
+  .command("set")
+  .description("Set the push token for the selected device")
+  .argument("<token>", "push token")
+  .action(async (token: string) => {
+    const profile = await resolveSelectedProfile();
+    await parseResponse(rpcClient.setPushToken(profile, token));
+
+    await writeSuccess({
+      deviceId: profile.deviceId,
+      pushTokenUpdated: true,
+    } as const);
+  });
+
+sendCommand
+  .command("text")
+  .description("Send a text item")
+  .argument("<text>", "text to send")
+  .requiredOption("--to <device...>", "target profile ids, device ids, or nicknames")
+  .option("--title <title>", "optional title")
+  .action(async (text: string, options) => {
+    const profile = await resolveSelectedProfile();
+    const targetDeviceIds = await resolveTargetDeviceIds(options.to);
+    const response = await parseResponse(
+      rpcClient.sendText(profile, {
+        text,
+        targetDeviceIds,
+        ...(options.title !== undefined ? { title: options.title } : {}),
+      }),
+    );
+
+    await profileStore.rememberTargets(profile.profileId, targetDeviceIds);
+    await writeSuccess(response);
+  });
+
+sendCommand
+  .command("url")
+  .description("Send a URL item")
+  .argument("<url>", "URL to send")
+  .requiredOption("--to <device...>", "target profile ids, device ids, or nicknames")
+  .option("--title <title>", "optional title")
+  .action(async (url: string, options) => {
+    const profile = await resolveSelectedProfile();
+    const targetDeviceIds = await resolveTargetDeviceIds(options.to);
+    const response = await parseResponse(
+      rpcClient.sendUrl(profile, {
+        url,
+        targetDeviceIds,
+        ...(options.title !== undefined ? { title: options.title } : {}),
+      }),
+    );
+
+    await profileStore.rememberTargets(profile.profileId, targetDeviceIds);
+    await writeSuccess(response);
+  });
+
+sendCommand
+  .command("file")
+  .description("Send one or more files")
+  .argument("<filePaths...>", "paths of files to upload")
+  .requiredOption("--to <device...>", "target profile ids, device ids, or nicknames")
+  .option("--title <title>", "optional title")
+  .action(async (filePaths: string[], options) => {
+    const profile = await resolveSelectedProfile();
+    const targetDeviceIds = await resolveTargetDeviceIds(options.to);
+    const response = await parseResponse(
+      rpcClient.sendFiles(profile, {
+        files: filePaths.map((filePath) => ({ filePath })),
+        targetDeviceIds,
+        ...(options.title !== undefined ? { title: options.title } : {}),
+      }),
+    );
+
+    await profileStore.rememberTargets(profile.profileId, targetDeviceIds);
+    await writeSuccess(response);
+  });
+
+receiveCommand
+  .command("once")
+  .description("Fetch pending deliveries once")
+  .action(async () => {
+    const profile = await resolveSelectedProfile();
+    const receivedDeliveries = await receivePendingDeliveries(profile);
+
+    await writeSuccess(receivedDeliveries);
+  });
+
+deliveryCommand
+  .command("list")
+  .description("List deliveries")
+  .addOption(
+    new Option("--state <state>", "delivery state filter")
+      .choices([...deliveryListStates])
+      .default("pending"),
+  )
+  .option("--limit <count>", "maximum number of deliveries to return", parsePositiveInteger)
+  .action(async (options) => {
+    const profile = await resolveSelectedProfile();
+    const deliveries = await parseResponse(
+      rpcClient.listDeliveries(profile, { state: options.state, limit: options.limit ?? 50 }),
+    );
+
+    await writeSuccess(deliveries);
+  });
+
+deliveryCommand
+  .command("show")
+  .description("Show a delivery")
+  .argument("<deliveryId>", "delivery id")
+  .action(async (deliveryId: string) => {
+    const profile = await resolveSelectedProfile();
+    const delivery = await parseResponse(rpcClient.getDelivery(profile, deliveryId));
+
+    await writeSuccess(delivery.delivery);
+  });
+
+deliveryCommand
+  .command("ack")
+  .description("Acknowledge a delivery")
+  .argument("<deliveryId>", "delivery id")
+  .action(async (deliveryId: string) => {
+    const profile = await resolveSelectedProfile();
+    const response = await parseResponse(rpcClient.acknowledgeDelivery(profile, deliveryId));
+
+    await writeSuccess(response);
+  });
+
+deliveryCommand
+  .command("viewed")
+  .description("Mark a delivery as viewed")
+  .argument("<deliveryId>", "delivery id")
+  .action(async (deliveryId: string) => {
+    const profile = await resolveSelectedProfile();
+    const response = await parseResponse(rpcClient.markDeliveryViewed(profile, deliveryId));
+
+    await writeSuccess(response);
+  });
+
+deliveryCommand
+  .command("open")
+  .description("Open a delivery and mark it viewed")
+  .argument("<deliveryId>", "delivery id")
+  .action(async (deliveryId: string) => {
+    const profile = await resolveSelectedProfile();
+    const response = await openDelivery(profile, deliveryId);
+
+    await writeSuccess(response);
+  });
+
+deliveryCommand
+  .command("download")
+  .description("Download files from a delivery")
+  .argument("<deliveryId>", "delivery id")
+  .option("--out <path>", "output file or directory")
+  .action(async (deliveryId: string, options) => {
+    const profile = await resolveSelectedProfile();
+    const download = await parseResponse(rpcClient.downloadDelivery(profile, deliveryId));
+    const outputPaths = await writeDownloadedDelivery(download, options.out);
+
+    await writeSuccess({
+      itemId: download.item.itemId,
+      outputPaths,
+    } satisfies DownloadDeliveryCommandResponse);
+  });
+
+itemCommand
+  .command("list")
+  .description("List sent items")
+  .option("--limit <count>", "maximum number of items to return", parsePositiveInteger)
+  .action(async (options) => {
+    const profile = await resolveSelectedProfile();
+    const items = await parseResponse(rpcClient.listItems(profile, { limit: options.limit ?? 50 }));
+
+    await writeSuccess(items);
+  });
+
+itemCommand
+  .command("show")
+  .description("Show a sent item")
+  .argument("<itemId>", "item id")
+  .action(async (itemId: string) => {
+    const profile = await resolveSelectedProfile();
+    const item = await parseResponse(rpcClient.getItem(profile, itemId));
+
+    await writeSuccess(item);
+  });
+
+try {
+  await program.parseAsync(process.argv);
+} catch (error) {
+  writeError(error);
 }
 
-function createExecutionContext(): {
-  globalOptions: GlobalOptions;
-  outputMode: OutputMode;
-} {
-  const globalOptions = program.opts() as GlobalOptions;
-  const outputMode = globalOptions.json ? "json" : globalOptions.plain ? "plain" : "human";
+async function resolveSelectedProfile(): Promise<LocalDeviceProfile> {
+  const requestedProfile = program.opts().device;
+
+  return await profileStore.resolveProfile(requestedProfile);
+}
+
+async function loadActiveProfileId(): Promise<string | null> {
+  const activeProfile = await profileStore.getActiveProfile();
+
+  return activeProfile?.profileId ?? null;
+}
+
+async function receivePendingDeliveries(
+  profile: LocalDeviceProfile,
+): Promise<ReceivedDeliveryResult[]> {
+  const pending = await parseResponse(rpcClient.fetchPendingDeliveries(profile));
+  const results: ReceivedDeliveryResult[] = [];
+
+  for (const delivery of pending.deliveries) {
+    const wasDuplicate = await profileStore.hasHandledDelivery(
+      profile.profileId,
+      delivery.deliveryId,
+    );
+    const simulation = simulatePlatformDelivery(profile.platform, delivery);
+
+    if (!wasDuplicate) {
+      await profileStore.recordHandledDelivery(profile.profileId, delivery.deliveryId);
+    }
+
+    let currentDelivery = await transitionDeliveryToDelivered(profile, delivery.deliveryId);
+
+    if (simulation.shouldMarkViewed && !wasDuplicate) {
+      const viewed = await parseResponse(
+        rpcClient.markDeliveryViewed(profile, delivery.deliveryId),
+      );
+      currentDelivery = viewed.delivery;
+    }
+
+    results.push({
+      delivery: currentDelivery,
+      wasDuplicate,
+      simulation,
+    });
+  }
+
+  return results;
+}
+
+async function openDelivery(
+  profile: LocalDeviceProfile,
+  deliveryId: string,
+): Promise<OpenDeliveryResponse> {
+  let delivery = (await parseResponse(rpcClient.getDelivery(profile, deliveryId))).delivery;
+
+  if (delivery.state === "pending") {
+    delivery = await transitionDeliveryToDelivered(profile, deliveryId);
+  }
+
+  if (delivery.state !== "viewed") {
+    delivery = (await parseResponse(rpcClient.markDeliveryViewed(profile, deliveryId))).delivery;
+  }
+
+  await profileStore.recordHandledDelivery(profile.profileId, deliveryId);
 
   return {
-    globalOptions,
-    outputMode,
+    delivery,
+    action: describeOpenAction(delivery),
   };
 }
 
-function createProfileStore(): LocalDeviceProfileStore {
-  return new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]);
-}
-
-async function resolveActingProfile(
-  store: LocalDeviceProfileStore,
-  deviceFlagValue: string | undefined,
-): Promise<LocalDeviceProfile> {
-  const envDevice = process.env["RELAY_DEVICE"];
-
-  return await store.resolveProfile(deviceFlagValue ?? envDevice);
-}
-
-function resolveServerBaseUrl(context: { globalOptions: GlobalOptions }): string {
-  const serverBaseUrl =
-    context.globalOptions.server ?? process.env["RELAY_SERVER_URL"] ?? undefined;
-
-  if (serverBaseUrl === undefined) {
-    throw new Error("No server base URL configured. Use --server <url> or set RELAY_SERVER_URL.");
-  }
-
-  return serverBaseUrl.replace(/\/$/, "");
-}
-
-async function resolveTargetDeviceIds(
-  store: LocalDeviceProfileStore,
-  profile: LocalDeviceProfile,
-  explicitTargets: string[] | undefined,
-): Promise<string[]> {
-  if (explicitTargets === undefined || explicitTargets.length === 0) {
-    return await store.resolveTargetDeviceIds(profile.profileId, undefined);
-  }
-
-  const resolvedTargets = await Promise.all(
-    explicitTargets.map(async (target) => {
-      const knownProfile = await store.getProfileByIdOrName(target);
-
-      return knownProfile?.deviceId ?? target;
-    }),
-  );
-
-  return await store.resolveTargetDeviceIds(profile.profileId, resolvedTargets);
-}
-
-async function resolveTextPayload(
-  textArgument: string | undefined,
-  shouldReadStdin: boolean,
-): Promise<string> {
-  if (textArgument !== undefined) {
-    return textArgument;
-  }
-
-  if (shouldReadStdin || !process.stdin.isTTY) {
-    const chunks: Buffer[] = [];
-
-    for await (const chunk of process.stdin) {
-      chunks.push(Buffer.from(chunk));
-    }
-
-    const value = Buffer.concat(chunks).toString("utf8");
-    if (value.length === 0) {
-      throw new Error("No text payload provided on stdin.");
-    }
-
-    return value;
-  }
-
-  throw new Error("No text payload provided. Pass inline text or pipe stdin.");
-}
-
-function emit(
-  context: { globalOptions: GlobalOptions; outputMode: OutputMode },
-  value: unknown,
-): void {
-  if (context.outputMode === "json") {
-    logger.info(JSON.stringify(value, null, 2));
-
-    return;
-  }
-
-  if (context.outputMode === "plain") {
-    emitPlainValue(value);
-
-    return;
-  }
-
-  if (context.globalOptions.quiet) {
-    logger.info(JSON.stringify(value));
-
-    return;
-  }
-
-  logger.info(JSON.stringify(value, null, 2));
-}
-
-function emitPlainValue(value: unknown): void {
-  if (typeof value === "string") {
-    logger.info(value);
-
-    return;
-  }
-
-  if (Array.isArray(value)) {
-    logger.info(value.map((entry) => JSON.stringify(entry)).join("\n"));
-
-    return;
-  }
-
-  logger.info(JSON.stringify(value));
-}
-
-function buildDeliveryOpenSummary(platform: DevicePlatform, delivery: DeliveryResource): string {
+function describeOpenAction(delivery: DeliveryResource): string {
   switch (delivery.item.type) {
     case "text":
-      return `Opened text on ${platform}: ${delivery.item.text ?? ""}`;
+      return `Opened text delivery ${delivery.deliveryId}`;
     case "url":
-      return `Opened URL on ${platform}: ${delivery.item.url ?? ""}`;
+      return `Opened URL delivery ${delivery.deliveryId}`;
     case "file":
-      return `Opened file detail on ${platform}: ${delivery.item.files.map((file) => file.fileName).join(", ")}`;
+      return `Opened file delivery ${delivery.deliveryId}`;
     default:
-      return assertIsUnreachable(delivery.item.type);
+      return assertUnreachable(delivery.item.type);
   }
 }
 
-function parseDurationToMilliseconds(value: string): number {
-  const match = /^(\d+)(ms|s|m)$/.exec(value.trim());
-  if (match === null) {
-    throw new Error(`Invalid duration: ${value}. Use values like 500ms, 10s, or 2m.`);
-  }
+async function transitionDeliveryToDelivered(
+  profile: LocalDeviceProfile,
+  deliveryId: string,
+): Promise<DeliveryResource> {
+  const acknowledged = await parseResponse(rpcClient.acknowledgeDelivery(profile, deliveryId));
 
-  const amountText = match[1];
-  const unit = match[2];
-  if (amountText === undefined || unit === undefined) {
-    throw new Error(`Invalid duration: ${value}.`);
-  }
-
-  const amount = Number.parseInt(amountText, 10);
-  switch (unit) {
-    case "ms":
-      return amount;
-    case "s":
-      return amount * 1000;
-    case "m":
-      return amount * 60 * 1000;
-    default:
-      throw new Error(`Unsupported duration unit: ${unit}`);
-  }
+  return acknowledged.delivery;
 }
 
-function ensureConfirmationAllowed(
-  context: { globalOptions: GlobalOptions },
-  force: boolean,
-  commandName: string,
-): void {
-  if (force) {
+async function writeDownloadedDelivery(
+  download: DownloadDeliveryResponse,
+  outPath?: string,
+): Promise<string[]> {
+  const outputPaths: string[] = [];
+  const isSingleFile = download.files.length === 1;
+  const baseOutputPath =
+    outPath ?? (isSingleFile ? process.cwd() : path.join(process.cwd(), download.item.itemId));
+
+  if (isSingleFile) {
+    const file = download.files[0];
+
+    if (file === undefined) {
+      throw new Error("Expected a single file in the delivery download response.");
+    }
+
+    const filePath =
+      outPath !== undefined && path.extname(outPath) !== ""
+        ? outPath
+        : path.join(baseOutputPath, file.fileName);
+
+    await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.promises.writeFile(filePath, Buffer.from(file.base64Content, "base64"));
+    outputPaths.push(filePath);
+
+    return outputPaths;
+  }
+
+  await fs.promises.mkdir(baseOutputPath, { recursive: true });
+  for (const file of download.files) {
+    const filePath = path.join(baseOutputPath, file.fileName);
+    await fs.promises.writeFile(filePath, Buffer.from(file.base64Content, "base64"));
+    outputPaths.push(filePath);
+  }
+
+  return outputPaths;
+}
+
+async function resolveTargetDeviceIds(deviceSelectors: string[]): Promise<string[]> {
+  const targetDeviceIds: string[] = [];
+
+  for (const deviceSelector of deviceSelectors) {
+    const profile = await profileStore.getProfileByIdOrName(deviceSelector);
+
+    if (profile === null) {
+      throw new Error(
+        `Unknown target device: ${deviceSelector}. Register it first or use \`relay device use <device>\` to inspect configured profiles.`,
+      );
+    }
+
+    if (!targetDeviceIds.includes(profile.deviceId)) {
+      targetDeviceIds.push(profile.deviceId);
+    }
+  }
+
+  return targetDeviceIds;
+}
+
+function serializeProfile(
+  profile: LocalDeviceProfile,
+  activeProfileId: string | null,
+): SerializedProfile {
+  return {
+    profileId: profile.profileId,
+    nickname: profile.nickname,
+    platform: profile.platform,
+    deviceId: profile.deviceId,
+    serverBaseUrl: profile.serverBaseUrl,
+    createdAt: profile.createdAt,
+    updatedAt: profile.updatedAt,
+    lastUsedTargetDeviceIds: profile.lastUsedTargetDeviceIds,
+    isActive: activeProfileId === profile.profileId,
+    handledDeliveryCount: profile.handledDeliveryIds.length,
+  };
+}
+
+async function writeSuccess(payload: unknown): Promise<void> {
+  if (program.opts().json) {
+    process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+
     return;
   }
 
-  if (context.globalOptions.noInput || !process.stdin.isTTY) {
-    throw new Error(`Refusing to run ${commandName} without --force in non-interactive mode.`);
+  if (typeof payload === "string") {
+    process.stdout.write(`${payload}\n`);
+
+    return;
   }
 
-  throw new Error(
-    `Interactive confirmations are not implemented yet for ${commandName}. Re-run with --force.`,
-  );
+  process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
 }
 
-function inferExitCode(error: unknown): number {
-  const message = formatErrorMessage(error).toLowerCase();
+function writeError(error: unknown): void {
+  const message = formatErrorMessage(error);
 
-  if (
-    message.includes("unknown local device profile") ||
-    message.includes("no active device profile") ||
-    message.includes("no server base url configured") ||
-    message.includes("no target devices provided")
-  ) {
-    return EXIT_CODES.localConfigProblem;
+  if (program.opts().json) {
+    process.stderr.write(`${JSON.stringify({ error: message })}\n`);
+  } else {
+    process.stderr.write(`${message}\n`);
   }
 
-  if (message.includes("authentication") || message.includes("401")) {
-    return EXIT_CODES.authenticationFailure;
+  process.exitCode = 1;
+}
+
+function parsePositiveInteger(value: string): number {
+  const parsed = Number.parseInt(value, 10);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new InvalidOptionArgumentError(`Expected a positive integer but received: ${value}`);
   }
 
-  if (
-    message.includes("fetch failed") ||
-    message.includes("network") ||
-    message.includes("econnrefused") ||
-    message.includes("enotfound")
-  ) {
-    return EXIT_CODES.networkFailure;
-  }
-
-  if (message.includes("not found") || message.includes("404")) {
-    return EXIT_CODES.notFound;
-  }
-
-  if (
-    message.includes("expected") ||
-    message.includes("invalid") ||
-    message.includes("cannot provide both") ||
-    message.includes("looks like a url")
-  ) {
-    return EXIT_CODES.invalidUsage;
-  }
-
-  return EXIT_CODES.genericFailure;
+  return parsed;
 }
 
 function formatErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  if (isDetailedError(error)) {
+    const detailData =
+      typeof error.detail === "object" && error.detail !== null && "data" in error.detail
+        ? error.detail?.data
+        : undefined;
+
+    if (typeof detailData === "string") {
+      return detailData;
+    }
+
+    if (
+      detailData !== null &&
+      typeof detailData === "object" &&
+      "error" in detailData &&
+      typeof detailData.error === "string"
+    ) {
+      return detailData.error;
+    }
+
+    return `Request failed with status ${error.statusCode}.`;
+  }
+
+  if (error instanceof InvalidOptionArgumentError) {
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return `Unexpected error: ${String(error)}`;
 }
 
-function readVersion(): string {
-  const packageJsonPath = new URL("../package.json", import.meta.url);
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
-    version?: string;
-  };
+function isDetailedError(error: unknown): error is {
+  statusCode: number;
+  detail?: unknown;
+} {
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    "statusCode" in error &&
+    typeof error.statusCode === "number"
+  );
+}
 
-  return packageJson.version ?? "0.0.0";
+function assertUnreachable(value: never): never {
+  throw new Error(`Unexpected value: ${JSON.stringify(value)}`);
 }

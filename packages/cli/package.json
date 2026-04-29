@@ -25,6 +25,7 @@
     "build": "tsgo --build ./tsconfig.json",
     "clean": "rm -rf tsconfig.tsbuildinfo",
     "dev": "tsgo --build ./tsconfig.json --watch",
+    "test": "vitest run",
     "lint": "eslint --max-warnings 0 .",
     "lint:fix": "pnpm run lint --fix"
   },
@@ -36,15 +37,18 @@
     "@content-relay/shared": "workspace:*",
     "@patricktree/commons-ecma": "^3.1.1",
     "@patricktree/commons-node": "^3.1.1",
-    "commander": "^14.0.3"
+    "commander": "^14.0.3",
+    "hono": "catalog:"
   },
   "devDependencies": {
+    "@content-relay/backend-test-utils": "workspace:*",
     "@content-relay/config-eslint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "eslint": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
     "node": "^24"
