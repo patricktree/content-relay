@@ -3,7 +3,7 @@
  */
 import { hc } from "hono/client";
 
-import type { createHonoApp } from "./hono-app.ts";
+import type { createHonoApp } from "#pkg/http/hono-app.ts";
 
 type RelayApiApp = Awaited<ReturnType<typeof createHonoApp>>;
 

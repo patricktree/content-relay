@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
-    /* disable declaration emit */
+    /* completely disable emit */
     "declaration": false,
-    "isolatedDeclarations": false
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true,
+    "sourceMap": false,
+    "composite": false
   }
 }

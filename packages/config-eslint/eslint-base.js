@@ -2,14 +2,39 @@
 
 import js from "@eslint/js";
 import nodePlugin from "eslint-plugin-n";
-import { defineConfig } from "eslint/config";
+import { defineConfig, globalIgnores } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export const config = defineConfig(
+  globalIgnores(["**/dist"]),
   js.configs.recommended,
   nodePlugin.configs["flat/recommended-module"],
+  {
+    rules: {
+      /* covered by TypeScript anyways */
+      "n/no-missing-import": "off",
+      "n/no-restricted-import": [
+        "error",
+        [
+          {
+            name: "./**",
+            message: "Use `#pkg/*` subpath imports instead of relative imports.",
+          },
+          {
+            name: "../**",
+            message: "Use `#pkg/*` subpath imports instead of relative imports.",
+          },
+        ],
+      ],
+    },
+  },
   tseslint.configs.strict,
   tseslint.configs.stylistic,
+  {
+    rules: {
+      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+    },
+  },
   {
     rules: {
       "no-restricted-globals": [
@@ -19,7 +44,6 @@ export const config = defineConfig(
           message: "Use `Temporal` via polyfill `temporal-polyfill` instead.",
         },
       ],
-      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
     },
   },
 );

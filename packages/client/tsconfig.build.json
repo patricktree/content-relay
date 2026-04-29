@@ -1,5 +1,8 @@
 {
-  "extends": ["@content-relay/config-typescript/tsconfig.defaults.json"],
+  "extends": [
+    "@content-relay/config-typescript/tsconfig.defaults.json",
+    "@content-relay/config-typescript/tsconfig.composite-emit-declaration-only.json"
+  ],
   "compilerOptions": {
     /* Modules */
     "rootDir": "./src",

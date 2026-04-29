@@ -6,10 +6,20 @@
   },
   "type": "module",
   "imports": {
-    "#pkg/*": "./src/*"
+    "#pkg/*.ts": {
+      "types": "./dist/types/*.d.ts",
+      "default": "./src/*.ts"
+    },
+    "#pkg/*": {
+      "types": "./dist/types/*",
+      "default": "./src/*"
+    }
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./src/index.ts"
+    }
   },
   "scripts": {
     "build": "tsgo --build ./tsconfig.json",
