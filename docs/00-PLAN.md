@@ -6,8 +6,8 @@ Build a personal cross-device system that lets the developer send **text**, **UR
 
 Supported recipient platforms:
 
-- **Android** via an installable **PWA**
-- **iOS** via a native React Native app
+- **Android** via the shared **Capacitor Mobile App**
+- **iOS** via the shared **Capacitor Mobile App**
 - **macOS** via a native **menu bar app**
 
 The central server runs on a **Raspberry Pi inside the Tailnet**.
@@ -19,11 +19,11 @@ The central server runs on a **Raspberry Pi inside the Tailnet**.
 - **Text**
   - macOS / app: auto-open in a dedicated app window
   - iOS: show notification, tap opens app text screen
-  - Android: show notification, tap opens PWA text screen
+  - Android: show notification, tap opens app text screen
 - **URL**
   - macOS / app: auto-open in the default browser
   - iOS: show notification, tap opens default browser
-  - Android: show notification, tap opens browser
+  - Android: show notification, tap opens default browser
 - **File**
   - a file send may contain **one or more files**
   - if the sender shares multiple files in one action, they must be treated as **one logical unit/item**
@@ -46,8 +46,8 @@ Initial send surfaces should include:
 
 - **iOS app UI**
 - **iOS share sheet**
-- **Android PWA UI**
-- **Android OS share sheet into the PWA**
+- **Android app UI**
+- **Android OS share sheet into the Android app**
 - **macOS app UI**
 - **CLI**
 
@@ -65,12 +65,12 @@ Initial send surfaces should include:
 ### Headless validation surface
 
 - The CLI is the **primary early development and testing surface**.
-- It must be possible to exercise the real server from the terminal without running the macOS app, iOS app, or Android PWA.
+- It must be possible to exercise the real server from the terminal without running the macOS app or the Capacitor mobile app.
 - The CLI should support multiple locally stored registered-device profiles so the developer can simulate devices such as:
   - `cli`
   - `macos`
   - `ios`
-  - `android-pwa`
+  - `android`
 - The CLI should validate the protocol and product behavior, including send, receive, ack, viewed, multi-target sends, and multi-file bundles.
 - An optional future TUI may be added later, but it must wrap the same headless client core and local state rather than becoming a separate client implementation.
 - The detailed CLI contract lives in [02-CLI-SPEC.md](./02-CLI-SPEC.md).
@@ -82,6 +82,12 @@ Initial send surfaces should include:
   - **deep link / QR code**
   - **manual one-time code** fallback
 - Invites are **single-use** and **short-lived**.
+- Mobile registration is **atomic**:
+  - notification permission must be granted
+  - native push registration must succeed
+  - the push token must be uploaded during registration
+  - the server must not create a partially registered mobile device
+- If mobile registration fails before the final server registration step, the invite remains unused.
 
 ### Connectivity and trust model
 
@@ -100,47 +106,52 @@ Initial send surfaces should include:
 
 ## Platform behavior
 
-### iOS
+### Shared mobile app behavior
 
-- Build a **bare React Native app** from day one.
-- Use **direct APNs**.
+- Build mobile as **one shared Capacitor app** for iOS and Android with a shared web UI.
 - Mobile behavior is **notification-first only**; no auto-open in the background.
-- Notifications should show:
+- Mobile notification previews should show:
   - text: **truncated preview**
   - URL: **URL string**
   - file: **filename** for single-file sends, or a summary such as **"3 files"** for multi-file sends
-- Tapping notifications should:
-  - URL -> open default browser
-  - text -> open app text screen
-  - file -> open app file detail / download screen
+- Tapping mobile notifications should:
+  - URL -> fetch authoritative delivery state, then open the **default browser**
+  - text -> fetch authoritative delivery state, then open the **app text screen**
+  - file -> fetch authoritative delivery state, then open the **app file detail / download screen**
 - If the app cannot reach the Pi over Tailnet when opening an item, it should **fail immediately with a clear error**.
+- If the mobile app is already foregrounded when a delivery arrives:
+  - handle it **in-app only**
+  - do **not** show a native notification/banner
+  - do **not** auto-navigate or auto-open anything
+- On mobile, fetch pending deliveries on:
+  - app launch
+  - app resume / becoming active
+  - notification tap
+  - explicit user refresh
+- Do **not** keep a persistent local archive of delivered items in v1.
+- Only minimal local state is needed on mobile, such as:
+  - device credentials
+  - handled delivery IDs for deduplication
+  - last-used targets
+  - app preferences
+- Mobile credentials may live in regular app-local storage in v1.
 
-#### iOS sending
+### iOS-specific mobile integration
 
-- **Text/URLs**: upload directly from the share flow
-- **Files**: hand off from the share flow to the main app for upload
+- Use **direct APNs**.
+- iOS share flows should target the shared mobile app.
+- **Text/URLs** should upload directly from the share flow where feasible.
+- **Files** may hand off from the share flow to the main app for upload if platform constraints require it.
+- If a fixed product requirement cannot be delivered reliably in pure Capacitor, add the **minimum native iOS integration** necessary.
 
-### Android
+### Android-specific mobile integration
 
-- Build Android as an installable **PWA**, not a native React Native app.
-- The PWA must support being a **share target** on Android for text, URLs, and files if the platform/browser permits it.
-- Use **Web Push** for notifications if supported in the installed PWA.
-- Android behavior is **notification-first only**; no auto-open in the background.
-- Notifications should show:
-  - text: **truncated preview**
-  - URL: **URL string**
-  - file: **filename** for single-file sends, or a summary such as **"3 files"** for multi-file sends
-- Tapping notifications should:
-  - URL -> open the URL in the browser
-  - text -> open the PWA text screen
-  - file -> open the PWA file detail / download screen
-- If the PWA cannot reach the Pi over Tailnet when opening an item, it should **fail immediately with a clear error**.
-
-#### Android sending
-
-- Primary Android send surface is the **OS share sheet into the PWA**.
-- The PWA should accept incoming shared **text**, **URLs**, and **files** via the Web Share Target flow where supported.
-- If file-share behavior has browser-specific limitations, document the exact fallback rather than silently failing.
+- Use **FCM** for push notifications.
+- Primary Android send surface is the **OS share sheet into the Android app**.
+- The Android app should accept incoming shared **text**, **URLs**, and **files**.
+- Multiple files shared in one Android share action must remain **one logical file item**.
+- If a fixed product requirement cannot be delivered reliably in pure Capacitor, add the **minimum native Android integration** necessary.
+- There is **no Android PWA or mobile-web fallback in v1**.
 
 ### macOS app
 
@@ -155,13 +166,15 @@ Initial send surfaces should include:
 
 ## Major risk / feasibility watchlist
 
-The earlier Brave-extension background-receive requirement is no longer relevant now that macOS uses a native menu bar app.
+The earlier Android PWA and browser-based feasibility questions are no longer relevant.
 
 The most important remaining feasibility watch areas are:
 
-- Android installed-PWA support for **Web Share Target** with text, URLs, and files across the intended browser/install path
-- Android **Web Push** reliability for the installed PWA
-- iOS share-flow constraints for handing file uploads off to the main app
+- Capacitor-compatible **share-in** support for iOS text, URLs, and files
+- Capacitor-compatible **share-in** support for Android text, URLs, and files
+- Native push wiring for **APNs** and **FCM**
+- Notification tap routing into the shared mobile web UI
+- File download/storage UX inside the Capacitor app
 
 The macOS app should still get a small early prototype, but it is no longer the architectural gate for the project.
 
@@ -251,8 +264,8 @@ Semantics:
 
 1. Sender uploads item to server
 2. Server persists item and target deliveries
-3. Server attempts to notify / wake recipients
-4. Recipient fetches item from server
+3. Server attempts a **best-effort immediate wake/notification** for mobile recipients
+4. Recipient fetches authoritative item state from the server
 5. Recipient acknowledges delivery
 6. Recipient marks viewed after user open
 
@@ -260,6 +273,7 @@ Semantics:
 
 - Send succeeds when the server has **accepted and stored** the item.
 - If the server is unreachable while sending, **fail immediately with a clear error**.
+- If immediate mobile push wake fails, send still succeeds once the item is durably stored.
 - Sender should be able to inspect **per-device status** later:
   - pending
   - delivered
@@ -280,22 +294,6 @@ Defer browser-specific send affordances such as the following to a possible futu
 - send right-clicked link URL
 - send selected text
 
-### iOS local storage
-
-- Do **not** keep a persistent local copy of delivered items in v1
-- Only minimal local state is needed, such as:
-  - device credentials
-  - handled delivery IDs for deduplication
-  - last-used targets
-
-### Android local storage
-
-- Do **not** keep a persistent local copy of delivered items in v1
-- Only minimal local state is needed, such as:
-  - device credentials
-  - handled delivery IDs for deduplication
-  - last-used targets
-
 ## Suggested milestone plan
 
 ### Milestone 0: Core backend foundation + headless CLI test harness
@@ -313,12 +311,12 @@ Deliverables:
 - item creation API
 - delivery creation / status model
 - pending-item fetch, ack, viewed, inspection, and file-download endpoints needed by the CLI
-- reusable headless client core shared by the CLI, automated tests, and any future TUI
+- reusable headless client core shared by the CLI, automated tests, macOS, and the mobile app
 - local device-profile storage with active-device selection, last-used targets, and handled-delivery tracking
 - CLI device registration using invite link or manual code
 - CLI send flows for text, URL, and file
 - CLI receive flows for pending fetch, ack, viewed, and file download
-- platform-profile simulation for `cli`, `macos`, `ios`, and `android-pwa`
+- platform-profile simulation for `cli`, `macos`, `ios`, and `android`
 - end-to-end test scenarios covering multi-target sends, offline receive, delivery deduplication, and multi-file bundles
 - backend hardening around the first headless vertical slice
 
@@ -345,50 +343,43 @@ Deliverables:
 - status updates back to server
 - browser-specific send integration explicitly deferred to a possible future Chromium extension
 
-### Milestone 3: Android PWA foundation
+### Milestone 3: shared mobile app foundation
 
 Deliverables:
 
-- Android PWA foundation
+- `packages/mobile-app` foundation
+- shared React-based mobile web UI inside Capacitor
+- Capacitor `ios` and `android` shells
 - registration via invite link / QR / code
-- per-device token auth
-- Web Push setup for Android PWA
-- notification handling
-- item fetch on tap
-- text detail screen
-- file detail / download screen
-- proper error handling for Tailnet/server unavailability
-
-### Milestone 4: Android sharing flows
-
-Deliverables:
-
-- Android PWA Web Share Target flow for text/URL/file where supported
-- Android PWA send UI
-- target confirmation UI with preselected last-used devices
-- documented fallback behavior for unsupported browser/file-share cases
-
-### Milestone 5: iOS app foundation
-
-Deliverables:
-
-- bare React Native iOS project
-- registration via invite link / QR / code
-- per-device token auth
+- atomic mobile registration with push permission + native push registration + token upload
 - APNs setup for iOS
+- FCM setup for Android
 - notification handling
 - item fetch on tap
 - text detail screen
 - file detail / download screen
+- URL handoff to the default browser
 - proper error handling for Tailnet/server unavailability
 
-### Milestone 6: iOS share flows
+### Milestone 4: shared mobile send flows
 
 Deliverables:
 
-- iOS share text/URL directly from share sheet
-- iOS hand off file shares to main app for upload
+- mobile app send UI for text, URLs, and files
 - target confirmation UI with preselected last-used devices
+- shared handling for text/URL/file sends from within the app
+- foreground in-app delivery handling with no auto-navigation
+
+### Milestone 5: native share-in + mobile hardening
+
+Deliverables:
+
+- iOS share text/URL directly from share sheet where feasible
+- iOS file-share handoff to the main app if needed
+- Android OS share-sheet integration for text/URL/file
+- preserved multi-file bundle semantics on both platforms
+- documented minimum native integrations where pure Capacitor is insufficient
+- notification tap routing verified end-to-end on both platforms
 
 ## Initial API sketch
 
@@ -398,6 +389,9 @@ This is not final, but it is the shape the implementation should likely converge
 
 - `POST /invites`
 - `POST /devices/register`
+  - `pushRegistration` is required for `ios` and `android`
+  - `pushRegistration` is absent for `cli`, `macos`, and `generic`
+  - for mobile devices, registration stores the device and initial push token atomically
 
 ### Send / upload
 
@@ -421,7 +415,7 @@ This is not final, but it is the shape the implementation should likely converge
 
 ### Device metadata
 
-- `POST /devices/:deviceId/push-token`
+- `POST /devices/:deviceId/push-token` for post-registration token refresh
 - `GET /devices`
 
 ## Non-goals for v1
@@ -437,6 +431,7 @@ This is not final, but it is the shape the implementation should likely converge
 - Browser-specific macOS send integration such as current-tab or selected-text capture
 - A polished TUI in the first implementation; the CLI is enough to start, and any later TUI should wrap the same headless client core
 - Exact-once delivery guarantees
+- Android PWA or mobile-web fallback
 
 ## Success criteria for v1
 
@@ -446,7 +441,7 @@ The system is successful when all of the following are true:
 2. A registered sender can send text, URLs, and files to one or more devices.
 3. The Pi stores every item locally and durably.
 4. Offline recipients receive pending items after reconnecting.
-5. Android PWA recipients get useful notifications with preview content.
+5. Android app recipients get useful notifications with preview content.
 6. iOS recipients get useful notifications with preview content.
 7. Tapping iOS and Android notifications opens the expected destination by payload type.
 8. The macOS app handles URL/text/file according to the chosen rules.

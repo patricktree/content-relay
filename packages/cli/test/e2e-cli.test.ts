@@ -405,7 +405,7 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
       configDirectory,
       inviteCode: receiverInvite.inviteCode,
       nickname: "Developer Android Sim",
-      platform: "android-pwa",
+      platform: "android",
       serverBaseUrl,
     });
 
@@ -533,7 +533,7 @@ test("send file and delivery download write the files", async () => {
       configDirectory,
       inviteCode: receiverInvite.inviteCode,
       nickname: "Developer Pixel Sim",
-      platform: "android-pwa",
+      platform: "android",
       serverBaseUrl,
     });
 

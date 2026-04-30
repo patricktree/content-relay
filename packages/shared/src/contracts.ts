@@ -1,22 +1,49 @@
 import { z } from "zod";
 
-export const devicePlatforms = ["cli", "macos", "ios", "android-pwa", "generic"] as const;
+export const devicePlatforms = ["cli", "macos", "ios", "android", "generic"] as const;
+export const mobileDevicePlatforms = ["ios", "android"] as const;
 export const relayItemTypes = ["text", "url", "file"] as const;
 export const deliveryStates = ["pending", "delivered", "viewed"] as const;
 export const deliveryListStates = [...deliveryStates, "all"] as const;
 
 export const devicePlatformSchema = z.enum(devicePlatforms);
+export const pushRegistrationSchema = z.object({
+  token: z.string().trim().min(1),
+});
 
 export const relayItemTypeSchema = z.enum(relayItemTypes);
 export const deliveryStateSchema = z.enum(deliveryStates);
 
 export const deliveryListStateSchema = z.enum(deliveryListStates);
 
-export const registerDeviceRequestSchema = z.object({
-  nickname: z.string().trim().min(1),
-  platform: devicePlatformSchema,
-  invite: z.string().trim().min(1),
-});
+export const registerDeviceRequestSchema = z
+  .object({
+    nickname: z.string().trim().min(1),
+    platform: devicePlatformSchema,
+    invite: z.string().trim().min(1),
+    pushRegistration: pushRegistrationSchema.optional(),
+  })
+  .superRefine((value, context) => {
+    if (isMobileDevicePlatform(value.platform)) {
+      if (value.pushRegistration === undefined) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["pushRegistration"],
+          message: "pushRegistration is required for ios and android devices.",
+        });
+      }
+
+      return;
+    }
+
+    if (value.pushRegistration !== undefined) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["pushRegistration"],
+        message: "pushRegistration is only allowed for ios and android devices.",
+      });
+    }
+  });
 
 export const registerDeviceResponseSchema = z.object({
   deviceId: z.string(),
@@ -155,6 +182,7 @@ export const pushTokenRequestSchema = z.object({
 });
 
 export type DevicePlatform = z.infer<typeof devicePlatformSchema>;
+export type MobileDevicePlatform = (typeof mobileDevicePlatforms)[number];
 export type RelayItemType = z.infer<typeof relayItemTypeSchema>;
 export type DeliveryState = z.infer<typeof deliveryStateSchema>;
 export type DeliveryListState = z.infer<typeof deliveryListStateSchema>;
@@ -178,12 +206,17 @@ export type ItemListResponse = z.infer<typeof itemListResponseSchema>;
 export type DeliveryActionResponse = z.infer<typeof deliveryActionResponseSchema>;
 export type DownloadDeliveryResponse = z.infer<typeof downloadDeliveryResponseSchema>;
 export type UpdateDeviceRequest = z.infer<typeof updateDeviceRequestSchema>;
+export type PushRegistration = z.infer<typeof pushRegistrationSchema>;
 export type PushTokenRequest = z.infer<typeof pushTokenRequestSchema>;
 
 export type AuthHeaders = {
   authorization: string;
   "x-relay-device-id": string;
 };
+
+export function isMobileDevicePlatform(platform: DevicePlatform): platform is MobileDevicePlatform {
+  return mobileDevicePlatforms.includes(platform as MobileDevicePlatform);
+}
 
 export function isValidAbsoluteUrl(value: string): boolean {
   try {

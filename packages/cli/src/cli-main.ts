@@ -15,8 +15,11 @@ import {
   assertValidAbsoluteUrl,
   deliveryListStates,
   devicePlatforms,
+  isMobileDevicePlatform,
   type DeliveryResource,
+  type DevicePlatform,
   type DownloadDeliveryResponse,
+  type PushRegistration,
 } from "@content-relay/shared";
 
 type ReceivedDeliveryResult = {
@@ -33,6 +36,12 @@ type OpenDeliveryResponse = {
 type DownloadDeliveryCommandResponse = {
   itemId: string;
   outputPaths: string[];
+};
+
+type BuildCliPushRegistrationInput = {
+  nickname: string;
+  platform: DevicePlatform;
+  pushTokenOverride?: string | undefined;
 };
 
 type SerializedProfile = Pick<
@@ -101,6 +110,7 @@ deviceCommand
       .choices([...devicePlatforms])
       .makeOptionMandatory(true),
   )
+  .option("--push-token <token>", "push token override for simulated mobile registration")
   .requiredOption("--invite <inviteCode>", "invite code")
   .action(async (options) => {
     const serverBaseUrl = program.opts().server;
@@ -109,11 +119,17 @@ deviceCommand
       throw new Error("Missing required --server <url> option.");
     }
 
+    const pushRegistration = buildCliPushRegistration({
+      nickname: options.name,
+      platform: options.platform,
+      pushTokenOverride: options.pushToken,
+    });
     const registration = await parseResponse(
       rpcClient.registerDevice(serverBaseUrl, {
         nickname: options.name,
         platform: options.platform,
         invite: options.invite,
+        ...(pushRegistration === undefined ? {} : { pushRegistration }),
       }),
     );
 
@@ -372,6 +388,24 @@ try {
   await program.parseAsync(process.argv);
 } catch (error) {
   writeError(error);
+}
+
+function buildCliPushRegistration(
+  input: BuildCliPushRegistrationInput,
+): PushRegistration | undefined {
+  if (!isMobileDevicePlatform(input.platform)) {
+    if (input.pushTokenOverride !== undefined) {
+      throw new Error("--push-token is only supported for ios and android simulated profiles.");
+    }
+
+    return undefined;
+  }
+
+  return {
+    token:
+      input.pushTokenOverride ??
+      `simulated-${input.platform}-${input.nickname.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-token`,
+  };
 }
 
 async function resolveSelectedProfile(): Promise<LocalDeviceProfile> {

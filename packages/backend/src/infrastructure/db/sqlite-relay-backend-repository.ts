@@ -17,6 +17,7 @@ import {
 } from "#pkg/infrastructure/db/schema.ts";
 import type {
   IRelayBackendRepository,
+  CreateDeviceRegistrationInput,
   DeliveryRecord,
   DeviceRecord,
   InviteRecord,
@@ -56,6 +57,22 @@ export class SqliteRelayBackendRepository implements IRelayBackendRepository {
 
   async createDevice(device: DeviceRecord): Promise<void> {
     this.#db.insert(devicesTable).values(device).run();
+  }
+
+  async createDeviceRegistration(input: CreateDeviceRegistrationInput): Promise<void> {
+    this.#sqlite.transaction((registration: CreateDeviceRegistrationInput) => {
+      this.#db.insert(devicesTable).values(registration.device).run();
+
+      if (registration.pushToken !== undefined) {
+        this.#upsertPushTokenRecord(registration.pushToken);
+      }
+
+      this.#db
+        .update(invitesTable)
+        .set({ usedAt: registration.usedAt })
+        .where(eq(invitesTable.id, registration.inviteId))
+        .run();
+    })(input);
   }
 
   async findActiveDeviceById(deviceId: string): Promise<DeviceRecord | null> {
@@ -305,6 +322,10 @@ export class SqliteRelayBackendRepository implements IRelayBackendRepository {
   }
 
   async upsertPushToken(pushToken: PushTokenRecord): Promise<void> {
+    this.#upsertPushTokenRecord(pushToken);
+  }
+
+  #upsertPushTokenRecord(pushToken: PushTokenRecord): void {
     const existingToken = this.#db
       .select()
       .from(pushTokensTable)

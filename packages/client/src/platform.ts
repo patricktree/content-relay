@@ -23,7 +23,7 @@ export function simulatePlatformDelivery(
     case "macos":
       return simulateMacosDelivery(delivery);
     case "ios":
-    case "android-pwa":
+    case "android":
       return {
         delivery,
         itemType: delivery.item.type,

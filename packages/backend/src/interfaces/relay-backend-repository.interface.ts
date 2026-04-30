@@ -19,11 +19,19 @@ export type ItemRecord = InferSelectModel<typeof itemsTable>;
 export type DeliveryRecord = InferSelectModel<typeof deliveriesTable>;
 export type PushTokenRecord = InferSelectModel<typeof pushTokensTable>;
 
+export type CreateDeviceRegistrationInput = {
+  inviteId: string;
+  usedAt: string;
+  device: DeviceRecord;
+  pushToken?: PushTokenRecord;
+};
+
 export type IRelayBackendRepository = {
   createInvite(invite: InviteRecord): Promise<void>;
   getInviteByCode(code: string): Promise<InviteRecord | null>;
   markInviteUsed(inviteId: string, usedAt: string): Promise<void>;
   createDevice(device: DeviceRecord): Promise<void>;
+  createDeviceRegistration(input: CreateDeviceRegistrationInput): Promise<void>;
   findActiveDeviceById(deviceId: string): Promise<DeviceRecord | null>;
   listActiveDevices(): Promise<DeviceRecord[]>;
   updateDeviceNickname(

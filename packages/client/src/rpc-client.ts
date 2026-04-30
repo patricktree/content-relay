@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import type { DevicePlatform, DeliveryListState } from "@content-relay/shared";
+import type { DevicePlatform, DeliveryListState, PushRegistration } from "@content-relay/shared";
 
 import { createAuthenticatedClient, createRelayHttpClient } from "#pkg/http-client.ts";
 import type { LocalDeviceProfile } from "#pkg/profile-store.ts";
@@ -13,7 +13,12 @@ export const rpcClient = {
 
   async registerDevice(
     serverBaseUrl: string,
-    input: { nickname: string; platform: DevicePlatform; invite: string },
+    input: {
+      nickname: string;
+      platform: DevicePlatform;
+      invite: string;
+      pushRegistration?: PushRegistration;
+    },
   ) {
     return createRelayHttpClient({ serverBaseUrl }).devices.register.$post({ json: input });
   },

@@ -18,7 +18,9 @@ import type {
   DeliveryResource,
   DevicePlatform,
   DownloadDeliveryResponse,
+  PushRegistration,
 } from "@content-relay/shared";
+import { isMobileDevicePlatform } from "@content-relay/shared";
 
 import { rpcClient } from "#pkg/rpc-client.ts";
 
@@ -66,11 +68,13 @@ export async function registerProfile(input: {
   const invite = await parseResponse(
     rpcClient.createInvite(input.serverBaseUrl, { expiresInSeconds: 900 }),
   );
+  const pushRegistration = buildPushRegistration(input.platform, input.nickname);
   const registration = await parseResponse(
     rpcClient.registerDevice(input.serverBaseUrl, {
       nickname: input.nickname,
       platform: input.platform,
       invite: invite.inviteCode,
+      ...(pushRegistration === undefined ? {} : { pushRegistration }),
     }),
   );
 
@@ -138,6 +142,19 @@ export async function receivePendingDeliveries(
   }
 
   return results;
+}
+
+function buildPushRegistration(
+  platform: DevicePlatform,
+  nickname: string,
+): PushRegistration | undefined {
+  if (!isMobileDevicePlatform(platform)) {
+    return undefined;
+  }
+
+  return {
+    token: `simulated-${platform}-${nickname.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-token`,
+  };
 }
 
 export async function writeDownloadedDelivery(

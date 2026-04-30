@@ -1,6 +1,12 @@
 import { randomUUID } from "node:crypto";
 
-import { devicePlatformSchema, type DevicePlatform } from "@content-relay/shared";
+import {
+  devicePlatformSchema,
+  isMobileDevicePlatform,
+  pushRegistrationSchema,
+  type DevicePlatform,
+  type PushRegistration,
+} from "@content-relay/shared";
 
 import { getDiContainer } from "#pkg/dependency-container-context.ts";
 import { RelayInvalidInputError } from "#pkg/errors.ts";
@@ -13,6 +19,7 @@ export type RegisterDeviceInput = {
   nickname: string;
   platform: string;
   invite: string;
+  pushRegistration?: PushRegistration | undefined;
 };
 
 export type RegisterDeviceOutput = {
@@ -47,21 +54,36 @@ export async function registerDevice(input: RegisterDeviceInput): Promise<Regist
   }
 
   const platform = devicePlatformSchema.parse(input.platform);
+  const pushRegistration = parsePushRegistration(platform, input.pushRegistration);
   const nickname = input.nickname.trim();
   const authToken = authTokenManager.generateToken();
   const deviceId = `dev_${randomUUID()}`;
   const authTokenHash = await authTokenManager.hash(authToken);
 
-  await repository.createDevice({
-    id: deviceId,
-    nickname,
-    platform,
-    authTokenHash,
-    createdAt: now,
-    updatedAt: now,
-    deletedAt: null,
+  await repository.createDeviceRegistration({
+    inviteId: invite.id,
+    usedAt: now,
+    device: {
+      id: deviceId,
+      nickname,
+      platform,
+      authTokenHash,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    },
+    ...(pushRegistration === undefined
+      ? {}
+      : {
+          pushToken: {
+            id: `push_${randomUUID()}`,
+            deviceId,
+            token: pushRegistration.token,
+            createdAt: now,
+            updatedAt: now,
+          },
+        }),
   });
-  await repository.markInviteUsed(invite.id, now);
 
   return {
     deviceId,
@@ -71,4 +93,27 @@ export async function registerDevice(input: RegisterDeviceInput): Promise<Regist
     serverBaseUrl,
     createdAt: now,
   };
+}
+
+function parsePushRegistration(
+  platform: DevicePlatform,
+  pushRegistration: PushRegistration | undefined,
+): PushRegistration | undefined {
+  if (isMobileDevicePlatform(platform)) {
+    if (pushRegistration === undefined) {
+      throw new RelayInvalidInputError(
+        "Mobile registration requires pushRegistration for ios and android devices.",
+      );
+    }
+
+    return pushRegistrationSchema.parse(pushRegistration);
+  }
+
+  if (pushRegistration !== undefined) {
+    throw new RelayInvalidInputError(
+      "pushRegistration is only allowed for ios and android devices.",
+    );
+  }
+
+  return undefined;
 }

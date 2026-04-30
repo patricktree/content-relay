@@ -52,7 +52,7 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
       profileStore,
       serverBaseUrl,
       nickname: "Developer Pixel Sim",
-      platform: "android-pwa",
+      platform: "android",
     });
 
     await profileStore.rememberTargets(senderProfile.profileId, [
@@ -203,6 +203,7 @@ test("invite codes are single-use", async () => {
         nickname: "Developer iPhone Sim",
         platform: "ios",
         invite: invite.inviteCode,
+        pushRegistration: { token: "simulated-ios-invite-reuse-token" },
       }),
     );
     await expect(registerAgainPromise).rejects.toThrow(DetailedError);
@@ -587,7 +588,7 @@ test("file uploads reject empty payloads and write single-file downloads", async
       profileStore,
       serverBaseUrl,
       nickname: "Developer Android Sim",
-      platform: "android-pwa",
+      platform: "android",
     });
 
     const emptyUploadResponse = await rpcClient.sendFiles(senderProfile, {
@@ -770,11 +771,45 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
     const invalidRegisterResponse = await createRelayHttpClient({
       serverBaseUrl,
     }).devices.register.$post({
-      json: { nickname: "   ", platform: "ios", invite: "invite_code" },
+      json: {
+        nickname: "   ",
+        platform: "ios",
+        invite: "invite_code",
+        pushRegistration: { token: "simulated-ios-validation-token" },
+      },
     });
     expect(invalidRegisterResponse.status).toBe(400);
     expect(await invalidRegisterResponse.json()).toMatchObject({
       error: expect.stringMatching(/(at least 1 character|>=1 characters)/i),
+    });
+
+    const missingMobilePushRegistrationResponse = await createRelayHttpClient({
+      serverBaseUrl,
+    }).devices.register.$post({
+      json: {
+        nickname: "Developer iPhone Sim",
+        platform: "ios",
+        invite: "invite_code",
+      },
+    });
+    expect(missingMobilePushRegistrationResponse.status).toBe(400);
+    expect(await missingMobilePushRegistrationResponse.json()).toMatchObject({
+      error: expect.stringMatching(/pushRegistration/i),
+    });
+
+    const nonMobilePushRegistrationResponse = await createRelayHttpClient({
+      serverBaseUrl,
+    }).devices.register.$post({
+      json: {
+        nickname: "Developer CLI",
+        platform: "cli",
+        invite: "invite_code",
+        pushRegistration: { token: "simulated-cli-validation-token" },
+      },
+    });
+    expect(nonMobilePushRegistrationResponse.status).toBe(400);
+    expect(await nonMobilePushRegistrationResponse.json()).toMatchObject({
+      error: expect.stringMatching(/only allowed for ios and android/i),
     });
 
     const invalidRenameResponse = await createAuthenticatedClient(senderProfile).devices[
@@ -1160,7 +1195,7 @@ test("profile store reuses remembered targets when no explicit targets are provi
       profileStore,
       serverBaseUrl,
       nickname: "Developer Pixel Sim",
-      platform: "android-pwa",
+      platform: "android",
     });
 
     await profileStore.rememberTargets(senderProfile.profileId, [
