@@ -7,7 +7,13 @@
     "build": {
       "cache": true,
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "*.tsbuildinfo"],
+      "outputs": [
+        /* TypeScript */
+        "dist/**",
+        "*.tsbuildinfo",
+        /* Switft */
+        ".build/**",
+      ],
     },
     "dev": {
       "cache": false,
@@ -21,7 +27,10 @@
     "lint:fix": {
       "cache": true,
       "dependsOn": ["^build"],
-      "outputs": ["src/**"],
+      "outputs": [
+        /* TypeScript */
+        "src/**",
+      ],
     },
     "test": {
       "cache": true,

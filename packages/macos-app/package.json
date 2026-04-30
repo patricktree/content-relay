@@ -1,0 +1,11 @@
+{
+  "name": "@content-relay/macos-app",
+  "private": true,
+  "scripts": {
+    "build": "./scripts/build.sh",
+    "clean": "rm -rf .build dist",
+    "lint": "swift build -c debug -Xswiftc -warnings-as-errors",
+    "lint:fix": "pnpm run lint",
+    "test": "swift test"
+  }
+}
