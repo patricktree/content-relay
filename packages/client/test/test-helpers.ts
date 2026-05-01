@@ -9,11 +9,13 @@ import {
 } from "@content-relay/backend-test-utils";
 import {
   createAuthenticatedClient,
-  LocalDeviceProfileStore,
   simulatePlatformDelivery,
-  type LocalDeviceProfile,
   type SimulatedDeliveryResult,
 } from "@content-relay/client";
+import {
+  LocalDeviceProfileStore,
+  type LocalDeviceProfile,
+} from "@content-relay/profile-store-node";
 import type {
   DeliveryResource,
   DevicePlatform,

@@ -5,12 +5,14 @@ import path from "node:path";
 import process from "node:process";
 
 import {
-  LocalDeviceProfileStore,
   rpcClient,
   simulatePlatformDelivery,
-  type LocalDeviceProfile,
   type SimulatedDeliveryResult,
 } from "@content-relay/client";
+import {
+  LocalDeviceProfileStore,
+  type LocalDeviceProfile,
+} from "@content-relay/profile-store-node";
 import {
   assertValidAbsoluteUrl,
   deliveryListStates,
@@ -262,9 +264,19 @@ sendCommand
   .action(async (filePaths: string[], options) => {
     const profile = await resolveSelectedProfile();
     const targetDeviceIds = await resolveTargetDeviceIds(options.to);
+    const files = await Promise.all(
+      filePaths.map(async (filePath) => {
+        const content = await fs.promises.readFile(filePath);
+
+        return {
+          content,
+          basename: path.basename(filePath),
+        };
+      }),
+    );
     const response = await parseResponse(
       rpcClient.sendFiles(profile, {
-        files: filePaths.map((filePath) => ({ filePath })),
+        files,
         targetDeviceIds,
         ...(options.title !== undefined ? { title: options.title } : {}),
       }),

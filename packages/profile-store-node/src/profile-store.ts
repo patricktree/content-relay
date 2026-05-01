@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { Temporal } from "temporal-polyfill";
@@ -170,7 +170,7 @@ export class LocalDeviceProfileStore {
   }
 
   async clear(): Promise<void> {
-    await rm(this.#profilesFilePath(), { force: true });
+    await fs.promises.rm(this.#profilesFilePath(), { force: true });
   }
 
   async rememberTargets(profileId: string, targetDeviceIds: string[]): Promise<void> {
@@ -258,10 +258,10 @@ export class LocalDeviceProfileStore {
   }
 
   async #readState(): Promise<PersistedProfiles> {
-    await mkdir(this.#configDirectory, { recursive: true });
+    await fs.promises.mkdir(this.#configDirectory, { recursive: true });
 
     try {
-      const content = await readFile(this.#profilesFilePath(), "utf8");
+      const content = await fs.promises.readFile(this.#profilesFilePath(), "utf8");
       const parsed = JSON.parse(content) as PersistedProfiles;
 
       return {
@@ -278,8 +278,12 @@ export class LocalDeviceProfileStore {
   }
 
   async #writeState(state: PersistedProfiles): Promise<void> {
-    await mkdir(this.#configDirectory, { recursive: true });
-    await writeFile(this.#profilesFilePath(), `${JSON.stringify(state, null, 2)}\n`, "utf8");
+    await fs.promises.mkdir(this.#configDirectory, { recursive: true });
+    await fs.promises.writeFile(
+      this.#profilesFilePath(),
+      `${JSON.stringify(state, null, 2)}\n`,
+      "utf8",
+    );
   }
 
   #profilesFilePath(): string {

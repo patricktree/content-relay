@@ -128,12 +128,17 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     const betaFilePath = path.join(rootDirectory, "beta.txt");
     await fs.promises.writeFile(alphaFilePath, "alpha\n", "utf8");
     await fs.promises.writeFile(betaFilePath, "beta\n", "utf8");
+    const alphaFileContent = await fs.promises.readFile(alphaFilePath);
+    const betaFileContent = await fs.promises.readFile(betaFilePath);
 
     const fileItem = await parseResponse(
       rpcClient.sendFiles(senderProfile, {
         targetDeviceIds: [androidProfile.deviceId],
         title: "Trip docs",
-        files: [{ filePath: alphaFilePath }, { filePath: betaFilePath }],
+        files: [
+          { content: alphaFileContent, basename: path.basename(alphaFilePath) },
+          { content: betaFileContent, basename: path.basename(betaFilePath) },
+        ],
       }),
     );
     expect(fileItem.item.type).toBe("file");
@@ -602,11 +607,12 @@ test("file uploads reject empty payloads and write single-file downloads", async
 
     const gammaFilePath = path.join(rootDirectory, "gamma.txt");
     await fs.promises.writeFile(gammaFilePath, "gamma\n", "utf8");
+    const gammaFileContent = await fs.promises.readFile(gammaFilePath);
 
     const fileItem = await parseResponse(
       rpcClient.sendFiles(senderProfile, {
         targetDeviceIds: [receiverProfile.deviceId],
-        files: [{ filePath: gammaFilePath }],
+        files: [{ content: gammaFileContent, basename: path.basename(gammaFilePath) }],
       }),
     );
     const firstFileDelivery = fileItem.deliveries[0];

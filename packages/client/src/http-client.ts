@@ -1,7 +1,13 @@
-import { hcWithType } from "@content-relay/backend";
+import { hc } from "hono/client";
+
+import type { Client, RelayApiApp } from "@content-relay/backend";
 import { type AuthHeaders } from "@content-relay/shared";
 
-import type { LocalDeviceProfile } from "#pkg/profile-store.ts";
+const hcWithType = (...args: Parameters<typeof hc>): Client => hc<RelayApiApp>(...args);
+
+export type CreateAuthenticatedClientOptions = AuthOptions & {
+  serverBaseUrl: string;
+};
 
 type AuthOptions = { authToken: string; deviceId: string };
 
@@ -26,12 +32,12 @@ export function createRelayHttpClient(opts: {
   });
 }
 
-export function createAuthenticatedClient(profile: LocalDeviceProfile): HcClient {
+export function createAuthenticatedClient(opts: CreateAuthenticatedClientOptions): HcClient {
   return createRelayHttpClient({
-    serverBaseUrl: profile.serverBaseUrl,
+    serverBaseUrl: opts.serverBaseUrl,
     auth: {
-      authToken: profile.authToken,
-      deviceId: profile.deviceId,
+      authToken: opts.authToken,
+      deviceId: opts.deviceId,
     },
   });
 }

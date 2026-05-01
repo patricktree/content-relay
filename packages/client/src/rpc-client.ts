@@ -1,10 +1,10 @@
-import fs from "node:fs";
-import path from "node:path";
-
 import type { DevicePlatform, DeliveryListState, PushRegistration } from "@content-relay/shared";
 
-import { createAuthenticatedClient, createRelayHttpClient } from "#pkg/http-client.ts";
-import type { LocalDeviceProfile } from "#pkg/profile-store.ts";
+import {
+  createAuthenticatedClient,
+  createRelayHttpClient,
+  type CreateAuthenticatedClientOptions,
+} from "#pkg/http-client.ts";
 
 export const rpcClient = {
   async createInvite(serverBaseUrl: string, input: { expiresInSeconds: number }) {
@@ -23,57 +23,59 @@ export const rpcClient = {
     return createRelayHttpClient({ serverBaseUrl }).devices.register.$post({ json: input });
   },
 
-  async listDevices(profile: LocalDeviceProfile) {
-    return createAuthenticatedClient(profile).devices.$get();
+  async listDevices(opts: CreateAuthenticatedClientOptions) {
+    return createAuthenticatedClient(opts).devices.$get();
   },
 
-  async renameDevice(profile: LocalDeviceProfile, nickname: string) {
-    return createAuthenticatedClient(profile).devices[":deviceId"].$patch({
-      param: { deviceId: profile.deviceId },
+  async renameDevice(opts: CreateAuthenticatedClientOptions, nickname: string) {
+    return createAuthenticatedClient(opts).devices[":deviceId"].$patch({
+      param: { deviceId: opts.deviceId },
       json: { nickname },
     });
   },
 
-  async deleteDevice(profile: LocalDeviceProfile) {
-    return createAuthenticatedClient(profile).devices[":deviceId"].$delete({
-      param: { deviceId: profile.deviceId },
+  async deleteDevice(opts: CreateAuthenticatedClientOptions) {
+    return createAuthenticatedClient(opts).devices[":deviceId"].$delete({
+      param: { deviceId: opts.deviceId },
     });
   },
 
-  async setPushToken(profile: LocalDeviceProfile, token: string) {
-    return createAuthenticatedClient(profile).devices[":deviceId"]["push-token"].$post({
-      param: { deviceId: profile.deviceId },
+  async setPushToken(opts: CreateAuthenticatedClientOptions, token: string) {
+    return createAuthenticatedClient(opts).devices[":deviceId"]["push-token"].$post({
+      param: { deviceId: opts.deviceId },
       json: { token },
     });
   },
 
   async sendText(
-    profile: LocalDeviceProfile,
+    opts: CreateAuthenticatedClientOptions,
     input: { text: string; targetDeviceIds: string[]; title?: string },
   ) {
-    return createAuthenticatedClient(profile).items.text.$post({ json: input });
+    return createAuthenticatedClient(opts).items.text.$post({ json: input });
   },
 
   async sendUrl(
-    profile: LocalDeviceProfile,
+    opts: CreateAuthenticatedClientOptions,
     input: { url: string; targetDeviceIds: string[]; title?: string },
   ) {
-    return createAuthenticatedClient(profile).items.url.$post({ json: input });
+    return createAuthenticatedClient(opts).items.url.$post({ json: input });
   },
 
   async sendFiles(
-    profile: LocalDeviceProfile,
-    request: { targetDeviceIds: string[]; title?: string; files: { filePath: string }[] },
+    opts: CreateAuthenticatedClientOptions,
+    request: {
+      targetDeviceIds: string[];
+      title?: string;
+      files: { content: Uint8Array<ArrayBuffer>; basename: string }[];
+    },
   ) {
     const files = await Promise.all(
       request.files.map(async (file) => {
-        const content = await fs.promises.readFile(file.filePath);
-
-        return new File([content], path.basename(file.filePath));
+        return new File([file.content], file.basename);
       }),
     );
 
-    return createAuthenticatedClient(profile).items.file.$post({
+    return createAuthenticatedClient(opts).items.file.$post({
       form: {
         targetDeviceIds: JSON.stringify(request.targetDeviceIds),
         ...(request.title !== undefined ? { title: request.title } : {}),
@@ -82,27 +84,27 @@ export const rpcClient = {
     });
   },
 
-  async fetchPendingDeliveries(profile: LocalDeviceProfile) {
-    return createAuthenticatedClient(profile).deliveries.pending.$get();
+  async fetchPendingDeliveries(opts: CreateAuthenticatedClientOptions) {
+    return createAuthenticatedClient(opts).deliveries.pending.$get();
   },
 
-  async acknowledgeDelivery(profile: LocalDeviceProfile, deliveryId: string) {
-    return createAuthenticatedClient(profile).deliveries[":deliveryId"].ack.$post({
+  async acknowledgeDelivery(opts: CreateAuthenticatedClientOptions, deliveryId: string) {
+    return createAuthenticatedClient(opts).deliveries[":deliveryId"].ack.$post({
       param: { deliveryId },
     });
   },
 
-  async markDeliveryViewed(profile: LocalDeviceProfile, deliveryId: string) {
-    return createAuthenticatedClient(profile).deliveries[":deliveryId"].viewed.$post({
+  async markDeliveryViewed(opts: CreateAuthenticatedClientOptions, deliveryId: string) {
+    return createAuthenticatedClient(opts).deliveries[":deliveryId"].viewed.$post({
       param: { deliveryId },
     });
   },
 
   async listDeliveries(
-    profile: LocalDeviceProfile,
+    opts: CreateAuthenticatedClientOptions,
     input: { state?: DeliveryListState; limit?: number | string } = {},
   ) {
-    return createAuthenticatedClient(profile).deliveries.$get({
+    return createAuthenticatedClient(opts).deliveries.$get({
       query: {
         ...(input.state !== undefined ? { state: input.state } : {}),
         ...(input.limit !== undefined ? { limit: String(input.limit) } : {}),
@@ -110,28 +112,28 @@ export const rpcClient = {
     });
   },
 
-  async getDelivery(profile: LocalDeviceProfile, deliveryId: string) {
-    return createAuthenticatedClient(profile).deliveries[":deliveryId"].$get({
+  async getDelivery(opts: CreateAuthenticatedClientOptions, deliveryId: string) {
+    return createAuthenticatedClient(opts).deliveries[":deliveryId"].$get({
       param: { deliveryId },
     });
   },
 
-  async listItems(profile: LocalDeviceProfile, input: { limit?: number | string } = {}) {
-    return createAuthenticatedClient(profile).items.$get({
+  async listItems(opts: CreateAuthenticatedClientOptions, input: { limit?: number | string } = {}) {
+    return createAuthenticatedClient(opts).items.$get({
       query: {
         ...(input.limit !== undefined ? { limit: String(input.limit) } : {}),
       },
     });
   },
 
-  async getItem(profile: LocalDeviceProfile, itemId: string) {
-    return createAuthenticatedClient(profile).items[":itemId"].$get({
+  async getItem(opts: CreateAuthenticatedClientOptions, itemId: string) {
+    return createAuthenticatedClient(opts).items[":itemId"].$get({
       param: { itemId },
     });
   },
 
-  async downloadDelivery(profile: LocalDeviceProfile, deliveryId: string) {
-    return createAuthenticatedClient(profile).deliveries[":deliveryId"].download.$get({
+  async downloadDelivery(opts: CreateAuthenticatedClientOptions, deliveryId: string) {
+    return createAuthenticatedClient(opts).deliveries[":deliveryId"].download.$get({
       param: { deliveryId },
     });
   },

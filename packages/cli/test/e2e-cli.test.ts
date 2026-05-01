@@ -6,11 +6,8 @@ import url from "node:url";
 import { expect, test } from "vitest";
 
 import { withRelayTestEnvironment } from "@content-relay/backend-test-utils";
-import {
-  createRelayHttpClient,
-  type LocalDeviceProfile,
-  type SimulatedDeliveryResult,
-} from "@content-relay/client";
+import { createRelayHttpClient, type SimulatedDeliveryResult } from "@content-relay/client";
+import type { LocalDeviceProfile } from "@content-relay/profile-store-node";
 import type {
   CreateInviteResponse,
   CreateItemResponse,

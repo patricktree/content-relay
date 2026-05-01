@@ -1,5 +1,5 @@
 {
-  "name": "@content-relay/client",
+  "name": "@content-relay/profile-store-node",
   "private": true,
   "files": [
     "src/**"
@@ -25,26 +25,20 @@
     "build": "tsgo --build ./tsconfig.json",
     "clean": "rm -rf tsconfig.tsbuildinfo",
     "dev": "tsgo --build ./tsconfig.json --watch",
-    "test": "vitest run",
     "lint": "eslint --max-warnings 0 .",
     "lint:fix": "pnpm run lint --fix"
   },
   "dependencies": {
-    "@content-relay/backend": "workspace:*",
     "@content-relay/shared": "workspace:*",
-    "hono": "catalog:",
     "temporal-polyfill": "^0.3.2"
   },
   "devDependencies": {
-    "@content-relay/backend-test-utils": "workspace:*",
     "@content-relay/config-eslint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
-    "@content-relay/profile-store-node": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "eslint": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "typescript": "catalog:"
   },
   "engines": {
     "node": "^24"

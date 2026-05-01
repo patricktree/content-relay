@@ -5,8 +5,6 @@ import { hc } from "hono/client";
 
 import type { createHonoApp } from "#pkg/http/hono-app.ts";
 
-type RelayApiApp = Awaited<ReturnType<typeof createHonoApp>>;
+export type RelayApiApp = Awaited<ReturnType<typeof createHonoApp>>;
 
 export type Client = ReturnType<typeof hc<RelayApiApp>>;
-
-export const hcWithType = (...args: Parameters<typeof hc>): Client => hc<RelayApiApp>(...args);
