@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    /* Language and Environment */
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "target": "ES2020"
+  }
+}

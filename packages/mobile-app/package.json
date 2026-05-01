@@ -1,0 +1,52 @@
+{
+  "name": "@content-relay/mobile-app",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#pkg/*.ts": {
+      "types": "./dist/types/*.d.ts",
+      "default": "./src/*.ts"
+    },
+    "#pkg/*.tsx": {
+      "types": "./dist/types/*.d.tsx",
+      "default": "./src/*.tsx"
+    },
+    "#pkg/*": {
+      "types": "./dist/types/*",
+      "default": "./src/*"
+    }
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build ./tsconfig.json && vite build && pnpm run native:sync",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "dev": "vite",
+    "lint": "eslint --max-warnings 0 .",
+    "lint:fix": "pnpm run lint --fix",
+    "native:sync": "cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/core": "^8.3.1",
+    "@capacitor/ios": "^8.3.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.3.1",
+    "@content-relay/config-eslint": "workspace:*",
+    "@content-relay/config-typescript": "workspace:*",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@typescript/native-preview": "catalog:",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "^8.0.10"
+  }
+}

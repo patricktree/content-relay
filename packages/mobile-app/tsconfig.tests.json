@@ -1,0 +1,17 @@
+{
+  "extends": [
+    "@content-relay/config-typescript/tsconfig.defaults.json",
+    "@content-relay/config-typescript/tsconfig.web.json",
+    "@content-relay/config-typescript/tsconfig.vitest.json"
+  ],
+  "compilerOptions": {
+    /* Modules */
+    "rootDir": "./test",
+    "types": ["node"],
+
+    /* Language and Environment */
+    "jsx": "react-jsx"
+  },
+  "include": ["test/**/*"],
+  "references": [{ "path": "./tsconfig.build.json" }]
+}
