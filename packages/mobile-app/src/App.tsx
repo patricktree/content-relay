@@ -1,9 +1,8 @@
 import { styled } from "@linaria/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
 import React from "react";
 
-import { rpcClient } from "@content-relay/client";
+import { rpcClient, parseOkResponse } from "@content-relay/client";
 import type { DeviceSummary } from "@content-relay/shared";
 import { isValidAbsoluteUrl } from "@content-relay/shared";
 
@@ -312,7 +311,7 @@ export function App(): React.JSX.Element {
 }
 
 async function fetchAvailableDevices(profile: AuthenticatedProfile): Promise<DeviceSummary[]> {
-  const devices = await parseResponse(rpcClient.listDevices(profile));
+  const devices = await parseOkResponse(rpcClient.listDevices(profile));
 
   return devices.filter((device) => device.deviceId !== profile.deviceId);
 }
@@ -330,7 +329,7 @@ async function sendItem(input: SendItemInput) {
       throw new Error("Enter the text to send.");
     }
 
-    return parseResponse(
+    return parseOkResponse(
       rpcClient.sendText(input.profile, {
         text: trimmedValue,
         targetDeviceIds: input.targetDeviceIds,
@@ -343,7 +342,7 @@ async function sendItem(input: SendItemInput) {
     throw new Error("Enter a valid absolute URL.");
   }
 
-  return parseResponse(
+  return parseOkResponse(
     rpcClient.sendUrl(input.profile, {
       url: trimmedValue,
       targetDeviceIds: input.targetDeviceIds,

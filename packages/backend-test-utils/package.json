@@ -30,8 +30,7 @@
   },
   "dependencies": {
     "@content-relay/backend": "workspace:*",
-    "@content-relay/shared": "workspace:*",
-    "hono": "catalog:"
+    "@content-relay/shared": "workspace:*"
   },
   "devDependencies": {
     "@content-relay/config-eslint": "workspace:*",

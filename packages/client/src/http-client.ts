@@ -1,7 +1,9 @@
-import { hc } from "hono/client";
+import { hc, parseResponse, DetailedError } from "hono/client";
 
 import type { Client, RelayApiApp } from "@content-relay/backend";
 import { type AuthHeaders } from "@content-relay/shared";
+
+export { parseResponse as parseOkResponse, DetailedError as ParseOkResponseDetailedError };
 
 const hcWithType = (...args: Parameters<typeof hc>): Client => hc<RelayApiApp>(...args);
 

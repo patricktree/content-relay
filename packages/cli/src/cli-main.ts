@@ -1,5 +1,4 @@
 import { Command, InvalidOptionArgumentError, Option } from "@commander-js/extra-typings";
-import { parseResponse } from "hono/client";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -8,6 +7,7 @@ import {
   rpcClient,
   simulatePlatformDelivery,
   type SimulatedDeliveryResult,
+  parseOkResponse,
 } from "@content-relay/client";
 import {
   LocalDeviceProfileStore,
@@ -96,7 +96,7 @@ inviteCommand
       throw new Error("Missing required --server <url> option.");
     }
 
-    const invite = await parseResponse(
+    const invite = await parseOkResponse(
       rpcClient.createInvite(serverBaseUrl, { expiresInSeconds: options.expiresIn ?? 900 }),
     );
 
@@ -126,7 +126,7 @@ deviceCommand
       platform: options.platform,
       pushTokenOverride: options.pushToken,
     });
-    const registration = await parseResponse(
+    const registration = await parseOkResponse(
       rpcClient.registerDevice(serverBaseUrl, {
         nickname: options.name,
         platform: options.platform,
@@ -165,7 +165,7 @@ deviceCommand
   .description("List registered devices from the server")
   .action(async () => {
     const profile = await resolveSelectedProfile();
-    const devices = await parseResponse(rpcClient.listDevices(profile));
+    const devices = await parseOkResponse(rpcClient.listDevices(profile));
 
     await writeSuccess(devices);
   });
@@ -176,7 +176,7 @@ deviceCommand
   .argument("<nickname>", "new device nickname")
   .action(async (nickname: string) => {
     const profile = await resolveSelectedProfile();
-    await parseResponse(rpcClient.renameDevice(profile, nickname));
+    await parseOkResponse(rpcClient.renameDevice(profile, nickname));
     const renamedProfile = await profileStore.renameProfile(profile.profileId, nickname);
     const activeProfileId = await loadActiveProfileId();
 
@@ -189,7 +189,7 @@ deviceCommand
   .requiredOption("--yes", "confirm device deletion")
   .action(async () => {
     const profile = await resolveSelectedProfile();
-    await parseResponse(rpcClient.deleteDevice(profile));
+    await parseOkResponse(rpcClient.deleteDevice(profile));
     await profileStore.removeProfile(profile.profileId);
 
     await writeSuccess({
@@ -205,7 +205,7 @@ devicePushTokenCommand
   .argument("<token>", "push token")
   .action(async (token: string) => {
     const profile = await resolveSelectedProfile();
-    await parseResponse(rpcClient.setPushToken(profile, token));
+    await parseOkResponse(rpcClient.setPushToken(profile, token));
 
     await writeSuccess({
       deviceId: profile.deviceId,
@@ -222,7 +222,7 @@ sendCommand
   .action(async (text: string, options) => {
     const profile = await resolveSelectedProfile();
     const targetDeviceIds = await resolveTargetDeviceIds(options.to);
-    const response = await parseResponse(
+    const response = await parseOkResponse(
       rpcClient.sendText(profile, {
         text,
         targetDeviceIds,
@@ -243,7 +243,7 @@ sendCommand
   .action(async (url: string, options) => {
     const profile = await resolveSelectedProfile();
     const targetDeviceIds = await resolveTargetDeviceIds(options.to);
-    const response = await parseResponse(
+    const response = await parseOkResponse(
       rpcClient.sendUrl(profile, {
         url,
         targetDeviceIds,
@@ -274,7 +274,7 @@ sendCommand
         };
       }),
     );
-    const response = await parseResponse(
+    const response = await parseOkResponse(
       rpcClient.sendFiles(profile, {
         files,
         targetDeviceIds,
@@ -307,7 +307,7 @@ deliveryCommand
   .option("--limit <count>", "maximum number of deliveries to return", parsePositiveInteger)
   .action(async (options) => {
     const profile = await resolveSelectedProfile();
-    const deliveries = await parseResponse(
+    const deliveries = await parseOkResponse(
       rpcClient.listDeliveries(profile, { state: options.state, limit: options.limit ?? 50 }),
     );
 
@@ -320,7 +320,7 @@ deliveryCommand
   .argument("<deliveryId>", "delivery id")
   .action(async (deliveryId: string) => {
     const profile = await resolveSelectedProfile();
-    const delivery = await parseResponse(rpcClient.getDelivery(profile, deliveryId));
+    const delivery = await parseOkResponse(rpcClient.getDelivery(profile, deliveryId));
 
     await writeSuccess(delivery.delivery);
   });
@@ -331,7 +331,7 @@ deliveryCommand
   .argument("<deliveryId>", "delivery id")
   .action(async (deliveryId: string) => {
     const profile = await resolveSelectedProfile();
-    const response = await parseResponse(rpcClient.acknowledgeDelivery(profile, deliveryId));
+    const response = await parseOkResponse(rpcClient.acknowledgeDelivery(profile, deliveryId));
 
     await writeSuccess(response);
   });
@@ -342,7 +342,7 @@ deliveryCommand
   .argument("<deliveryId>", "delivery id")
   .action(async (deliveryId: string) => {
     const profile = await resolveSelectedProfile();
-    const response = await parseResponse(rpcClient.markDeliveryViewed(profile, deliveryId));
+    const response = await parseOkResponse(rpcClient.markDeliveryViewed(profile, deliveryId));
 
     await writeSuccess(response);
   });
@@ -365,7 +365,7 @@ deliveryCommand
   .option("--out <path>", "output file or directory")
   .action(async (deliveryId: string, options) => {
     const profile = await resolveSelectedProfile();
-    const download = await parseResponse(rpcClient.downloadDelivery(profile, deliveryId));
+    const download = await parseOkResponse(rpcClient.downloadDelivery(profile, deliveryId));
     const outputPaths = await writeDownloadedDelivery(download, options.out);
 
     await writeSuccess({
@@ -380,7 +380,9 @@ itemCommand
   .option("--limit <count>", "maximum number of items to return", parsePositiveInteger)
   .action(async (options) => {
     const profile = await resolveSelectedProfile();
-    const items = await parseResponse(rpcClient.listItems(profile, { limit: options.limit ?? 50 }));
+    const items = await parseOkResponse(
+      rpcClient.listItems(profile, { limit: options.limit ?? 50 }),
+    );
 
     await writeSuccess(items);
   });
@@ -391,7 +393,7 @@ itemCommand
   .argument("<itemId>", "item id")
   .action(async (itemId: string) => {
     const profile = await resolveSelectedProfile();
-    const item = await parseResponse(rpcClient.getItem(profile, itemId));
+    const item = await parseOkResponse(rpcClient.getItem(profile, itemId));
 
     await writeSuccess(item);
   });
@@ -435,7 +437,7 @@ async function loadActiveProfileId(): Promise<string | null> {
 async function receivePendingDeliveries(
   profile: LocalDeviceProfile,
 ): Promise<ReceivedDeliveryResult[]> {
-  const pending = await parseResponse(rpcClient.fetchPendingDeliveries(profile));
+  const pending = await parseOkResponse(rpcClient.fetchPendingDeliveries(profile));
   const results: ReceivedDeliveryResult[] = [];
 
   for (const delivery of pending.deliveries) {
@@ -452,7 +454,7 @@ async function receivePendingDeliveries(
     let currentDelivery = await transitionDeliveryToDelivered(profile, delivery.deliveryId);
 
     if (simulation.shouldMarkViewed && !wasDuplicate) {
-      const viewed = await parseResponse(
+      const viewed = await parseOkResponse(
         rpcClient.markDeliveryViewed(profile, delivery.deliveryId),
       );
       currentDelivery = viewed.delivery;
@@ -472,14 +474,14 @@ async function openDelivery(
   profile: LocalDeviceProfile,
   deliveryId: string,
 ): Promise<OpenDeliveryResponse> {
-  let delivery = (await parseResponse(rpcClient.getDelivery(profile, deliveryId))).delivery;
+  let delivery = (await parseOkResponse(rpcClient.getDelivery(profile, deliveryId))).delivery;
 
   if (delivery.state === "pending") {
     delivery = await transitionDeliveryToDelivered(profile, deliveryId);
   }
 
   if (delivery.state !== "viewed") {
-    delivery = (await parseResponse(rpcClient.markDeliveryViewed(profile, deliveryId))).delivery;
+    delivery = (await parseOkResponse(rpcClient.markDeliveryViewed(profile, deliveryId))).delivery;
   }
 
   await profileStore.recordHandledDelivery(profile.profileId, deliveryId);
@@ -507,7 +509,7 @@ async function transitionDeliveryToDelivered(
   profile: LocalDeviceProfile,
   deliveryId: string,
 ): Promise<DeliveryResource> {
-  const acknowledged = await parseResponse(rpcClient.acknowledgeDelivery(profile, deliveryId));
+  const acknowledged = await parseOkResponse(rpcClient.acknowledgeDelivery(profile, deliveryId));
 
   return acknowledged.delivery;
 }

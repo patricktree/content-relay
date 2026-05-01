@@ -123,9 +123,6 @@ importers:
       '@content-relay/shared':
         specifier: workspace:*
         version: link:../shared
-      hono:
-        specifier: 'catalog:'
-        version: 4.12.15
     devDependencies:
       '@content-relay/config-eslint':
         specifier: workspace:*
@@ -175,9 +172,6 @@ importers:
       commander:
         specifier: ^14.0.3
         version: 14.0.3
-      hono:
-        specifier: 'catalog:'
-        version: 4.12.15
     devDependencies:
       '@content-relay/backend-test-utils':
         specifier: workspace:*
@@ -298,9 +292,6 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.100.7
         version: 5.100.7(react@19.2.5)
-      hono:
-        specifier: 'catalog:'
-        version: 4.12.15
       react:
         specifier: ^19.2.5
         version: 19.2.5
