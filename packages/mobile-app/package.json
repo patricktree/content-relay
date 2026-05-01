@@ -34,6 +34,8 @@
     "@capacitor/android": "^8.3.1",
     "@capacitor/core": "^8.3.1",
     "@capacitor/ios": "^8.3.1",
+    "@linaria/core": "^7.0.0",
+    "@linaria/react": "^7.0.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },
@@ -45,6 +47,7 @@
     "@types/react-dom": "^19.2.3",
     "@typescript/native-preview": "catalog:",
     "@vitejs/plugin-react": "^6.0.1",
+    "@wyw-in-js/vite": "^1.1.0",
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vite": "^8.0.10"
