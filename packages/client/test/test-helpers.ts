@@ -8,7 +8,7 @@ import {
   withRelayTestEnvironment as withBaseRelayTestEnvironment,
 } from "@content-relay/backend-test-utils";
 import {
-  createAuthenticatedClient,
+  createAuthenticatedHttpClient,
   simulatePlatformDelivery,
   type SimulatedDeliveryResult,
 } from "@content-relay/client";
@@ -27,7 +27,7 @@ import { isMobileDevicePlatform } from "@content-relay/shared";
 import { rpcClient } from "#pkg/rpc-client.ts";
 
 export { allocatePort, listenOnPort };
-export { createAuthenticatedClient };
+export { createAuthenticatedHttpClient };
 
 export type ReceivedDeliveryResult = {
   delivery: DeliveryResource;

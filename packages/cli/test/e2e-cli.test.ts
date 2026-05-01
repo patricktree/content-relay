@@ -6,7 +6,7 @@ import url from "node:url";
 import { expect, test } from "vitest";
 
 import { withRelayTestEnvironment } from "@content-relay/backend-test-utils";
-import { createRelayHttpClient, type SimulatedDeliveryResult } from "@content-relay/client";
+import { createHttpClient, type SimulatedDeliveryResult } from "@content-relay/client";
 import type { LocalDeviceProfile } from "@content-relay/profile-store-node";
 import type {
   CreateInviteResponse,
@@ -97,11 +97,11 @@ test("invite create returns a usable invite", async () => {
 test("device management commands cover list, rename, push-token, and delete", async () => {
   await withRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const primaryInviteResponse = await createRelayHttpClient({ serverBaseUrl }).invites.$post({
+    const primaryInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const primaryInvite = (await primaryInviteResponse.json()) as CreateInviteResponse;
-    const secondaryInviteResponse = await createRelayHttpClient({ serverBaseUrl }).invites.$post({
+    const secondaryInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const secondaryInvite = (await secondaryInviteResponse.json()) as CreateInviteResponse;
@@ -194,7 +194,7 @@ test("device management commands cover list, rename, push-token, and delete", as
 test("device register persists a profile that device current can load", async () => {
   await withRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const inviteResponse = await createRelayHttpClient({ serverBaseUrl }).invites.$post({
+    const inviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const invite = (await inviteResponse.json()) as CreateInviteResponse;
@@ -235,11 +235,11 @@ test("device register persists a profile that device current can load", async ()
 test("send text, receive once, and delivery open", async () => {
   await withRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const senderInviteResponse = await createRelayHttpClient({ serverBaseUrl }).invites.$post({
+    const senderInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const senderInvite = (await senderInviteResponse.json()) as CreateInviteResponse;
-    const receiverInviteResponse = await createRelayHttpClient({ serverBaseUrl }).invites.$post({
+    const receiverInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;
@@ -317,11 +317,11 @@ test("send text, receive once, and delivery open", async () => {
 test("send url and item list expose sent URL items", async () => {
   await withRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const senderInviteResponse = await createRelayHttpClient({ serverBaseUrl }).invites.$post({
+    const senderInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const senderInvite = (await senderInviteResponse.json()) as CreateInviteResponse;
-    const receiverInviteResponse = await createRelayHttpClient({ serverBaseUrl }).invites.$post({
+    const receiverInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;
@@ -382,11 +382,11 @@ test("send url and item list expose sent URL items", async () => {
 test("delivery list, show, ack, and viewed manage delivery state transitions", async () => {
   await withRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const senderInviteResponse = await createRelayHttpClient({ serverBaseUrl }).invites.$post({
+    const senderInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const senderInvite = (await senderInviteResponse.json()) as CreateInviteResponse;
-    const receiverInviteResponse = await createRelayHttpClient({ serverBaseUrl }).invites.$post({
+    const receiverInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;
@@ -510,11 +510,11 @@ test("send file and delivery download write the files", async () => {
     const betaFilePath = path.join(rootDirectory, "beta.txt");
     await fs.promises.writeFile(alphaFilePath, "alpha\n", "utf8");
     await fs.promises.writeFile(betaFilePath, "beta\n", "utf8");
-    const senderInviteResponse = await createRelayHttpClient({ serverBaseUrl }).invites.$post({
+    const senderInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const senderInvite = (await senderInviteResponse.json()) as CreateInviteResponse;
-    const receiverInviteResponse = await createRelayHttpClient({ serverBaseUrl }).invites.$post({
+    const receiverInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;

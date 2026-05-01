@@ -1,14 +1,14 @@
 import type { DevicePlatform, DeliveryListState, PushRegistration } from "@content-relay/shared";
 
 import {
-  createAuthenticatedClient,
-  createRelayHttpClient,
-  type CreateAuthenticatedClientOptions,
+  createAuthenticatedHttpClient,
+  createHttpClient,
+  type CreateAuthenticatedHttpClientOptions,
 } from "#pkg/http-client.ts";
 
 export const rpcClient = {
   async createInvite(serverBaseUrl: string, input: { expiresInSeconds: number }) {
-    return createRelayHttpClient({ serverBaseUrl }).invites.$post({ json: input });
+    return createHttpClient({ serverBaseUrl }).invites.$post({ json: input });
   },
 
   async registerDevice(
@@ -20,49 +20,49 @@ export const rpcClient = {
       pushRegistration?: PushRegistration;
     },
   ) {
-    return createRelayHttpClient({ serverBaseUrl }).devices.register.$post({ json: input });
+    return createHttpClient({ serverBaseUrl }).devices.register.$post({ json: input });
   },
 
-  async listDevices(opts: CreateAuthenticatedClientOptions) {
-    return createAuthenticatedClient(opts).devices.$get();
+  async listDevices(opts: CreateAuthenticatedHttpClientOptions) {
+    return createAuthenticatedHttpClient(opts).devices.$get();
   },
 
-  async renameDevice(opts: CreateAuthenticatedClientOptions, nickname: string) {
-    return createAuthenticatedClient(opts).devices[":deviceId"].$patch({
+  async renameDevice(opts: CreateAuthenticatedHttpClientOptions, nickname: string) {
+    return createAuthenticatedHttpClient(opts).devices[":deviceId"].$patch({
       param: { deviceId: opts.deviceId },
       json: { nickname },
     });
   },
 
-  async deleteDevice(opts: CreateAuthenticatedClientOptions) {
-    return createAuthenticatedClient(opts).devices[":deviceId"].$delete({
+  async deleteDevice(opts: CreateAuthenticatedHttpClientOptions) {
+    return createAuthenticatedHttpClient(opts).devices[":deviceId"].$delete({
       param: { deviceId: opts.deviceId },
     });
   },
 
-  async setPushToken(opts: CreateAuthenticatedClientOptions, token: string) {
-    return createAuthenticatedClient(opts).devices[":deviceId"]["push-token"].$post({
+  async setPushToken(opts: CreateAuthenticatedHttpClientOptions, token: string) {
+    return createAuthenticatedHttpClient(opts).devices[":deviceId"]["push-token"].$post({
       param: { deviceId: opts.deviceId },
       json: { token },
     });
   },
 
   async sendText(
-    opts: CreateAuthenticatedClientOptions,
+    opts: CreateAuthenticatedHttpClientOptions,
     input: { text: string; targetDeviceIds: string[]; title?: string },
   ) {
-    return createAuthenticatedClient(opts).items.text.$post({ json: input });
+    return createAuthenticatedHttpClient(opts).items.text.$post({ json: input });
   },
 
   async sendUrl(
-    opts: CreateAuthenticatedClientOptions,
+    opts: CreateAuthenticatedHttpClientOptions,
     input: { url: string; targetDeviceIds: string[]; title?: string },
   ) {
-    return createAuthenticatedClient(opts).items.url.$post({ json: input });
+    return createAuthenticatedHttpClient(opts).items.url.$post({ json: input });
   },
 
   async sendFiles(
-    opts: CreateAuthenticatedClientOptions,
+    opts: CreateAuthenticatedHttpClientOptions,
     request: {
       targetDeviceIds: string[];
       title?: string;
@@ -75,7 +75,7 @@ export const rpcClient = {
       }),
     );
 
-    return createAuthenticatedClient(opts).items.file.$post({
+    return createAuthenticatedHttpClient(opts).items.file.$post({
       form: {
         targetDeviceIds: JSON.stringify(request.targetDeviceIds),
         ...(request.title !== undefined ? { title: request.title } : {}),
@@ -84,27 +84,27 @@ export const rpcClient = {
     });
   },
 
-  async fetchPendingDeliveries(opts: CreateAuthenticatedClientOptions) {
-    return createAuthenticatedClient(opts).deliveries.pending.$get();
+  async fetchPendingDeliveries(opts: CreateAuthenticatedHttpClientOptions) {
+    return createAuthenticatedHttpClient(opts).deliveries.pending.$get();
   },
 
-  async acknowledgeDelivery(opts: CreateAuthenticatedClientOptions, deliveryId: string) {
-    return createAuthenticatedClient(opts).deliveries[":deliveryId"].ack.$post({
+  async acknowledgeDelivery(opts: CreateAuthenticatedHttpClientOptions, deliveryId: string) {
+    return createAuthenticatedHttpClient(opts).deliveries[":deliveryId"].ack.$post({
       param: { deliveryId },
     });
   },
 
-  async markDeliveryViewed(opts: CreateAuthenticatedClientOptions, deliveryId: string) {
-    return createAuthenticatedClient(opts).deliveries[":deliveryId"].viewed.$post({
+  async markDeliveryViewed(opts: CreateAuthenticatedHttpClientOptions, deliveryId: string) {
+    return createAuthenticatedHttpClient(opts).deliveries[":deliveryId"].viewed.$post({
       param: { deliveryId },
     });
   },
 
   async listDeliveries(
-    opts: CreateAuthenticatedClientOptions,
+    opts: CreateAuthenticatedHttpClientOptions,
     input: { state?: DeliveryListState; limit?: number | string } = {},
   ) {
-    return createAuthenticatedClient(opts).deliveries.$get({
+    return createAuthenticatedHttpClient(opts).deliveries.$get({
       query: {
         ...(input.state !== undefined ? { state: input.state } : {}),
         ...(input.limit !== undefined ? { limit: String(input.limit) } : {}),
@@ -112,28 +112,31 @@ export const rpcClient = {
     });
   },
 
-  async getDelivery(opts: CreateAuthenticatedClientOptions, deliveryId: string) {
-    return createAuthenticatedClient(opts).deliveries[":deliveryId"].$get({
+  async getDelivery(opts: CreateAuthenticatedHttpClientOptions, deliveryId: string) {
+    return createAuthenticatedHttpClient(opts).deliveries[":deliveryId"].$get({
       param: { deliveryId },
     });
   },
 
-  async listItems(opts: CreateAuthenticatedClientOptions, input: { limit?: number | string } = {}) {
-    return createAuthenticatedClient(opts).items.$get({
+  async listItems(
+    opts: CreateAuthenticatedHttpClientOptions,
+    input: { limit?: number | string } = {},
+  ) {
+    return createAuthenticatedHttpClient(opts).items.$get({
       query: {
         ...(input.limit !== undefined ? { limit: String(input.limit) } : {}),
       },
     });
   },
 
-  async getItem(opts: CreateAuthenticatedClientOptions, itemId: string) {
-    return createAuthenticatedClient(opts).items[":itemId"].$get({
+  async getItem(opts: CreateAuthenticatedHttpClientOptions, itemId: string) {
+    return createAuthenticatedHttpClient(opts).items[":itemId"].$get({
       param: { itemId },
     });
   },
 
-  async downloadDelivery(opts: CreateAuthenticatedClientOptions, deliveryId: string) {
-    return createAuthenticatedClient(opts).deliveries[":deliveryId"].download.$get({
+  async downloadDelivery(opts: CreateAuthenticatedHttpClientOptions, deliveryId: string) {
+    return createAuthenticatedHttpClient(opts).deliveries[":deliveryId"].download.$get({
       param: { deliveryId },
     });
   },

@@ -19,12 +19,12 @@ import {
 } from "@content-relay/backend";
 import type { DeliveryListState, DeviceSummary } from "@content-relay/shared";
 
-import { createRelayHttpClient } from "#pkg/http-client.ts";
+import { createHttpClient } from "#pkg/http-client.ts";
 import { rpcClient } from "#pkg/rpc-client.ts";
 
 import {
   allocatePort,
-  createAuthenticatedClient,
+  createAuthenticatedHttpClient,
   createAuthHeaders,
   listenOnPort,
   receivePendingDeliveries,
@@ -334,7 +334,7 @@ test("deleting a device invalidates its authentication and hides it from active 
       platform: "ios",
     });
 
-    const removeResponse = await createAuthenticatedClient(receiverProfile).devices[
+    const removeResponse = await createAuthenticatedHttpClient(receiverProfile).devices[
       ":deviceId"
     ].$delete({
       param: { deviceId: receiverProfile.deviceId },
@@ -368,7 +368,7 @@ test("push tokens can be upserted for the authenticated device", async () => {
       platform: "ios",
     });
 
-    const upsertResponse1 = await createAuthenticatedClient(profile).devices[":deviceId"][
+    const upsertResponse1 = await createAuthenticatedHttpClient(profile).devices[":deviceId"][
       "push-token"
     ].$post({
       param: { deviceId: profile.deviceId },
@@ -376,7 +376,7 @@ test("push tokens can be upserted for the authenticated device", async () => {
     });
     expect(upsertResponse1.status).toBe(204);
 
-    const upsertResponse2 = await createAuthenticatedClient(profile).devices[":deviceId"][
+    const upsertResponse2 = await createAuthenticatedHttpClient(profile).devices[":deviceId"][
       "push-token"
     ].$post({
       param: { deviceId: profile.deviceId },
@@ -384,13 +384,15 @@ test("push tokens can be upserted for the authenticated device", async () => {
     });
     expect(upsertResponse2.status).toBe(204);
 
-    const removeResponse = await createAuthenticatedClient(profile).devices[":deviceId"].$delete({
+    const removeResponse = await createAuthenticatedHttpClient(profile).devices[
+      ":deviceId"
+    ].$delete({
       param: { deviceId: profile.deviceId },
     });
     expect(removeResponse.status).toBe(204);
 
     const upsertDeletedDevicePushTokenPromise = parseResponse(
-      createAuthenticatedClient(profile).devices[":deviceId"]["push-token"].$post({
+      createAuthenticatedHttpClient(profile).devices[":deviceId"]["push-token"].$post({
         param: { deviceId: profile.deviceId },
         json: { token: "ExponentPushToken[device-token-3]" },
       }),
@@ -423,7 +425,7 @@ test("device routes support rename, listing, and same-device authorization guard
       platform: "ios",
     });
 
-    const renameResponse = await createAuthenticatedClient(receiverProfile).devices[
+    const renameResponse = await createAuthenticatedHttpClient(receiverProfile).devices[
       ":deviceId"
     ].$patch({
       param: { deviceId: receiverProfile.deviceId },
@@ -444,7 +446,7 @@ test("device routes support rename, listing, and same-device authorization guard
     );
 
     const renameAnotherDevicePromise = parseResponse(
-      createAuthenticatedClient(receiverProfile).devices[":deviceId"].$patch({
+      createAuthenticatedHttpClient(receiverProfile).devices[":deviceId"].$patch({
         param: { deviceId: senderProfile.deviceId },
         json: { nickname: "Malicious Rename" },
       }),
@@ -460,7 +462,7 @@ test("device routes support rename, listing, and same-device authorization guard
     });
 
     const deleteAnotherDevicePromise = parseResponse(
-      createAuthenticatedClient(receiverProfile).devices[":deviceId"].$delete({
+      createAuthenticatedHttpClient(receiverProfile).devices[":deviceId"].$delete({
         param: { deviceId: senderProfile.deviceId },
       }),
     );
@@ -475,7 +477,7 @@ test("device routes support rename, listing, and same-device authorization guard
     });
 
     const updateAnotherDevicePushTokenPromise = parseResponse(
-      createAuthenticatedClient(receiverProfile).devices[":deviceId"]["push-token"].$post({
+      createAuthenticatedHttpClient(receiverProfile).devices[":deviceId"]["push-token"].$post({
         param: { deviceId: senderProfile.deviceId },
         json: { token: "ExponentPushToken[cross-device]" },
       }),
@@ -766,7 +768,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       platform: "ios",
     });
 
-    const invalidInviteResponse = await createRelayHttpClient({ serverBaseUrl }).invites.$post({
+    const invalidInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
       json: { expiresInSeconds: 0 },
     });
     expect(invalidInviteResponse.status).toBe(400);
@@ -774,7 +776,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       error: expect.stringMatching(/(greater than 0|>0)/i),
     });
 
-    const invalidRegisterResponse = await createRelayHttpClient({
+    const invalidRegisterResponse = await createHttpClient({
       serverBaseUrl,
     }).devices.register.$post({
       json: {
@@ -789,7 +791,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       error: expect.stringMatching(/(at least 1 character|>=1 characters)/i),
     });
 
-    const missingMobilePushRegistrationResponse = await createRelayHttpClient({
+    const missingMobilePushRegistrationResponse = await createHttpClient({
       serverBaseUrl,
     }).devices.register.$post({
       json: {
@@ -803,7 +805,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       error: expect.stringMatching(/pushRegistration/i),
     });
 
-    const nonMobilePushRegistrationResponse = await createRelayHttpClient({
+    const nonMobilePushRegistrationResponse = await createHttpClient({
       serverBaseUrl,
     }).devices.register.$post({
       json: {
@@ -818,7 +820,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       error: expect.stringMatching(/only allowed for ios and android/i),
     });
 
-    const invalidRenameResponse = await createAuthenticatedClient(senderProfile).devices[
+    const invalidRenameResponse = await createAuthenticatedHttpClient(senderProfile).devices[
       ":deviceId"
     ].$patch({
       param: { deviceId: senderProfile.deviceId },
@@ -829,7 +831,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       error: expect.stringMatching(/(at least 1 character|>=1 characters)/i),
     });
 
-    const invalidPushTokenResponse = await createAuthenticatedClient(senderProfile).devices[
+    const invalidPushTokenResponse = await createAuthenticatedHttpClient(senderProfile).devices[
       ":deviceId"
     ]["push-token"].$post({
       param: { deviceId: senderProfile.deviceId },
@@ -840,17 +842,19 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       error: expect.stringMatching(/(at least 1 character|>=1 characters)/i),
     });
 
-    const invalidTextItemResponse = await createAuthenticatedClient(senderProfile).items.text.$post(
-      {
-        json: { text: "", targetDeviceIds: [receiverProfile.deviceId] },
-      },
-    );
+    const invalidTextItemResponse = await createAuthenticatedHttpClient(
+      senderProfile,
+    ).items.text.$post({
+      json: { text: "", targetDeviceIds: [receiverProfile.deviceId] },
+    });
     expect(invalidTextItemResponse.status).toBe(400);
     expect(await invalidTextItemResponse.json()).toMatchObject({
       error: expect.stringMatching(/(at least 1 character|>=1 characters)/i),
     });
 
-    const invalidUrlItemResponse = await createAuthenticatedClient(senderProfile).items.url.$post({
+    const invalidUrlItemResponse = await createAuthenticatedHttpClient(
+      senderProfile,
+    ).items.url.$post({
       json: { url: "not-a-url", targetDeviceIds: [receiverProfile.deviceId] },
     });
     expect(invalidUrlItemResponse.status).toBe(400);
@@ -858,7 +862,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       error: expect.stringMatching(/valid url/i),
     });
 
-    const invalidDeliveryStateResponse = await createAuthenticatedClient(
+    const invalidDeliveryStateResponse = await createAuthenticatedHttpClient(
       receiverProfile,
     ).deliveries.$get({
       query: {
@@ -872,7 +876,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       error: expect.stringMatching(/Invalid option/i),
     });
 
-    const invalidDeliveryLimitResponse = await createAuthenticatedClient(
+    const invalidDeliveryLimitResponse = await createAuthenticatedHttpClient(
       receiverProfile,
     ).deliveries.$get({
       query: { limit: "0" },
@@ -882,7 +886,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       error: expect.stringMatching(/(greater than 0|>0)/i),
     });
 
-    const invalidItemLimitResponse = await createAuthenticatedClient(senderProfile).items.$get({
+    const invalidItemLimitResponse = await createAuthenticatedHttpClient(senderProfile).items.$get({
       query: { limit: "0" },
     });
     expect(invalidItemLimitResponse.status).toBe(400);
@@ -1036,7 +1040,7 @@ test("resource lookup routes reject unknown resources and invalid file downloads
 
 test("items, deliveries, and devices collection routes reject unauthenticated requests", async () => {
   await withRelayTestEnvironment(async ({ serverBaseUrl }) => {
-    const client = createRelayHttpClient({ serverBaseUrl });
+    const client = createHttpClient({ serverBaseUrl });
 
     const listDevicesPromise = parseResponse(client.devices.$get());
     await expect(listDevicesPromise).rejects.toThrow(DetailedError);
@@ -1076,7 +1080,7 @@ test("items, deliveries, and devices collection routes reject unauthenticated re
 test("http client trims trailing slashes and preserves raw text and malformed JSON responses", async () => {
   await withRelayTestEnvironment(async ({ serverBaseUrl }) => {
     const invite = await parseResponse(
-      createRelayHttpClient({
+      createHttpClient({
         serverBaseUrl: `${serverBaseUrl}/`,
       }).invites.$post({
         json: { expiresInSeconds: 900 },
@@ -1085,7 +1089,7 @@ test("http client trims trailing slashes and preserves raw text and malformed JS
     expect(invite.inviteCode).toBeTruthy();
 
     const registration = await parseResponse(
-      createRelayHttpClient({
+      createHttpClient({
         serverBaseUrl: `${serverBaseUrl}/`,
       }).devices.register.$post({
         json: {
@@ -1117,7 +1121,7 @@ test("http client trims trailing slashes and preserves raw text and malformed JS
   await listenOnPort(server, port);
 
   try {
-    const client = createRelayHttpClient({ serverBaseUrl: `http://127.0.0.1:${port}/` });
+    const client = createHttpClient({ serverBaseUrl: `http://127.0.0.1:${port}/` });
 
     const textErrorPromise = parseResponse(
       client.invites.$post({ json: { expiresInSeconds: 900 } }),
