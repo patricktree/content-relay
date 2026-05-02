@@ -347,8 +347,9 @@ Deliverables:
 
 Deliverables:
 
-- `packages/mobile-app` foundation
-- shared React-based mobile web UI inside Capacitor
+- `packages/web-app` foundation for the shared mobile web UI
+- `packages/mobile-app` foundation for the Capacitor shells
+- shared React-based mobile web UI consumed by Capacitor
 - Capacitor `ios` and `android` shells
 - registration via invite link / QR / code
 - atomic mobile registration with push permission + native push registration + token upload

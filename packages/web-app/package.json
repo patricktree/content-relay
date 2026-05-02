@@ -1,14 +1,15 @@
 {
-  "name": "@content-relay/profile-store-node",
+  "name": "@content-relay/web-app",
   "private": true,
-  "files": [
-    "src/**"
-  ],
   "type": "module",
   "imports": {
     "#pkg/*.ts": {
       "types": "./dist/types/*.d.ts",
       "default": "./src/*.ts"
+    },
+    "#pkg/*.tsx": {
+      "types": "./dist/types/*.d.tsx",
+      "default": "./src/*.tsx"
     },
     "#pkg/*": {
       "types": "./dist/types/*",
@@ -16,32 +17,34 @@
     }
   },
   "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "types": "./dist/types/index.d.ts",
-      "default": "./src/index.ts"
-    }
+    "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsgo --build ./tsconfig.json",
+    "build": "tsgo --build ./tsconfig.json && vite build",
     "clean": "del-cli --dot=true \"dist\" \"*.tsbuildinfo\"",
-    "dev": "tsgo --build ./tsconfig.json --watch",
+    "dev": "vite",
     "lint": "eslint --max-warnings 0 .",
     "lint:fix": "pnpm run lint --fix"
   },
   "dependencies": {
+    "@content-relay/client": "workspace:*",
     "@content-relay/shared": "workspace:*",
-    "temporal-polyfill": "^0.3.2"
+    "@linaria/core": "^7.0.0",
+    "@linaria/react": "^7.0.1",
+    "@tanstack/react-query": "^5.100.7",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
   },
   "devDependencies": {
     "@content-relay/config-eslint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
-    "@types/node": "catalog:",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@typescript/native-preview": "catalog:",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@wyw-in-js/vite": "^1.1.0",
     "eslint": "catalog:",
-    "typescript": "catalog:"
-  },
-  "engines": {
-    "node": "^24"
+    "typescript": "catalog:",
+    "vite": "^8.0.10"
   }
 }

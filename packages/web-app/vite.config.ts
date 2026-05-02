@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   build: {
-    outDir: "vite-outdir",
+    outDir: "dist/web",
   },
   plugins: [wyw(), react()],
 });

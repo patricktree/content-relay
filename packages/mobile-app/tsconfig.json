@@ -1,4 +1,10 @@
 {
-  "files": [],
-  "references": [{ "path": "./tsconfig.build.json" }, { "path": "./tsconfig.tests.json" }]
+  /* just for IDE support for capacitor.config.ts */
+
+  "extends": ["@content-relay/config-typescript/tsconfig.defaults.json"],
+  "compilerOptions": {
+    /* Modules */
+    "types": ["node"]
+  },
+  "include": ["capacitor.config.ts"]
 }

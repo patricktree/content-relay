@@ -2,11 +2,9 @@
 
 ## What it does
 
-- provides one shared Capacitor app package for iOS and Android
-- renders a minimal React-based hello-world screen
-- keeps the shared web UI in `src/`
-- keeps the native Capacitor shells in `ios/` and `android/`
-- builds the web bundle and syncs it into the native projects
+- provides the shared Capacitor shell for iOS and Android
+- keeps the native Capacitor projects in `ios/` and `android/`
+- syncs the shared web bundle from `packages/web-app/` into the native projects
 
 ## Build
 
@@ -16,10 +14,13 @@ From the repo root:
 pnpm --filter '@content-relay/mobile-app' build
 ```
 
-The build produces:
+That builds `@content-relay/web-app` first and then syncs its web assets into the native Capacitor projects.
 
-- `packages/mobile-app/vite-outdir`
-- synced web assets in the native Capacitor projects
+If you already built the shared web app and only want to refresh the native shells:
+
+```sh
+pnpm --filter '@content-relay/mobile-app' native:sync
+```
 
 ## Android SDK setup
 
@@ -30,8 +31,18 @@ cd packages/mobile-app
 echo 'sdk.dir=/absolute/path/to/your/Android/sdk' > ./android/local.properties
 ```
 
+## Android deploy
+
+With an Android emulator running or a physical Android device connected via ADB, from the repo root run:
+
+```sh
+pnpm --filter '@content-relay/mobile-app' build && cd packages/mobile-app/android && ./gradlew installDebug
+```
+
+That installs the debug app on the connected Android target.
+
 ## Manual verification checklist
 
 - run the build and confirm it succeeds
-- open the iOS project and confirm the app renders the hello-world screen
-- open the Android project and confirm the app renders the hello-world screen
+- open the iOS project and confirm the app renders the shared web UI
+- open the Android project and confirm the app renders the shared web UI

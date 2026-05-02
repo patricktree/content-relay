@@ -16,6 +16,7 @@
     }
   },
   "exports": {
+    "./package.json": "./package.json",
     ".": {
       "types": "./dist/types/index.d.ts",
       "default": "./src/index.ts"
@@ -23,7 +24,7 @@
   },
   "scripts": {
     "build": "tsgo --build ./tsconfig.json",
-    "clean": "rm -rf tsconfig.tsbuildinfo",
+    "clean": "del-cli --dot=true \"dist\" \"*.tsbuildinfo\"",
     "dev": "tsgo --build ./tsconfig.json --watch",
     "test": "vitest run",
     "lint": "eslint --max-warnings 0 .",

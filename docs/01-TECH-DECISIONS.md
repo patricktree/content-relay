@@ -123,10 +123,11 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 
 ### Mobile app structure
 
-- Build one shared mobile app in `packages/mobile-app`.
-- Use **Capacitor** for the native app shells.
+- Build the shared mobile web UI in `packages/web-app`.
+- Use **Capacitor** for the native app shells in `packages/mobile-app`.
 - Use **React** for the shared mobile web UI.
-- Keep the native `ios/` and `android/` projects under the shared mobile app package.
+- Keep the native `ios/` and `android/` projects under `packages/mobile-app`.
+- Have `packages/mobile-app` consume the built web assets from `packages/web-app`.
 - Do not create separate top-level `packages/ios-app` or `packages/android-app` directories in v1.
 
 ### Mobile client architecture
