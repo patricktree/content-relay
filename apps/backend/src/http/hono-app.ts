@@ -1,5 +1,6 @@
 import { $, createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { type Context, type MiddlewareHandler } from "hono";
+import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 
 import { createLogger } from "@content-relay/o11y.logs";
@@ -68,6 +69,9 @@ const API_TAGS = {
 } as const;
 
 const AUTH_SECURITY = [{ BearerAuth: [], RelayDeviceIdHeader: [] }];
+const allowedCorsOrigins = ["https://localhost"];
+const allowedCorsHeaders = ["authorization", "content-type", "x-relay-device-id"];
+const allowedCorsMethods = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"];
 
 const deliveryIdParamsSchema = z.object({
   deliveryId: z
@@ -126,6 +130,12 @@ type HonoEnvironment = {
 type AuthenticatedContext = Context<HonoEnvironment>;
 
 const authenticateProtectedRoute: MiddlewareHandler<HonoEnvironment> = async (context, next) => {
+  if (context.req.method === "OPTIONS") {
+    await next();
+
+    return;
+  }
+
   await authenticateRequest(context);
   await next();
 };
@@ -156,6 +166,17 @@ export async function createHonoApp() {
     in: "header",
     name: "x-relay-device-id",
   });
+
+  // Capacitor serves the bundled app from https://localhost, so the backend must
+  // explicitly allow that origin for browser-style requests from the mobile shell.
+  app.use(
+    "/*",
+    cors({
+      origin: allowedCorsOrigins,
+      allowHeaders: allowedCorsHeaders,
+      allowMethods: allowedCorsMethods,
+    }),
+  );
 
   app.onError((error, context) => {
     const status = getHttpStatus(error);
