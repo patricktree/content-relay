@@ -18,7 +18,9 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "postinstall": "sh ./postinstall.sh",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "fix": "pnpm run format && pnpm run lint:fix",
+    "verify": "turbo run build lint test"
   },
   "devDependencies": {
     "del-cli": "^7.0.0",

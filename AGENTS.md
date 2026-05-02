@@ -12,8 +12,9 @@
 
 ## Validation
 
-- Before handoff, run from the monorepo root: `pnpm run build && pnpm run lint:fix && pnpm run test`
-- To format everything, run from the monorepo root: `pnpm run format`
+- Before handoff, run from the monorepo root: `pnpm run fix`, resolve all reported issues, then run `pnpm run verify` and resolve all reported issues until both pass cleanly.
+- `pnpm run fix` runs formatting and autofixable linting.
+- `pnpm run verify` runs build, lint, and tests.
 - These commands are either extremely fast by default or Turborepo-cached, so don't bother running more fine-grained commands (like direct `pnpm exec oxfmt` invocations).
 
 ## Testing
