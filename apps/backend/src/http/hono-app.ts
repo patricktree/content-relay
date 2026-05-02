@@ -68,9 +68,9 @@ const API_TAGS = {
   items: "Items",
 } as const;
 
-const AUTH_SECURITY = [{ BearerAuth: [], RelayDeviceIdHeader: [] }];
+const AUTH_SECURITY = [{ RelayDeviceIdHeader: [] }];
 const allowedCorsOrigins = ["https://localhost"];
-const allowedCorsHeaders = ["authorization", "content-type", "x-relay-device-id"];
+const allowedCorsHeaders = ["content-type", "x-relay-device-id"];
 const allowedCorsMethods = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"];
 
 const deliveryIdParamsSchema = z.object({
@@ -154,11 +154,6 @@ export async function createHonoApp() {
         400,
       );
     },
-  });
-
-  app.openAPIRegistry.registerComponent("securitySchemes", "BearerAuth", {
-    type: "http",
-    scheme: "bearer",
   });
 
   app.openAPIRegistry.registerComponent("securitySchemes", "RelayDeviceIdHeader", {
@@ -1211,16 +1206,14 @@ export async function createHonoApp() {
 
 async function authenticateRequest(context: AuthenticatedContext): Promise<void> {
   const deviceId = context.req.header("x-relay-device-id");
-  const authorization = context.req.header("authorization");
 
-  if (deviceId === undefined || authorization === undefined) {
+  if (deviceId === undefined) {
     throw new HTTPException(401, {
-      message: "Missing device authentication headers.",
+      message: "Missing x-relay-device-id header.",
     });
   }
 
-  const authToken = authorization.replace(/^Bearer\s+/i, "").trim();
-  await authenticateDevice(deviceId, authToken);
+  await authenticateDevice(deviceId);
   context.set("authenticatedDeviceId", deviceId);
 }
 

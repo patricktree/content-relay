@@ -1,6 +1,5 @@
 import ContentRelayMacOSCore
 import Foundation
-import Security
 
 struct SavedRelayConfiguration: Codable, Equatable {
   let serverBaseURL: String
@@ -32,27 +31,20 @@ struct SavedRelayConfiguration: Codable, Equatable {
 struct SettingsSnapshot: Equatable {
   var serverBaseURL: String
   var deviceId: String
-  var authToken: String
   var pollIntervalSeconds: String
 
   static let empty = SettingsSnapshot(
     serverBaseURL: "",
     deviceId: "",
-    authToken: "",
     pollIntervalSeconds: "15"
   )
 }
 
 final class RelayAppConfigurationStore {
   private let fileManager: FileManager
-  private let keychainStore: RelayAuthTokenKeychainStore
 
-  init(
-    fileManager: FileManager = .default,
-    keychainStore: RelayAuthTokenKeychainStore = RelayAuthTokenKeychainStore()
-  ) {
+  init(fileManager: FileManager = .default) {
     self.fileManager = fileManager
-    self.keychainStore = keychainStore
   }
 
   func loadSavedConfiguration() throws -> SavedRelayConfiguration? {
@@ -78,14 +70,9 @@ final class RelayAppConfigurationStore {
       )
     }
 
-    guard let authToken = try keychainStore.loadAuthToken() else {
-      return nil
-    }
-
     return RelayDeviceCredentials(
       serverBaseURL: serverBaseURL,
-      deviceId: configuration.deviceId,
-      authToken: authToken
+      deviceId: configuration.deviceId
     )
   }
 
@@ -102,7 +89,6 @@ final class RelayAppConfigurationStore {
     )
 
     try writeConfiguration(configuration)
-    try keychainStore.saveAuthToken(snapshot.authToken.trimmingCharacters(in: .whitespacesAndNewlines))
   }
 
   func rememberLastUsedTargetDeviceIds(_ deviceIds: [String]) throws {
@@ -126,18 +112,14 @@ final class RelayAppConfigurationStore {
     if fileManager.fileExists(atPath: fileURL.path) {
       try fileManager.removeItem(at: fileURL)
     }
-
-    try keychainStore.deleteAuthToken()
   }
 
   func makeSettingsSnapshot() throws -> SettingsSnapshot {
     let configuration = try loadSavedConfiguration()
-    let authToken = try keychainStore.loadAuthToken() ?? ""
 
     return SettingsSnapshot(
       serverBaseURL: configuration?.serverBaseURL ?? "",
       deviceId: configuration?.deviceId ?? "",
-      authToken: authToken,
       pollIntervalSeconds: String(configuration?.pollIntervalSeconds ?? 15)
     )
   }
@@ -231,106 +213,6 @@ actor PersistentHandledDeliveryStore: HandledDeliveryStore {
 
 private struct PersistedHandledDeliveryState: Codable {
   var handledDeliveryIds: [String]
-}
-
-final class RelayAuthTokenKeychainStore {
-  private static let service = "me.patricktree.ContentRelayMacOS"
-  private static let account = "device-auth-token"
-
-  func loadAuthToken() throws -> String? {
-    let query: [CFString: Any] = [
-      kSecClass: kSecClassGenericPassword,
-      kSecAttrService: Self.service,
-      kSecAttrAccount: Self.account,
-      kSecReturnData: true,
-      kSecMatchLimit: kSecMatchLimitOne,
-    ]
-
-    var result: CFTypeRef?
-    let status = SecItemCopyMatching(query as CFDictionary, &result)
-
-    switch status {
-    case errSecSuccess:
-      guard let data = result as? Data, let token = String(data: data, encoding: .utf8) else {
-        throw NSError(
-          domain: "ContentRelayMacOS",
-          code: 2,
-          userInfo: [NSLocalizedDescriptionKey: "The saved auth token is unreadable."]
-        )
-      }
-
-      return token
-    case errSecItemNotFound:
-      return nil
-    default:
-      throw NSError(
-        domain: "ContentRelayMacOS",
-        code: Int(status),
-        userInfo: [NSLocalizedDescriptionKey: "Failed to read the auth token from Keychain (status \(status))."]
-      )
-    }
-  }
-
-  func saveAuthToken(_ token: String) throws {
-    guard !token.isEmpty else {
-      throw NSError(
-        domain: "ContentRelayMacOS",
-        code: 3,
-        userInfo: [NSLocalizedDescriptionKey: "The auth token cannot be empty."]
-      )
-    }
-
-    let encodedToken = Data(token.utf8)
-    let query: [CFString: Any] = [
-      kSecClass: kSecClassGenericPassword,
-      kSecAttrService: Self.service,
-      kSecAttrAccount: Self.account,
-    ]
-
-    let attributes: [CFString: Any] = [kSecValueData: encodedToken]
-    let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
-
-    if updateStatus == errSecSuccess {
-      return
-    }
-
-    if updateStatus != errSecItemNotFound {
-      throw NSError(
-        domain: "ContentRelayMacOS",
-        code: Int(updateStatus),
-        userInfo: [NSLocalizedDescriptionKey: "Failed to update the auth token in Keychain (status \(updateStatus))."]
-      )
-    }
-
-    var createQuery = query
-    createQuery[kSecValueData] = encodedToken
-
-    let createStatus = SecItemAdd(createQuery as CFDictionary, nil)
-    guard createStatus == errSecSuccess else {
-      throw NSError(
-        domain: "ContentRelayMacOS",
-        code: Int(createStatus),
-        userInfo: [NSLocalizedDescriptionKey: "Failed to save the auth token in Keychain (status \(createStatus))."]
-      )
-    }
-  }
-
-  func deleteAuthToken() throws {
-    let query: [CFString: Any] = [
-      kSecClass: kSecClassGenericPassword,
-      kSecAttrService: Self.service,
-      kSecAttrAccount: Self.account,
-    ]
-
-    let status = SecItemDelete(query as CFDictionary)
-    guard status == errSecSuccess || status == errSecItemNotFound else {
-      throw NSError(
-        domain: "ContentRelayMacOS",
-        code: Int(status),
-        userInfo: [NSLocalizedDescriptionKey: "Failed to delete the auth token from Keychain (status \(status))."]
-      )
-    }
-  }
 }
 
 private func normalizeServerBaseURL(_ rawValue: String) throws -> URL {

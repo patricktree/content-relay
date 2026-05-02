@@ -8,7 +8,6 @@ export const devicesTable = sqliteTable(
     id: text("id").primaryKey(),
     nickname: text("nickname").notNull(),
     platform: text("platform", { enum: devicePlatforms }).notNull(),
-    authTokenHash: text("auth_token_hash").notNull(),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
     deletedAt: text("deleted_at"),

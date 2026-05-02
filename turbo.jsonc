@@ -12,7 +12,7 @@
         /* TypeScript */
         "dist/**",
         "*.tsbuildinfo",
-        /* Switft */
+        /* Swift */
         ".build/**",
       ],
     },

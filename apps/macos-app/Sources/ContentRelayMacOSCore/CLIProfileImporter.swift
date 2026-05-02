@@ -65,7 +65,6 @@ private struct PersistedCLIProfile: Decodable {
   let profileId: String
   let serverBaseUrl: String
   let deviceId: String
-  let authToken: String
   let nickname: String
   let platform: String
 
@@ -79,8 +78,7 @@ private struct PersistedCLIProfile: Decodable {
     return ImportedCLIProfile(
       nickname: nickname,
       serverBaseURL: serverBaseURL,
-      deviceId: deviceId,
-      authToken: authToken
+      deviceId: deviceId
     )
   }
 }

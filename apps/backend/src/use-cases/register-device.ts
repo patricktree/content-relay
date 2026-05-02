@@ -10,7 +10,6 @@ import {
 
 import { getDiContainer } from "#pkg/dependency-container-context.ts";
 import { RelayInvalidInputError } from "#pkg/errors.ts";
-import { authTokenManagerToken } from "#pkg/interfaces/auth-token-manager.interface.ts";
 import { clockToken } from "#pkg/interfaces/clock.interface.ts";
 import { relayRepositoryToken } from "#pkg/interfaces/relay-backend-repository.interface.ts";
 import { normalizeInvite, serverBaseUrlToken } from "#pkg/use-cases/shared.ts";
@@ -26,14 +25,12 @@ export type RegisterDeviceOutput = {
   deviceId: string;
   nickname: string;
   platform: DevicePlatform;
-  authToken: string;
   serverBaseUrl: string;
   createdAt: string;
 };
 
 export async function registerDevice(input: RegisterDeviceInput): Promise<RegisterDeviceOutput> {
   const repository = getDiContainer().inject(relayRepositoryToken);
-  const authTokenManager = getDiContainer().inject(authTokenManagerToken);
   const clock = getDiContainer().inject(clockToken);
   const serverBaseUrl = getDiContainer().inject(serverBaseUrlToken);
 
@@ -56,9 +53,7 @@ export async function registerDevice(input: RegisterDeviceInput): Promise<Regist
   const platform = devicePlatformSchema.parse(input.platform);
   const pushRegistration = parsePushRegistration(platform, input.pushRegistration);
   const nickname = input.nickname.trim();
-  const authToken = authTokenManager.generateToken();
   const deviceId = `dev_${randomUUID()}`;
-  const authTokenHash = await authTokenManager.hash(authToken);
 
   await repository.createDeviceRegistration({
     inviteId: invite.id,
@@ -67,7 +62,6 @@ export async function registerDevice(input: RegisterDeviceInput): Promise<Regist
       id: deviceId,
       nickname,
       platform,
-      authTokenHash,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -89,7 +83,6 @@ export async function registerDevice(input: RegisterDeviceInput): Promise<Regist
     deviceId,
     nickname,
     platform,
-    authToken,
     serverBaseUrl,
     createdAt: now,
   };

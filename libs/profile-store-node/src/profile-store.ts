@@ -16,7 +16,6 @@ export type LocalDeviceProfile = {
   profileId: string;
   serverBaseUrl: string;
   deviceId: string;
-  authToken: string;
   nickname: string;
   platform: DevicePlatform;
   lastUsedTargetDeviceIds: string[];
@@ -89,7 +88,6 @@ export class LocalDeviceProfileStore {
       profileId: input.profileId ?? input.deviceId,
       serverBaseUrl: normalizeServerBaseUrl(input.serverBaseUrl),
       deviceId: input.deviceId,
-      authToken: input.authToken,
       nickname: input.nickname,
       platform: input.platform,
       lastUsedTargetDeviceIds: [],
@@ -251,7 +249,6 @@ export class LocalDeviceProfileStore {
       ...profile,
       serverBaseUrl: normalizeServerBaseUrl(registration.serverBaseUrl),
       deviceId: registration.deviceId,
-      authToken: registration.authToken,
       nickname: registration.nickname,
       platform: registration.platform,
     }));

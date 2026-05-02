@@ -42,7 +42,6 @@ export function presentRegisterDeviceOutput(result: RegisterDeviceOutput): Regis
     deviceId: result.deviceId,
     nickname: result.nickname,
     platform: result.platform,
-    authToken: result.authToken,
     serverBaseUrl: result.serverBaseUrl,
     createdAt: result.createdAt,
   };

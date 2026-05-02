@@ -11,22 +11,20 @@ import type { ShareDraft } from "#pkg/share-draft.ts";
 
 type SendItemType = "text" | "url";
 
-type AuthenticatedProfile = {
-  authToken: string;
+type RegisteredDeviceProfile = {
   deviceId: string;
   serverBaseUrl: string;
 };
 
 type SendItemInput = {
   itemType: SendItemType;
-  profile: AuthenticatedProfile;
+  profile: RegisteredDeviceProfile;
   targetDeviceIds: string[];
   title: string;
   value: string;
 };
 
 type StoredDraft = {
-  authToken: string;
   deviceId: string;
   manualTargetDeviceIds: string;
   selectedTargetDeviceIds: string[];
@@ -44,7 +42,6 @@ type Status =
 const STORAGE_KEY = "content-relay.mobile-app.send-draft";
 
 const DEFAULT_DRAFT: StoredDraft = {
-  authToken: "",
   deviceId: "",
   manualTargetDeviceIds: "",
   selectedTargetDeviceIds: [],
@@ -54,7 +51,8 @@ const DEFAULT_DRAFT: StoredDraft = {
 };
 
 const mobileAppQueryKeys = {
-  availableDevices: (profile: AuthenticatedProfile) => ["devices", "available", profile] as const,
+  availableDevices: (profile: RegisteredDeviceProfile) =>
+    ["devices", "available", profile] as const,
 };
 
 export function App(): React.JSX.Element {
@@ -70,8 +68,7 @@ export function App(): React.JSX.Element {
     ]),
   );
 
-  const profile: AuthenticatedProfile = {
-    authToken: draft.authToken.trim(),
+  const profile: RegisteredDeviceProfile = {
     deviceId: draft.deviceId.trim(),
     serverBaseUrl: trimTrailingSlash(draft.serverBaseUrl),
   };
@@ -214,7 +211,7 @@ export function App(): React.JSX.Element {
         </Header>
 
         <Card>
-          <SectionTitle>Authentication</SectionTitle>
+          <SectionTitle>Device setup</SectionTitle>
           <Field>
             <Label htmlFor="server-base-url">Server URL</Label>
             <Input
@@ -238,19 +235,6 @@ export function App(): React.JSX.Element {
               placeholder="device_123"
               spellCheck={false}
               value={draft.deviceId}
-            />
-          </Field>
-          <Field>
-            <Label htmlFor="auth-token">Auth token</Label>
-            <TextArea
-              id="auth-token"
-              autoCapitalize="none"
-              autoCorrect="off"
-              onChange={(event) => updateDraft(setDraft, { authToken: event.target.value })}
-              placeholder="Paste the auth token for this device"
-              rows={3}
-              spellCheck={false}
-              value={draft.authToken}
             />
           </Field>
           <Row>
@@ -372,7 +356,7 @@ export function App(): React.JSX.Element {
   );
 }
 
-async function fetchAvailableDevices(profile: AuthenticatedProfile): Promise<DeviceSummary[]> {
+async function fetchAvailableDevices(profile: RegisteredDeviceProfile): Promise<DeviceSummary[]> {
   const devices = await parseOkResponse(rpcClient.listDevices(profile));
 
   return devices.filter((device) => device.deviceId !== profile.deviceId);
@@ -440,7 +424,6 @@ function readStoredDraft(): StoredDraft {
     const parsed = JSON.parse(savedDraft) as Partial<StoredDraft>;
 
     return {
-      authToken: parsed.authToken ?? DEFAULT_DRAFT.authToken,
       deviceId: parsed.deviceId ?? DEFAULT_DRAFT.deviceId,
       manualTargetDeviceIds: parsed.manualTargetDeviceIds ?? DEFAULT_DRAFT.manualTargetDeviceIds,
       selectedTargetDeviceIds:

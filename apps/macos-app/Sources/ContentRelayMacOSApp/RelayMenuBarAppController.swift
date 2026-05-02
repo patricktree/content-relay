@@ -271,7 +271,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
       throw NSError(
         domain: "ContentRelayMacOS",
         code: 40,
-        userInfo: [NSLocalizedDescriptionKey: "The app is not configured. Open Settings to import or paste device credentials."]
+        userInfo: [NSLocalizedDescriptionKey: "The app is not configured. Open Settings to import or paste the server URL and device ID."]
       )
     }
 
@@ -287,7 +287,6 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
     if let snapshot {
       let serverBaseURL = try normalizedURL(from: snapshot.serverBaseURL)
       let deviceId = snapshot.deviceId.trimmingCharacters(in: .whitespacesAndNewlines)
-      let authToken = snapshot.authToken.trimmingCharacters(in: .whitespacesAndNewlines)
 
       guard !deviceId.isEmpty else {
         throw NSError(
@@ -297,19 +296,10 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
         )
       }
 
-      guard !authToken.isEmpty else {
-        throw NSError(
-          domain: "ContentRelayMacOS",
-          code: 42,
-          userInfo: [NSLocalizedDescriptionKey: "Enter an auth token."]
-        )
-      }
-
       return URLSessionRelayAPIClient(
         credentials: RelayDeviceCredentials(
           serverBaseURL: serverBaseURL,
-          deviceId: deviceId,
-          authToken: authToken
+          deviceId: deviceId
         )
       )
     }
@@ -384,7 +374,6 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
       let snapshot = SettingsSnapshot(
         serverBaseURL: importedProfile.serverBaseURL.absoluteString,
         deviceId: importedProfile.deviceId,
-        authToken: importedProfile.authToken,
         pollIntervalSeconds: String((try? configurationStore.currentPollIntervalSeconds()) ?? 15)
       )
 

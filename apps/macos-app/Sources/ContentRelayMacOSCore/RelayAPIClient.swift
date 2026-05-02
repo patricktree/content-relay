@@ -170,7 +170,6 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
     var request = URLRequest(url: url)
     request.httpMethod = method
     request.setValue("application/json", forHTTPHeaderField: "accept")
-    request.setValue("Bearer \(credentials.authToken)", forHTTPHeaderField: "authorization")
     request.setValue(credentials.deviceId, forHTTPHeaderField: "x-relay-device-id")
 
     if let bodyData {

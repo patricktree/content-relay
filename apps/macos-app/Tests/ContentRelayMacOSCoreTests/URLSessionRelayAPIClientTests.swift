@@ -2,8 +2,8 @@ import ContentRelayMacOSCore
 import Foundation
 import Testing
 
-@Test("URLSession relay API client sends auth headers and decodes pending deliveries")
-func sendsAuthHeadersAndDecodesPendingDeliveries() async throws {
+@Test("URLSession relay API client sends device headers and decodes pending deliveries")
+func sendsDeviceHeadersAndDecodesPendingDeliveries() async throws {
   let configuration = URLSessionConfiguration.ephemeral
   configuration.protocolClasses = [StubURLProtocol.self]
 
@@ -11,8 +11,7 @@ func sendsAuthHeadersAndDecodesPendingDeliveries() async throws {
   let client = URLSessionRelayAPIClient(
     credentials: RelayDeviceCredentials(
       serverBaseURL: URL(string: "http://127.0.0.1:8787")!,
-      deviceId: "device_macos",
-      authToken: "auth_token"
+      deviceId: "device_macos"
     ),
     session: session
   )
@@ -33,8 +32,7 @@ func listsDevicesAndSendsJSONItemRequests() async throws {
   let client = URLSessionRelayAPIClient(
     credentials: RelayDeviceCredentials(
       serverBaseURL: URL(string: "http://127.0.0.1:8787")!,
-      deviceId: "device_macos",
-      authToken: "auth_token"
+      deviceId: "device_macos"
     ),
     session: session
   )
@@ -75,8 +73,7 @@ func sendsMultipartFileUploadsAndDownloadsFiles() async throws {
   let client = URLSessionRelayAPIClient(
     credentials: RelayDeviceCredentials(
       serverBaseURL: URL(string: "http://127.0.0.1:8787")!,
-      deviceId: "device_macos",
-      authToken: "auth_token"
+      deviceId: "device_macos"
     ),
     session: session
   )
@@ -97,14 +94,13 @@ func sendsMultipartFileUploadsAndDownloadsFiles() async throws {
 @Test("URLSession relay API client surfaces backend error payloads")
 func surfacesBackendErrorPayloads() async throws {
   let configuration = URLSessionConfiguration.ephemeral
-  configuration.protocolClasses = [StubURLProtocol.self]
+  configuration.protocolClasses = [InvalidDeviceStubURLProtocol.self]
 
   let session = URLSession(configuration: configuration)
   let client = URLSessionRelayAPIClient(
     credentials: RelayDeviceCredentials(
       serverBaseURL: URL(string: "http://127.0.0.1:8787")!,
-      deviceId: "device_macos",
-      authToken: "bad_token"
+      deviceId: "bad_device"
     ),
     session: session
   )
@@ -117,7 +113,7 @@ func surfacesBackendErrorPayloads() async throws {
   }
 }
 
-private final class StubURLProtocol: URLProtocol, @unchecked Sendable {
+private class StubURLProtocol: URLProtocol, @unchecked Sendable {
   override class func canInit(with request: URLRequest) -> Bool {
     true
   }
@@ -135,21 +131,11 @@ private final class StubURLProtocol: URLProtocol, @unchecked Sendable {
 
   override func stopLoading() {}
 
-  private static func makeResponse(for request: URLRequest) -> (HTTPURLResponse, Data) {
+  fileprivate class func makeResponse(for request: URLRequest) -> (HTTPURLResponse, Data) {
     #expect(request.value(forHTTPHeaderField: "x-relay-device-id") == "device_macos")
+    #expect(request.value(forHTTPHeaderField: "authorization") == nil)
     #expect(request.url?.host() == "127.0.0.1")
     #expect(request.url?.port == 8787)
-
-    let authorizationHeader = request.value(forHTTPHeaderField: "authorization")
-    if authorizationHeader == "Bearer bad_token" {
-      return jsonResponse(
-        request: request,
-        statusCode: 401,
-        body: "{\"error\":\"Authentication failed.\"}"
-      )
-    }
-
-    #expect(authorizationHeader == "Bearer auth_token")
 
     switch (request.httpMethod, request.url?.path()) {
     case ("GET", "/deliveries/pending"):
@@ -206,7 +192,7 @@ private final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     }
   }
 
-  private static func jsonResponse(request: URLRequest, statusCode: Int, body: String) -> (HTTPURLResponse, Data) {
+  fileprivate class func jsonResponse(request: URLRequest, statusCode: Int, body: String) -> (HTTPURLResponse, Data) {
     let response = HTTPURLResponse(
       url: request.url!,
       statusCode: statusCode,
@@ -218,9 +204,22 @@ private final class StubURLProtocol: URLProtocol, @unchecked Sendable {
   }
 }
 
+private class InvalidDeviceStubURLProtocol: StubURLProtocol, @unchecked Sendable {
+  override class func makeResponse(for request: URLRequest) -> (HTTPURLResponse, Data) {
+    #expect(request.value(forHTTPHeaderField: "x-relay-device-id") == "bad_device")
+    #expect(request.value(forHTTPHeaderField: "authorization") == nil)
+
+    return jsonResponse(
+      request: request,
+      statusCode: 401,
+      body: "{\"error\":\"Authentication failed.\"}"
+    )
+  }
+}
+
 private func requestBodyString(from request: URLRequest) -> String {
-  if let httpBody = request.httpBody, let string = String(data: httpBody, encoding: .utf8) {
-    return string
+  if let body = request.httpBody {
+    return String(decoding: body, as: UTF8.self)
   }
 
   guard let stream = request.httpBodyStream else {
@@ -230,22 +229,26 @@ private func requestBodyString(from request: URLRequest) -> String {
   stream.open()
   defer { stream.close() }
 
-  let bufferSize = 4096
+  let bufferSize = 1024
   let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
   defer { buffer.deallocate() }
 
   var data = Data()
   while stream.hasBytesAvailable {
-    let count = stream.read(buffer, maxLength: bufferSize)
+    let readCount = stream.read(buffer, maxLength: bufferSize)
 
-    if count <= 0 {
+    if readCount < 0 {
+      return ""
+    }
+
+    if readCount == 0 {
       break
     }
 
-    data.append(buffer, count: count)
+    data.append(buffer, count: readCount)
   }
 
-  return String(data: data, encoding: .utf8) ?? ""
+  return String(decoding: data, as: UTF8.self)
 }
 
 private let pendingDeliveriesJSON = """
@@ -256,7 +259,7 @@ private let pendingDeliveriesJSON = """
       "itemId": "item_1",
       "targetDeviceId": "device_macos",
       "state": "pending",
-      "createdAt": "2026-04-30T12:00:00Z",
+      "createdAt": "2026-04-16T10:00:00Z",
       "acknowledgedAt": null,
       "viewedAt": null,
       "item": {
@@ -267,7 +270,7 @@ private let pendingDeliveriesJSON = """
         "text": "hello",
         "url": null,
         "files": [],
-        "createdAt": "2026-04-30T12:00:00Z"
+        "createdAt": "2026-04-16T10:00:00Z"
       }
     }
   ]
@@ -280,15 +283,15 @@ private let devicesJSON = """
     "deviceId": "device_cli",
     "nickname": "Developer CLI",
     "platform": "cli",
-    "createdAt": "2026-04-30T12:00:00Z",
-    "updatedAt": "2026-04-30T12:00:00Z"
+    "createdAt": "2026-04-16T10:00:00Z",
+    "updatedAt": "2026-04-16T10:00:00Z"
   },
   {
     "deviceId": "device_ios",
     "nickname": "My iPhone",
     "platform": "ios",
-    "createdAt": "2026-04-30T12:00:00Z",
-    "updatedAt": "2026-04-30T12:00:00Z"
+    "createdAt": "2026-04-16T10:00:00Z",
+    "updatedAt": "2026-04-16T10:00:00Z"
   }
 ]
 """
@@ -296,33 +299,33 @@ private let devicesJSON = """
 private let createdTextItemJSON = """
 {
   "item": {
-    "itemId": "item_text",
+    "itemId": "item_text_1",
     "type": "text",
     "title": "Inbox",
     "sourceDeviceId": "device_macos",
     "text": "hello from macOS",
     "url": null,
     "files": [],
-    "createdAt": "2026-04-30T12:00:00Z"
+    "createdAt": "2026-04-16T10:00:00Z"
   },
   "deliveries": [
     {
-      "deliveryId": "delivery_text",
-      "itemId": "item_text",
+      "deliveryId": "delivery_text_1",
+      "itemId": "item_text_1",
       "targetDeviceId": "device_ios",
       "state": "pending",
-      "createdAt": "2026-04-30T12:00:00Z",
+      "createdAt": "2026-04-16T10:00:00Z",
       "acknowledgedAt": null,
       "viewedAt": null,
       "item": {
-        "itemId": "item_text",
+        "itemId": "item_text_1",
         "type": "text",
         "title": "Inbox",
         "sourceDeviceId": "device_macos",
         "text": "hello from macOS",
         "url": null,
         "files": [],
-        "createdAt": "2026-04-30T12:00:00Z"
+        "createdAt": "2026-04-16T10:00:00Z"
       }
     }
   ]
@@ -332,7 +335,7 @@ private let createdTextItemJSON = """
 private let createdFileItemJSON = """
 {
   "item": {
-    "itemId": "item_file",
+    "itemId": "item_file_1",
     "type": "file",
     "title": "Trip Docs",
     "sourceDeviceId": "device_macos",
@@ -340,37 +343,37 @@ private let createdFileItemJSON = """
     "url": null,
     "files": [
       {
-        "fileId": "file_alpha",
-        "itemId": "item_file",
+        "fileId": "file_1",
+        "itemId": "item_file_1",
         "order": 0,
         "fileName": "alpha.txt",
-        "storedFileName": "stored-alpha.txt",
+        "storedFileName": "stored_alpha.txt",
         "contentType": "text/plain",
         "sizeBytes": 6
       },
       {
-        "fileId": "file_beta",
-        "itemId": "item_file",
+        "fileId": "file_2",
+        "itemId": "item_file_1",
         "order": 1,
         "fileName": "beta.txt",
-        "storedFileName": "stored-beta.txt",
+        "storedFileName": "stored_beta.txt",
         "contentType": "text/plain",
         "sizeBytes": 5
       }
     ],
-    "createdAt": "2026-04-30T12:00:00Z"
+    "createdAt": "2026-04-16T10:00:00Z"
   },
   "deliveries": [
     {
       "deliveryId": "delivery_file_1",
-      "itemId": "item_file",
+      "itemId": "item_file_1",
       "targetDeviceId": "device_ios",
       "state": "pending",
-      "createdAt": "2026-04-30T12:00:00Z",
+      "createdAt": "2026-04-16T10:00:00Z",
       "acknowledgedAt": null,
       "viewedAt": null,
       "item": {
-        "itemId": "item_file",
+        "itemId": "item_file_1",
         "type": "file",
         "title": "Trip Docs",
         "sourceDeviceId": "device_macos",
@@ -378,25 +381,25 @@ private let createdFileItemJSON = """
         "url": null,
         "files": [
           {
-            "fileId": "file_alpha",
-            "itemId": "item_file",
+            "fileId": "file_1",
+            "itemId": "item_file_1",
             "order": 0,
             "fileName": "alpha.txt",
-            "storedFileName": "stored-alpha.txt",
+            "storedFileName": "stored_alpha.txt",
             "contentType": "text/plain",
             "sizeBytes": 6
           },
           {
-            "fileId": "file_beta",
-            "itemId": "item_file",
+            "fileId": "file_2",
+            "itemId": "item_file_1",
             "order": 1,
             "fileName": "beta.txt",
-            "storedFileName": "stored-beta.txt",
+            "storedFileName": "stored_beta.txt",
             "contentType": "text/plain",
             "sizeBytes": 5
           }
         ],
-        "createdAt": "2026-04-30T12:00:00Z"
+        "createdAt": "2026-04-16T10:00:00Z"
       }
     }
   ]
@@ -414,36 +417,36 @@ private let downloadedDeliveryJSON = """
     "url": null,
     "files": [
       {
-        "fileId": "file_alpha",
+        "fileId": "file_1",
         "itemId": "item_download",
         "order": 0,
         "fileName": "alpha.txt",
-        "storedFileName": "stored-alpha.txt",
+        "storedFileName": "stored_alpha.txt",
         "contentType": "text/plain",
         "sizeBytes": 6
       },
       {
-        "fileId": "file_beta",
+        "fileId": "file_2",
         "itemId": "item_download",
         "order": 1,
         "fileName": "beta.txt",
-        "storedFileName": "stored-beta.txt",
+        "storedFileName": "stored_beta.txt",
         "contentType": "text/plain",
         "sizeBytes": 5
       }
     ],
-    "createdAt": "2026-04-30T12:00:00Z"
+    "createdAt": "2026-04-16T10:00:00Z"
   },
   "files": [
     {
-      "fileId": "file_alpha",
+      "fileId": "file_1",
       "fileName": "alpha.txt",
       "contentType": "text/plain",
       "sizeBytes": 6,
       "base64Content": "YWxwaGEK"
     },
     {
-      "fileId": "file_beta",
+      "fileId": "file_2",
       "fileName": "beta.txt",
       "contentType": "text/plain",
       "sizeBytes": 5,

@@ -14,8 +14,7 @@ export type CreateHttpClientOptions = {
   serverBaseUrl: string;
 };
 
-export type CreateAuthenticatedHttpClientOptions = CreateHttpClientOptions & {
-  authToken: string;
+export type CreateDeviceHttpClientOptions = CreateHttpClientOptions & {
   deviceId: string;
 };
 
@@ -23,12 +22,9 @@ export function createHttpClient(opts: CreateHttpClientOptions): HcClient {
   return hcWithType(trimTrailingSlash(opts.serverBaseUrl), {});
 }
 
-export function createAuthenticatedHttpClient(
-  opts: CreateAuthenticatedHttpClientOptions,
-): HcClient {
+export function createDeviceHttpClient(opts: CreateDeviceHttpClientOptions): HcClient {
   return hcWithType(trimTrailingSlash(opts.serverBaseUrl), {
     headers: {
-      authorization: `Bearer ${opts.authToken}`,
       "x-relay-device-id": opts.deviceId,
     } as const satisfies AuthHeaders,
   });

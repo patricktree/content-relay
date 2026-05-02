@@ -15,7 +15,7 @@
 - lists available target devices from the backend
 - remembers last-used target devices locally
 - imports an existing `macos` profile from `~/.content-relay/profiles.json`
-- stores the auth token in Keychain and local app state in Application Support
+- stores local app state in Application Support
 
 ## Build
 
@@ -46,7 +46,6 @@ open "apps/macos-app/dist/Content Relay.app"
 4. If the app cannot auto-import the profile, open **Settings…** from the menu bar and paste:
    - server base URL
    - device ID
-   - auth token
 
 ## Manual verification checklist
 

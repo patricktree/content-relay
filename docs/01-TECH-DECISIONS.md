@@ -50,12 +50,11 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 - Keep blob storage separate from metadata persistence.
 - Keep file metadata in SQLite and file contents on the filesystem.
 
-### Auth and secrets
+### Trust and device identity
 
-- Device authentication uses opaque random tokens.
-- Store tokens hashed at rest.
-- Use Node built-in `crypto.scrypt` and `crypto.timingSafeEqual` for hashing and verification.
-- Do not use JWTs for device authentication in v1.
+- The relay is Tailnet-only.
+- Protected routes identify the caller by the registered `x-relay-device-id` header.
+- Do not add a second application-layer auth mechanism in v1.
 
 ### IDs and time
 
@@ -239,7 +238,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 
 ## Explicit non-choices for v1
 
-- No JWT-based device auth
+- No JWT-based or token-based device auth
 - No resumable upload protocol
 - No Android PWA
 - No mobile-web fallback client

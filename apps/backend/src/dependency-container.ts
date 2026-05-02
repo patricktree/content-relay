@@ -3,9 +3,7 @@ import path from "node:path";
 
 import { FileSystemBlobStore } from "#pkg/infrastructure/blob-store/file-system-blob-store.ts";
 import { SqliteRelayBackendRepository } from "#pkg/infrastructure/db/sqlite-relay-backend-repository.ts";
-import { ScryptAuthTokenManager } from "#pkg/infrastructure/scrypt-auth-token-manager.ts";
 import { SystemClock } from "#pkg/infrastructure/system-clock.ts";
-import { authTokenManagerToken } from "#pkg/interfaces/auth-token-manager.interface.ts";
 import { blobStoreToken } from "#pkg/interfaces/blob-store.interface.ts";
 import { clockToken } from "#pkg/interfaces/clock.interface.ts";
 import { relayRepositoryToken } from "#pkg/interfaces/relay-backend-repository.interface.ts";
@@ -36,7 +34,6 @@ export async function createDependencyContainer(
     value: new SqliteRelayBackendRepository({ databaseDirectory }),
   });
   container.register({ token: blobStoreToken, value: new FileSystemBlobStore({ blobsDirectory }) });
-  container.register({ token: authTokenManagerToken, value: new ScryptAuthTokenManager() });
   container.register({ token: clockToken, value: new SystemClock() });
 
   return container;

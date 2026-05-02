@@ -19,7 +19,6 @@ func importsActiveMacOSProfile() throws {
           "profileId": "cli_profile",
           "serverBaseUrl": "http://127.0.0.1:3000",
           "deviceId": "device_cli",
-          "authToken": "auth_cli",
           "nickname": "CLI",
           "platform": "cli"
         },
@@ -27,7 +26,6 @@ func importsActiveMacOSProfile() throws {
           "profileId": "mac_profile",
           "serverBaseUrl": "http://100.64.0.1:8787",
           "deviceId": "device_macos",
-          "authToken": "auth_macos",
           "nickname": "My Mac",
           "platform": "macos"
         }
@@ -40,7 +38,6 @@ func importsActiveMacOSProfile() throws {
 
   #expect(importedProfile.nickname == "My Mac")
   #expect(importedProfile.deviceId == "device_macos")
-  #expect(importedProfile.authToken == "auth_macos")
   #expect(importedProfile.serverBaseURL.absoluteString == "http://100.64.0.1:8787")
 }
 
@@ -61,7 +58,6 @@ func rejectsMissingMacOSProfiles() throws {
           "profileId": "cli_profile",
           "serverBaseUrl": "http://127.0.0.1:3000",
           "deviceId": "device_cli",
-          "authToken": "auth_cli",
           "nickname": "CLI",
           "platform": "cli"
         }

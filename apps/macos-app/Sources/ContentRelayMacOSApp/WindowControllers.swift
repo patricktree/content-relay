@@ -44,7 +44,6 @@ enum ComposePayloadType: String, CaseIterable, Identifiable {
 final class SettingsViewModel: ObservableObject {
   @Published var serverBaseURL: String
   @Published var deviceId: String
-  @Published var authToken: String
   @Published var pollIntervalSeconds: String
   @Published var statusMessage: String = ""
   @Published var isBusy = false
@@ -61,7 +60,6 @@ final class SettingsViewModel: ObservableObject {
   ) {
     self.serverBaseURL = initialSnapshot.serverBaseURL
     self.deviceId = initialSnapshot.deviceId
-    self.authToken = initialSnapshot.authToken
     self.pollIntervalSeconds = initialSnapshot.pollIntervalSeconds
     self.saveAction = saveAction
     self.importAction = importAction
@@ -71,7 +69,6 @@ final class SettingsViewModel: ObservableObject {
   func apply(snapshot: SettingsSnapshot) {
     serverBaseURL = snapshot.serverBaseURL
     deviceId = snapshot.deviceId
-    authToken = snapshot.authToken
     pollIntervalSeconds = snapshot.pollIntervalSeconds
   }
 
@@ -109,7 +106,6 @@ final class SettingsViewModel: ObservableObject {
     SettingsSnapshot(
       serverBaseURL: serverBaseURL,
       deviceId: deviceId,
-      authToken: authToken,
       pollIntervalSeconds: pollIntervalSeconds
     )
   }
@@ -388,8 +384,6 @@ private struct SettingsView: View {
       Group {
         labeledField("Server base URL", text: $viewModel.serverBaseURL)
         labeledField("Device ID", text: $viewModel.deviceId)
-        SecureField("Auth token", text: $viewModel.authToken)
-          .textFieldStyle(.roundedBorder)
         labeledField("Poll interval (seconds)", text: $viewModel.pollIntervalSeconds)
       }
 

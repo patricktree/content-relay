@@ -129,12 +129,10 @@ public struct RelayErrorResponse: Codable, Sendable {
 public struct RelayDeviceCredentials: Equatable, Sendable {
   public let serverBaseURL: URL
   public let deviceId: String
-  public let authToken: String
 
-  public init(serverBaseURL: URL, deviceId: String, authToken: String) {
+  public init(serverBaseURL: URL, deviceId: String) {
     self.serverBaseURL = serverBaseURL
     self.deviceId = deviceId
-    self.authToken = authToken
   }
 }
 
@@ -142,13 +140,11 @@ public struct ImportedCLIProfile: Equatable, Sendable {
   public let nickname: String
   public let serverBaseURL: URL
   public let deviceId: String
-  public let authToken: String
 
-  public init(nickname: String, serverBaseURL: URL, deviceId: String, authToken: String) {
+  public init(nickname: String, serverBaseURL: URL, deviceId: String) {
     self.nickname = nickname
     self.serverBaseURL = serverBaseURL
     self.deviceId = deviceId
-    self.authToken = authToken
   }
 }
 

@@ -49,7 +49,6 @@ export const registerDeviceResponseSchema = z.object({
   deviceId: z.string(),
   nickname: z.string(),
   platform: devicePlatformSchema,
-  authToken: z.string(),
   serverBaseUrl: z.string().url(),
   createdAt: z.string(),
 });
@@ -210,7 +209,6 @@ export type PushRegistration = z.infer<typeof pushRegistrationSchema>;
 export type PushTokenRequest = z.infer<typeof pushTokenRequestSchema>;
 
 export type AuthHeaders = {
-  authorization: string;
   "x-relay-device-id": string;
 };
 

@@ -8,7 +8,7 @@ import {
   withRelayTestEnvironment as withBaseRelayTestEnvironment,
 } from "@content-relay/backend-test-utils";
 import {
-  createAuthenticatedHttpClient,
+  createDeviceHttpClient,
   simulatePlatformDelivery,
   type SimulatedDeliveryResult,
 } from "@content-relay/client";
@@ -27,7 +27,7 @@ import { isMobileDevicePlatform } from "@content-relay/shared";
 import { rpcClient } from "#pkg/rpc-client.ts";
 
 export { allocatePort, listenOnPort };
-export { createAuthenticatedHttpClient };
+export { createDeviceHttpClient };
 
 export type ReceivedDeliveryResult = {
   delivery: DeliveryResource;
@@ -91,7 +91,6 @@ export async function registerProfile(input: {
 
 export function createAuthHeaders(profile: LocalDeviceProfile): HeadersInit {
   return {
-    authorization: `Bearer ${profile.authToken}`,
     "x-relay-device-id": profile.deviceId,
   };
 }

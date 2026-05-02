@@ -93,7 +93,7 @@ Initial send surfaces should include:
 
 - The system is **Tailnet-only**.
 - Every participating device must have **Tailscale installed and connected**.
-- Clients still use **per-device secrets/tokens** after registration.
+- Clients identify themselves with their registered **device ID** over the Tailnet.
 - No public internet fallback for the Pi server.
 
 ### UI design principles
@@ -307,7 +307,7 @@ Deliverables:
 - SQLite schema
 - filesystem blob storage
 - invite creation + device registration
-- per-device token auth
+- device-ID-based identity over Tailnet
 - item creation API
 - delivery creation / status model
 - pending-item fetch, ack, viewed, inspection, and file-download endpoints needed by the CLI
@@ -422,7 +422,7 @@ This is not final, but it is the shape the implementation should likely converge
 ## Non-goals for v1
 
 - Public internet access to the Pi server
-- Complex auth beyond Tailnet + per-device token
+- Complex auth beyond Tailnet-only device identity
 - URL metadata scraping
 - Local recipient archive/cache
 - Archive browsing UI
