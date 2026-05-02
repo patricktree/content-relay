@@ -5,6 +5,7 @@
 - provides the shared Capacitor shell for iOS and Android
 - keeps the native Capacitor projects in `ios/` and `android/`
 - syncs the shared web bundle from `packages/web-app/` into the native projects
+- on Android, accepts shared text and URLs from the OS share sheet and forwards them into the shared send UI
 
 ## Build
 
@@ -46,3 +47,4 @@ That installs the debug app on the connected Android target.
 - run the build and confirm it succeeds
 - open the iOS project and confirm the app renders the shared web UI
 - open the Android project and confirm the app renders the shared web UI
+- on Android, share text and a URL from another app and confirm Content Relay opens with the compose form prefilled

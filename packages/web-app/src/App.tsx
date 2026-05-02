@@ -6,6 +6,9 @@ import { rpcClient, parseOkResponse } from "@content-relay/client";
 import type { DeviceSummary } from "@content-relay/shared";
 import { isValidAbsoluteUrl } from "@content-relay/shared";
 
+import { addAndroidShareListener, consumePendingAndroidShare } from "#pkg/android-share.ts";
+import type { ShareDraft } from "#pkg/share-draft.ts";
+
 type SendItemType = "text" | "url";
 
 type AuthenticatedProfile = {
@@ -58,6 +61,7 @@ export function App(): React.JSX.Element {
   const [draft, setDraft] = React.useState<StoredDraft>(readStoredDraft);
   const [itemType, setItemType] = React.useState<SendItemType>("text");
   const [status, setStatus] = React.useState<Status>({ kind: "idle" });
+  const lastHandledShareDraftKey = React.useRef<string | null>(null);
 
   const targetDeviceIds = Array.from(
     new Set([
@@ -81,6 +85,61 @@ export function App(): React.JSX.Element {
     mutationFn: sendItem,
   });
   const devices = devicesQuery.data ?? [];
+
+  React.useEffect(() => {
+    let isDisposed = false;
+    let listenerHandle: { remove: () => Promise<void> } | null = null;
+
+    function applyShareDraft(shareDraft: ShareDraft): void {
+      if (lastHandledShareDraftKey.current === shareDraft.dedupeKey) {
+        return;
+      }
+
+      lastHandledShareDraftKey.current = shareDraft.dedupeKey;
+      setItemType(shareDraft.itemType);
+      updateDraft(setDraft, {
+        title: shareDraft.title,
+        value: shareDraft.value,
+      });
+      setStatus({
+        kind: "success",
+        message:
+          shareDraft.itemType === "url"
+            ? "Imported shared URL from Android."
+            : "Imported shared text from Android.",
+      });
+    }
+
+    async function initializeAndroidShare(): Promise<void> {
+      listenerHandle = await addAndroidShareListener((shareDraft) => {
+        if (isDisposed) {
+          return;
+        }
+
+        applyShareDraft(shareDraft);
+      });
+
+      const pendingShareDraft = await consumePendingAndroidShare();
+
+      if (isDisposed || pendingShareDraft === null) {
+        return;
+      }
+
+      applyShareDraft(pendingShareDraft);
+    }
+
+    void initializeAndroidShare().catch((error: unknown) => {
+      console.error("Failed to initialize Android share bridge.", error);
+    });
+
+    return () => {
+      isDisposed = true;
+
+      if (listenerHandle !== null) {
+        void listenerHandle.remove();
+      }
+    };
+  }, []);
 
   async function handleRefreshDevices(): Promise<void> {
     try {
@@ -148,7 +207,10 @@ export function App(): React.JSX.Element {
         <Header>
           <Eyebrow>Content Relay</Eyebrow>
           <Title>Send</Title>
-          <Subtitle>Configure this device, confirm targets, and send text or URLs.</Subtitle>
+          <Subtitle>
+            Configure this device, confirm targets, and send text or URLs from the app or the
+            Android share sheet.
+          </Subtitle>
         </Header>
 
         <Card>
