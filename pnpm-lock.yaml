@@ -45,20 +45,20 @@ importers:
         specifier: 2.9.6
         version: 2.9.6
 
-  packages/backend:
+  apps/backend:
     dependencies:
       '@commander-js/extra-typings':
         specifier: ^14.0.0
         version: 14.0.0(commander@14.0.3)
       '@content-relay/o11y.logs':
         specifier: workspace:*
-        version: link:../o11y.logs
+        version: link:../../libs/o11y.logs
       '@content-relay/o11y.node-sdk':
         specifier: workspace:*
-        version: link:../o11y.node-sdk
+        version: link:../../libs/o11y.node-sdk
       '@content-relay/shared':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../../libs/shared
       '@hono/node-server':
         specifier: ^2.0.0
         version: 2.0.0(hono@4.12.15)
@@ -98,10 +98,10 @@ importers:
     devDependencies:
       '@content-relay/config-eslint':
         specifier: workspace:*
-        version: link:../config-eslint
+        version: link:../../tooling/config-eslint
       '@content-relay/config-typescript':
         specifier: workspace:*
-        version: link:../config-typescript
+        version: link:../../tooling/config-typescript
       '@types/better-sqlite3':
         specifier: ^7.6.13
         version: 7.6.13
@@ -118,54 +118,26 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
-  packages/backend-test-utils:
-    dependencies:
-      '@content-relay/backend':
-        specifier: workspace:*
-        version: link:../backend
-      '@content-relay/shared':
-        specifier: workspace:*
-        version: link:../shared
-    devDependencies:
-      '@content-relay/config-eslint':
-        specifier: workspace:*
-        version: link:../config-eslint
-      '@content-relay/config-typescript':
-        specifier: workspace:*
-        version: link:../config-typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.12.2
-      '@typescript/native-preview':
-        specifier: 'catalog:'
-        version: 7.0.0-dev.20260428.1
-      eslint:
-        specifier: 'catalog:'
-        version: 10.2.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
-  packages/cli:
+  apps/cli:
     dependencies:
       '@commander-js/extra-typings':
         specifier: ^14.0.0
         version: 14.0.0(commander@14.0.3)
       '@content-relay/client':
         specifier: workspace:*
-        version: link:../client
+        version: link:../../libs/client
       '@content-relay/o11y.logs':
         specifier: workspace:*
-        version: link:../o11y.logs
+        version: link:../../libs/o11y.logs
       '@content-relay/o11y.node-sdk':
         specifier: workspace:*
-        version: link:../o11y.node-sdk
+        version: link:../../libs/o11y.node-sdk
       '@content-relay/profile-store-node':
         specifier: workspace:*
-        version: link:../profile-store-node
+        version: link:../../libs/profile-store-node
       '@content-relay/shared':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../../libs/shared
       '@patricktree/commons-ecma':
         specifier: ^3.1.1
         version: 3.1.1
@@ -178,13 +150,13 @@ importers:
     devDependencies:
       '@content-relay/backend-test-utils':
         specifier: workspace:*
-        version: link:../backend-test-utils
+        version: link:../../libs/backend-test-utils
       '@content-relay/config-eslint':
         specifier: workspace:*
-        version: link:../config-eslint
+        version: link:../../tooling/config-eslint
       '@content-relay/config-typescript':
         specifier: workspace:*
-        version: link:../config-typescript
+        version: link:../../tooling/config-typescript
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.2
@@ -201,75 +173,9 @@ importers:
         specifier: 'catalog:'
         version: 4.1.5(@types/node@24.12.2)
 
-  packages/client:
-    dependencies:
-      '@content-relay/backend':
-        specifier: workspace:*
-        version: link:../backend
-      '@content-relay/shared':
-        specifier: workspace:*
-        version: link:../shared
-      hono:
-        specifier: 'catalog:'
-        version: 4.12.15
-      temporal-polyfill:
-        specifier: ^0.3.2
-        version: 0.3.2
-    devDependencies:
-      '@content-relay/backend-test-utils':
-        specifier: workspace:*
-        version: link:../backend-test-utils
-      '@content-relay/config-eslint':
-        specifier: workspace:*
-        version: link:../config-eslint
-      '@content-relay/config-typescript':
-        specifier: workspace:*
-        version: link:../config-typescript
-      '@content-relay/profile-store-node':
-        specifier: workspace:*
-        version: link:../profile-store-node
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.12.2
-      '@typescript/native-preview':
-        specifier: 'catalog:'
-        version: 7.0.0-dev.20260428.1
-      eslint:
-        specifier: 'catalog:'
-        version: 10.2.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.5(@types/node@24.12.2)
+  apps/macos-app: {}
 
-  packages/config-eslint:
-    devDependencies:
-      '@eslint/js':
-        specifier: ^10.0.1
-        version: 10.0.1(eslint@10.2.1)
-      '@typescript/native-preview':
-        specifier: 'catalog:'
-        version: 7.0.0-dev.20260428.1
-      eslint:
-        specifier: 'catalog:'
-        version: 10.2.1
-      eslint-plugin-n:
-        specifier: ^17.24.0
-        version: 17.24.0(eslint@10.2.1)(typescript@6.0.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-      typescript-eslint:
-        specifier: ^8.59.0
-        version: 8.59.0(eslint@10.2.1)(typescript@6.0.3)
-
-  packages/config-typescript: {}
-
-  packages/macos-app: {}
-
-  packages/mobile-app:
+  apps/mobile-app:
     dependencies:
       '@capacitor/android':
         specifier: ^8.3.1
@@ -289,134 +195,22 @@ importers:
         version: 8.3.1
       '@content-relay/config-typescript':
         specifier: workspace:*
-        version: link:../config-typescript
+        version: link:../../tooling/config-typescript
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.2
 
-  packages/o11y.logs:
-    dependencies:
-      '@opentelemetry/api':
-        specifier: ^1.9.1
-        version: 1.9.1
-      '@opentelemetry/api-logs':
-        specifier: ^0.215.0
-        version: 0.215.0
-      '@patricktree/commons-ecma':
-        specifier: ^3.1.1
-        version: 3.1.1
-    devDependencies:
-      '@content-relay/config-eslint':
-        specifier: workspace:*
-        version: link:../config-eslint
-      '@content-relay/config-typescript':
-        specifier: workspace:*
-        version: link:../config-typescript
-      '@typescript/native-preview':
-        specifier: 'catalog:'
-        version: 7.0.0-dev.20260428.1
-      eslint:
-        specifier: 'catalog:'
-        version: 10.2.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
-  packages/o11y.node-sdk:
-    dependencies:
-      '@opentelemetry/api':
-        specifier: ^1.9.1
-        version: 1.9.1
-      '@opentelemetry/sdk-logs':
-        specifier: ^0.215.0
-        version: 0.215.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/sdk-node':
-        specifier: ^0.215.0
-        version: 0.215.0(@opentelemetry/api@1.9.1)
-      '@patricktree/commons-node':
-        specifier: ^3.1.1
-        version: 3.1.1
-    devDependencies:
-      '@content-relay/config-eslint':
-        specifier: workspace:*
-        version: link:../config-eslint
-      '@content-relay/config-typescript':
-        specifier: workspace:*
-        version: link:../config-typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.12.2
-      '@typescript/native-preview':
-        specifier: 'catalog:'
-        version: 7.0.0-dev.20260428.1
-      eslint:
-        specifier: 'catalog:'
-        version: 10.2.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
-  packages/profile-store-node:
-    dependencies:
-      '@content-relay/shared':
-        specifier: workspace:*
-        version: link:../shared
-      temporal-polyfill:
-        specifier: ^0.3.2
-        version: 0.3.2
-    devDependencies:
-      '@content-relay/config-eslint':
-        specifier: workspace:*
-        version: link:../config-eslint
-      '@content-relay/config-typescript':
-        specifier: workspace:*
-        version: link:../config-typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.12.2
-      '@typescript/native-preview':
-        specifier: 'catalog:'
-        version: 7.0.0-dev.20260428.1
-      eslint:
-        specifier: 'catalog:'
-        version: 10.2.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
-  packages/shared:
-    dependencies:
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-    devDependencies:
-      '@content-relay/config-eslint':
-        specifier: workspace:*
-        version: link:../config-eslint
-      '@content-relay/config-typescript':
-        specifier: workspace:*
-        version: link:../config-typescript
-      '@typescript/native-preview':
-        specifier: 'catalog:'
-        version: 7.0.0-dev.20260428.1
-      eslint:
-        specifier: 'catalog:'
-        version: 10.2.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
-  packages/web-app:
+  apps/web-app:
     dependencies:
       '@capacitor/core':
         specifier: ^8.3.1
         version: 8.3.1
       '@content-relay/client':
         specifier: workspace:*
-        version: link:../client
+        version: link:../../libs/client
       '@content-relay/shared':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../../libs/shared
       '@linaria/core':
         specifier: ^7.0.0
         version: 7.0.0
@@ -438,10 +232,10 @@ importers:
     devDependencies:
       '@content-relay/config-eslint':
         specifier: workspace:*
-        version: link:../config-eslint
+        version: link:../../tooling/config-eslint
       '@content-relay/config-typescript':
         specifier: workspace:*
-        version: link:../config-typescript
+        version: link:../../tooling/config-typescript
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.2
@@ -472,6 +266,212 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.5(@types/node@24.12.2)
+
+  libs/backend-test-utils:
+    dependencies:
+      '@content-relay/backend':
+        specifier: workspace:*
+        version: link:../../apps/backend
+      '@content-relay/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@content-relay/config-eslint':
+        specifier: workspace:*
+        version: link:../../tooling/config-eslint
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260428.1
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  libs/client:
+    dependencies:
+      '@content-relay/backend':
+        specifier: workspace:*
+        version: link:../../apps/backend
+      '@content-relay/shared':
+        specifier: workspace:*
+        version: link:../shared
+      hono:
+        specifier: 'catalog:'
+        version: 4.12.15
+      temporal-polyfill:
+        specifier: ^0.3.2
+        version: 0.3.2
+    devDependencies:
+      '@content-relay/backend-test-utils':
+        specifier: workspace:*
+        version: link:../backend-test-utils
+      '@content-relay/config-eslint':
+        specifier: workspace:*
+        version: link:../../tooling/config-eslint
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@content-relay/profile-store-node':
+        specifier: workspace:*
+        version: link:../profile-store-node
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260428.1
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.5(@types/node@24.12.2)
+
+  libs/o11y.logs:
+    dependencies:
+      '@opentelemetry/api':
+        specifier: ^1.9.1
+        version: 1.9.1
+      '@opentelemetry/api-logs':
+        specifier: ^0.215.0
+        version: 0.215.0
+      '@patricktree/commons-ecma':
+        specifier: ^3.1.1
+        version: 3.1.1
+    devDependencies:
+      '@content-relay/config-eslint':
+        specifier: workspace:*
+        version: link:../../tooling/config-eslint
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260428.1
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  libs/o11y.node-sdk:
+    dependencies:
+      '@opentelemetry/api':
+        specifier: ^1.9.1
+        version: 1.9.1
+      '@opentelemetry/sdk-logs':
+        specifier: ^0.215.0
+        version: 0.215.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-node':
+        specifier: ^0.215.0
+        version: 0.215.0(@opentelemetry/api@1.9.1)
+      '@patricktree/commons-node':
+        specifier: ^3.1.1
+        version: 3.1.1
+    devDependencies:
+      '@content-relay/config-eslint':
+        specifier: workspace:*
+        version: link:../../tooling/config-eslint
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260428.1
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  libs/profile-store-node:
+    dependencies:
+      '@content-relay/shared':
+        specifier: workspace:*
+        version: link:../shared
+      temporal-polyfill:
+        specifier: ^0.3.2
+        version: 0.3.2
+    devDependencies:
+      '@content-relay/config-eslint':
+        specifier: workspace:*
+        version: link:../../tooling/config-eslint
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260428.1
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  libs/shared:
+    dependencies:
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@content-relay/config-eslint':
+        specifier: workspace:*
+        version: link:../../tooling/config-eslint
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260428.1
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  tooling/config-eslint:
+    devDependencies:
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.2.1)
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260428.1
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1
+      eslint-plugin-n:
+        specifier: ^17.24.0
+        version: 17.24.0(eslint@10.2.1)(typescript@6.0.3)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.59.0
+        version: 8.59.0(eslint@10.2.1)(typescript@6.0.3)
+
+  tooling/config-typescript: {}
 
 packages:
 

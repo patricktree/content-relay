@@ -36,7 +36,7 @@ See more in
    ```
 6. Launch the app:
    ```sh
-   open "packages/macos-app/dist/Content Relay.app"
+   open "apps/macos-app/dist/Content Relay.app"
    ```
 7. In the menu bar app, open **Settings…** if needed and click **Import Active CLI macOS Profile**.
 8. Click **Test Fetch** to verify connectivity.

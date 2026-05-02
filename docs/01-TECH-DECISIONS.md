@@ -123,16 +123,16 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 
 ### Mobile app structure
 
-- Build the shared mobile web UI in `packages/web-app`.
-- Use **Capacitor** for the native app shells in `packages/mobile-app`.
+- Build the shared mobile web UI in `apps/web-app`.
+- Use **Capacitor** for the native app shells in `apps/mobile-app`.
 - Use **React** for the shared mobile web UI.
-- Keep the native `ios/` and `android/` projects under `packages/mobile-app`.
-- Have `packages/mobile-app` consume the built web assets from `packages/web-app`.
-- Do not create separate top-level `packages/ios-app` or `packages/android-app` directories in v1.
+- Keep the native `ios/` and `android/` projects under `apps/mobile-app`.
+- Have `apps/mobile-app` consume the built web assets from `apps/web-app`.
+- Do not create separate top-level `apps/ios-app` or `apps/android-app` directories in v1.
 
 ### Mobile client architecture
 
-- Refactor `packages/client` into a platform-neutral headless client core.
+- Refactor `libs/client` into a platform-neutral headless client core.
 - Share that client core across the CLI, automated tests, macOS app integration, and the Capacitor mobile app.
 - Keep local profile storage, preference storage, and delivery-deduplication state behind platform-specific adapters.
 

@@ -17,8 +17,8 @@ pnpm --filter '@content-relay/web-app' build
 
 The build produces:
 
-- `packages/web-app/dist/types`
-- `packages/web-app/dist/web`
+- `apps/web-app/dist/types`
+- `apps/web-app/dist/web`
 
 ## Manual verification checklist
 

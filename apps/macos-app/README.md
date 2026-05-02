@@ -27,12 +27,12 @@ pnpm --filter '@content-relay/macos-app' build
 
 The build produces:
 
-- `packages/macos-app/dist/Content Relay.app`
+- `apps/macos-app/dist/Content Relay.app`
 
 Open it with:
 
 ```sh
-open "packages/macos-app/dist/Content Relay.app"
+open "apps/macos-app/dist/Content Relay.app"
 ```
 
 ## First-run setup

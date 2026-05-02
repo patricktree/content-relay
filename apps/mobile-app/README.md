@@ -4,7 +4,7 @@
 
 - provides the shared Capacitor shell for iOS and Android
 - keeps the native Capacitor projects in `ios/` and `android/`
-- syncs the shared web bundle from `packages/web-app/` into the native projects
+- syncs the shared web bundle from `apps/web-app/` into the native projects
 - on Android, accepts shared text and URLs from the OS share sheet and forwards them into the shared send UI
 
 ## Build
@@ -28,7 +28,7 @@ pnpm --filter '@content-relay/mobile-app' native:sync
 Before running Android builds locally, create `android/local.properties` with a simple one-liner:
 
 ```sh
-cd packages/mobile-app
+cd apps/mobile-app
 echo 'sdk.dir=/absolute/path/to/your/Android/sdk' > ./android/local.properties
 ```
 
@@ -37,7 +37,7 @@ echo 'sdk.dir=/absolute/path/to/your/Android/sdk' > ./android/local.properties
 With an Android emulator running or a physical Android device connected via ADB, from the repo root run:
 
 ```sh
-pnpm --filter '@content-relay/mobile-app' build && cd packages/mobile-app/android && ./gradlew installDebug
+pnpm --filter '@content-relay/mobile-app' build && cd apps/mobile-app/android && ./gradlew installDebug
 ```
 
 That installs the debug app on the connected Android target.
