@@ -39,6 +39,11 @@ export const config = defineConfig(
   {
     rules: {
       "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+      /* ignore unused variables that start with `_` */
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "_*..", varsIgnorePattern: "_.*" },
+      ],
     },
   },
   {

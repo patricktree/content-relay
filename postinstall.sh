@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if [ "$CI" = "true" ]; then
+    # in CI/CD (i.e. GitHub Actions runners and Docker builds), we are finished
+    exit 0
+else
+    # on developer machines, run some commands
+    husky
+fi
