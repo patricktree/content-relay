@@ -91,6 +91,41 @@ func sendsMultipartFileUploadsAndDownloadsFiles() async throws {
   #expect(downloadResponse.files.map(\.fileName) == ["alpha.txt", "beta.txt"])
 }
 
+@Test("OpenAPI relay API client sends multipart file uploads")
+func sendsMultipartFileUploadsWithGeneratedClient() async throws {
+  let configuration = URLSessionConfiguration.ephemeral
+  configuration.protocolClasses = [StubURLProtocol.self]
+
+  let temporaryDirectory = FileManager.default.temporaryDirectory
+    .appendingPathComponent(UUID().uuidString, isDirectory: true)
+  try FileManager.default.createDirectory(at: temporaryDirectory, withIntermediateDirectories: true)
+  defer { try? FileManager.default.removeItem(at: temporaryDirectory) }
+
+  let firstFileURL = temporaryDirectory.appendingPathComponent("alpha.txt")
+  let secondFileURL = temporaryDirectory.appendingPathComponent("beta.txt")
+  try Data("alpha\n".utf8).write(to: firstFileURL)
+  try Data("beta\n".utf8).write(to: secondFileURL)
+
+  let session = URLSession(configuration: configuration)
+  let client = OpenAPIRelayAPIClient(
+    credentials: RelayDeviceCredentials(
+      serverBaseURL: URL(string: "http://127.0.0.1:8787")!,
+      deviceId: "device_macos"
+    ),
+    session: session
+  )
+
+  let uploadResponse = try await client.sendFiles(
+    fileURLs: [firstFileURL, secondFileURL],
+    title: "Trip Docs",
+    targetDeviceIds: ["device_ios", "device_android"]
+  )
+
+  #expect(uploadResponse.item.type == .file)
+  #expect(uploadResponse.item.files.count == 2)
+  #expect(uploadResponse.deliveries.count == 1)
+}
+
 @Test("URLSession relay API client surfaces backend error payloads")
 func surfacesBackendErrorPayloads() async throws {
   let configuration = URLSessionConfiguration.ephemeral

@@ -23,7 +23,7 @@
     }
   },
   "scripts": {
-    "build": "tsgo --build ./tsconfig.json",
+    "build": "tsgo --build ./tsconfig.json && node ./scripts/export-openapi-json.ts",
     "clean": "del-cli --dot=true \"dist\" \"*.tsbuildinfo\"",
     "dev": "tsgo --build ./tsconfig.json --watch",
     "test": "vitest run",

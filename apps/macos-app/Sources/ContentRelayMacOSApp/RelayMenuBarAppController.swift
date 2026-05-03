@@ -275,7 +275,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
       )
     }
 
-    let apiClient = URLSessionRelayAPIClient(credentials: credentials)
+    let apiClient = OpenAPIRelayAPIClient(credentials: credentials)
     return PendingDeliveryProcessor(
       apiClient: apiClient,
       handledDeliveryStore: handledDeliveryStore,
@@ -283,7 +283,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
     )
   }
 
-  private func makeClient(from snapshot: SettingsSnapshot? = nil) throws -> URLSessionRelayAPIClient {
+  private func makeClient(from snapshot: SettingsSnapshot? = nil) throws -> any RelayAPIClient {
     if let snapshot {
       let serverBaseURL = try normalizedURL(from: snapshot.serverBaseURL)
       let deviceId = snapshot.deviceId.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -296,7 +296,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
         )
       }
 
-      return URLSessionRelayAPIClient(
+      return OpenAPIRelayAPIClient(
         credentials: RelayDeviceCredentials(
           serverBaseURL: serverBaseURL,
           deviceId: deviceId
@@ -312,7 +312,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
       )
     }
 
-    return URLSessionRelayAPIClient(credentials: credentials)
+    return OpenAPIRelayAPIClient(credentials: credentials)
   }
 
   private func fetchPendingDeliveries(trigger: FetchTrigger) async {

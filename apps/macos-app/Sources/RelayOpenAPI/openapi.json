@@ -1,0 +1,3207 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Content Relay API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1",
+      "description": "Current environment"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "RelayDeviceIdHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-relay-device-id"
+      }
+    },
+    "schemas": {},
+    "parameters": {}
+  },
+  "paths": {
+    "/invites": {
+      "post": {
+        "tags": ["Invites"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expiresInSeconds": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 86400,
+                    "default": 900
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invite created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inviteCode": {
+                      "type": "string"
+                    },
+                    "inviteUrl": {
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["inviteCode", "inviteUrl", "expiresAt"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices/register": {
+      "post": {
+        "tags": ["Devices"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nickname": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "platform": {
+                    "type": "string",
+                    "enum": ["cli", "macos", "ios", "android", "generic"]
+                  },
+                  "invite": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "pushRegistration": {
+                    "type": "object",
+                    "properties": {
+                      "token": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": ["token"]
+                  }
+                },
+                "required": ["nickname", "platform", "invite"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Device registered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "nickname": {
+                      "type": "string"
+                    },
+                    "platform": {
+                      "type": "string",
+                      "enum": ["cli", "macos", "ios", "android", "generic"]
+                    },
+                    "serverBaseUrl": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["deviceId", "nickname", "platform", "serverBaseUrl", "createdAt"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invite not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices": {
+      "get": {
+        "tags": ["Devices"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Devices listed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "deviceId": {
+                        "type": "string"
+                      },
+                      "nickname": {
+                        "type": "string"
+                      },
+                      "platform": {
+                        "type": "string",
+                        "enum": ["cli", "macos", "ios", "android", "generic"]
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["deviceId", "nickname", "platform", "createdAt", "updatedAt"]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices/{deviceId}": {
+      "patch": {
+        "tags": ["Devices"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "device_123"
+            },
+            "required": true,
+            "name": "deviceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nickname": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": ["nickname"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Device renamed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "nickname": {
+                      "type": "string"
+                    },
+                    "platform": {
+                      "type": "string",
+                      "enum": ["cli", "macos", "ios", "android", "generic"]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["deviceId", "nickname", "platform", "createdAt", "updatedAt"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Devices"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "device_123"
+            },
+            "required": true,
+            "name": "deviceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Device deleted."
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices/{deviceId}/push-token": {
+      "post": {
+        "tags": ["Devices"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "device_123"
+            },
+            "required": true,
+            "name": "deviceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": ["token"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Push token upserted."
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/text": {
+      "post": {
+        "tags": ["Items"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "targetDeviceIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": ["text", "targetDeviceIds"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Text item created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": {
+                      "type": "object",
+                      "properties": {
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": ["text", "url", "file"]
+                        },
+                        "title": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "sourceDeviceId": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "url": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "files": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "fileId": {
+                                "type": "string"
+                              },
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "order": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "fileName": {
+                                "type": "string"
+                              },
+                              "storedFileName": {
+                                "type": "string"
+                              },
+                              "contentType": {
+                                "type": "string"
+                              },
+                              "sizeBytes": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "fileId",
+                              "itemId",
+                              "order",
+                              "fileName",
+                              "storedFileName",
+                              "contentType",
+                              "sizeBytes"
+                            ]
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "itemId",
+                        "type",
+                        "title",
+                        "sourceDeviceId",
+                        "text",
+                        "url",
+                        "files",
+                        "createdAt"
+                      ]
+                    },
+                    "deliveries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "deliveryId": {
+                            "type": "string"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "targetDeviceId": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": ["pending", "delivered", "viewed"]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "acknowledgedAt": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "viewedAt": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "item": {
+                            "type": "object",
+                            "properties": {
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": ["text", "url", "file"]
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "sourceDeviceId": {
+                                "type": "string"
+                              },
+                              "text": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "url": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "files": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "fileId": {
+                                      "type": "string"
+                                    },
+                                    "itemId": {
+                                      "type": "string"
+                                    },
+                                    "order": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "fileName": {
+                                      "type": "string"
+                                    },
+                                    "storedFileName": {
+                                      "type": "string"
+                                    },
+                                    "contentType": {
+                                      "type": "string"
+                                    },
+                                    "sizeBytes": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    }
+                                  },
+                                  "required": [
+                                    "fileId",
+                                    "itemId",
+                                    "order",
+                                    "fileName",
+                                    "storedFileName",
+                                    "contentType",
+                                    "sizeBytes"
+                                  ]
+                                }
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "itemId",
+                              "type",
+                              "title",
+                              "sourceDeviceId",
+                              "text",
+                              "url",
+                              "files",
+                              "createdAt"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "deliveryId",
+                          "itemId",
+                          "targetDeviceId",
+                          "state",
+                          "createdAt",
+                          "acknowledgedAt",
+                          "viewedAt",
+                          "item"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["item", "deliveries"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/url": {
+      "post": {
+        "tags": ["Items"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "targetDeviceIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": ["url", "targetDeviceIds"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "URL item created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": {
+                      "type": "object",
+                      "properties": {
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": ["text", "url", "file"]
+                        },
+                        "title": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "sourceDeviceId": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "url": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "files": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "fileId": {
+                                "type": "string"
+                              },
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "order": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "fileName": {
+                                "type": "string"
+                              },
+                              "storedFileName": {
+                                "type": "string"
+                              },
+                              "contentType": {
+                                "type": "string"
+                              },
+                              "sizeBytes": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "fileId",
+                              "itemId",
+                              "order",
+                              "fileName",
+                              "storedFileName",
+                              "contentType",
+                              "sizeBytes"
+                            ]
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "itemId",
+                        "type",
+                        "title",
+                        "sourceDeviceId",
+                        "text",
+                        "url",
+                        "files",
+                        "createdAt"
+                      ]
+                    },
+                    "deliveries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "deliveryId": {
+                            "type": "string"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "targetDeviceId": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": ["pending", "delivered", "viewed"]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "acknowledgedAt": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "viewedAt": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "item": {
+                            "type": "object",
+                            "properties": {
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": ["text", "url", "file"]
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "sourceDeviceId": {
+                                "type": "string"
+                              },
+                              "text": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "url": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "files": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "fileId": {
+                                      "type": "string"
+                                    },
+                                    "itemId": {
+                                      "type": "string"
+                                    },
+                                    "order": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "fileName": {
+                                      "type": "string"
+                                    },
+                                    "storedFileName": {
+                                      "type": "string"
+                                    },
+                                    "contentType": {
+                                      "type": "string"
+                                    },
+                                    "sizeBytes": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    }
+                                  },
+                                  "required": [
+                                    "fileId",
+                                    "itemId",
+                                    "order",
+                                    "fileName",
+                                    "storedFileName",
+                                    "contentType",
+                                    "sizeBytes"
+                                  ]
+                                }
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "itemId",
+                              "type",
+                              "title",
+                              "sourceDeviceId",
+                              "text",
+                              "url",
+                              "files",
+                              "createdAt"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "deliveryId",
+                          "itemId",
+                          "targetDeviceId",
+                          "state",
+                          "createdAt",
+                          "acknowledgedAt",
+                          "viewedAt",
+                          "item"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["item", "deliveries"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/file": {
+      "post": {
+        "tags": ["Items"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetDeviceIds": {
+                    "type": "string",
+                    "description": "JSON-encoded array of target device IDs."
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              },
+              "encoding": {}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File item created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": {
+                      "type": "object",
+                      "properties": {
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": ["text", "url", "file"]
+                        },
+                        "title": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "sourceDeviceId": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "url": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "files": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "fileId": {
+                                "type": "string"
+                              },
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "order": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "fileName": {
+                                "type": "string"
+                              },
+                              "storedFileName": {
+                                "type": "string"
+                              },
+                              "contentType": {
+                                "type": "string"
+                              },
+                              "sizeBytes": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "fileId",
+                              "itemId",
+                              "order",
+                              "fileName",
+                              "storedFileName",
+                              "contentType",
+                              "sizeBytes"
+                            ]
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "itemId",
+                        "type",
+                        "title",
+                        "sourceDeviceId",
+                        "text",
+                        "url",
+                        "files",
+                        "createdAt"
+                      ]
+                    },
+                    "deliveries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "deliveryId": {
+                            "type": "string"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "targetDeviceId": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": ["pending", "delivered", "viewed"]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "acknowledgedAt": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "viewedAt": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "item": {
+                            "type": "object",
+                            "properties": {
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": ["text", "url", "file"]
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "sourceDeviceId": {
+                                "type": "string"
+                              },
+                              "text": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "url": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "files": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "fileId": {
+                                      "type": "string"
+                                    },
+                                    "itemId": {
+                                      "type": "string"
+                                    },
+                                    "order": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "fileName": {
+                                      "type": "string"
+                                    },
+                                    "storedFileName": {
+                                      "type": "string"
+                                    },
+                                    "contentType": {
+                                      "type": "string"
+                                    },
+                                    "sizeBytes": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    }
+                                  },
+                                  "required": [
+                                    "fileId",
+                                    "itemId",
+                                    "order",
+                                    "fileName",
+                                    "storedFileName",
+                                    "contentType",
+                                    "sizeBytes"
+                                  ]
+                                }
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "itemId",
+                              "type",
+                              "title",
+                              "sourceDeviceId",
+                              "text",
+                              "url",
+                              "files",
+                              "createdAt"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "deliveryId",
+                          "itemId",
+                          "targetDeviceId",
+                          "state",
+                          "createdAt",
+                          "acknowledgedAt",
+                          "viewedAt",
+                          "item"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["item", "deliveries"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deliveries/pending": {
+      "get": {
+        "tags": ["Deliveries"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pending deliveries listed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deliveries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "deliveryId": {
+                            "type": "string"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "targetDeviceId": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": ["pending", "delivered", "viewed"]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "acknowledgedAt": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "viewedAt": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "item": {
+                            "type": "object",
+                            "properties": {
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": ["text", "url", "file"]
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "sourceDeviceId": {
+                                "type": "string"
+                              },
+                              "text": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "url": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "files": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "fileId": {
+                                      "type": "string"
+                                    },
+                                    "itemId": {
+                                      "type": "string"
+                                    },
+                                    "order": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "fileName": {
+                                      "type": "string"
+                                    },
+                                    "storedFileName": {
+                                      "type": "string"
+                                    },
+                                    "contentType": {
+                                      "type": "string"
+                                    },
+                                    "sizeBytes": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    }
+                                  },
+                                  "required": [
+                                    "fileId",
+                                    "itemId",
+                                    "order",
+                                    "fileName",
+                                    "storedFileName",
+                                    "contentType",
+                                    "sizeBytes"
+                                  ]
+                                }
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "itemId",
+                              "type",
+                              "title",
+                              "sourceDeviceId",
+                              "text",
+                              "url",
+                              "files",
+                              "createdAt"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "deliveryId",
+                          "itemId",
+                          "targetDeviceId",
+                          "state",
+                          "createdAt",
+                          "acknowledgedAt",
+                          "viewedAt",
+                          "item"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["deliveries"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deliveries": {
+      "get": {
+        "tags": ["Deliveries"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "delivered", "viewed", "all"]
+            },
+            "required": false,
+            "name": "state",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true,
+              "maximum": 500
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deliveries listed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deliveries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "deliveryId": {
+                            "type": "string"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "targetDeviceId": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": ["pending", "delivered", "viewed"]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "acknowledgedAt": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "viewedAt": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "item": {
+                            "type": "object",
+                            "properties": {
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": ["text", "url", "file"]
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "sourceDeviceId": {
+                                "type": "string"
+                              },
+                              "text": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "url": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "files": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "fileId": {
+                                      "type": "string"
+                                    },
+                                    "itemId": {
+                                      "type": "string"
+                                    },
+                                    "order": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "fileName": {
+                                      "type": "string"
+                                    },
+                                    "storedFileName": {
+                                      "type": "string"
+                                    },
+                                    "contentType": {
+                                      "type": "string"
+                                    },
+                                    "sizeBytes": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    }
+                                  },
+                                  "required": [
+                                    "fileId",
+                                    "itemId",
+                                    "order",
+                                    "fileName",
+                                    "storedFileName",
+                                    "contentType",
+                                    "sizeBytes"
+                                  ]
+                                }
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "itemId",
+                              "type",
+                              "title",
+                              "sourceDeviceId",
+                              "text",
+                              "url",
+                              "files",
+                              "createdAt"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "deliveryId",
+                          "itemId",
+                          "targetDeviceId",
+                          "state",
+                          "createdAt",
+                          "acknowledgedAt",
+                          "viewedAt",
+                          "item"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["deliveries"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deliveries/{deliveryId}": {
+      "get": {
+        "tags": ["Deliveries"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "delivery_123"
+            },
+            "required": true,
+            "name": "deliveryId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delivery loaded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "delivery": {
+                      "type": "object",
+                      "properties": {
+                        "deliveryId": {
+                          "type": "string"
+                        },
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "targetDeviceId": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": ["pending", "delivered", "viewed"]
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "acknowledgedAt": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "viewedAt": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "item": {
+                          "type": "object",
+                          "properties": {
+                            "itemId": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": ["text", "url", "file"]
+                            },
+                            "title": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "sourceDeviceId": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "url": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "files": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "fileId": {
+                                    "type": "string"
+                                  },
+                                  "itemId": {
+                                    "type": "string"
+                                  },
+                                  "order": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "fileName": {
+                                    "type": "string"
+                                  },
+                                  "storedFileName": {
+                                    "type": "string"
+                                  },
+                                  "contentType": {
+                                    "type": "string"
+                                  },
+                                  "sizeBytes": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "fileId",
+                                  "itemId",
+                                  "order",
+                                  "fileName",
+                                  "storedFileName",
+                                  "contentType",
+                                  "sizeBytes"
+                                ]
+                              }
+                            },
+                            "createdAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "itemId",
+                            "type",
+                            "title",
+                            "sourceDeviceId",
+                            "text",
+                            "url",
+                            "files",
+                            "createdAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "deliveryId",
+                        "itemId",
+                        "targetDeviceId",
+                        "state",
+                        "createdAt",
+                        "acknowledgedAt",
+                        "viewedAt",
+                        "item"
+                      ]
+                    }
+                  },
+                  "required": ["delivery"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Delivery not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deliveries/{deliveryId}/ack": {
+      "post": {
+        "tags": ["Deliveries"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "delivery_123"
+            },
+            "required": true,
+            "name": "deliveryId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delivery acknowledged.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "delivery": {
+                      "type": "object",
+                      "properties": {
+                        "deliveryId": {
+                          "type": "string"
+                        },
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "targetDeviceId": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": ["pending", "delivered", "viewed"]
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "acknowledgedAt": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "viewedAt": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "item": {
+                          "type": "object",
+                          "properties": {
+                            "itemId": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": ["text", "url", "file"]
+                            },
+                            "title": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "sourceDeviceId": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "url": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "files": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "fileId": {
+                                    "type": "string"
+                                  },
+                                  "itemId": {
+                                    "type": "string"
+                                  },
+                                  "order": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "fileName": {
+                                    "type": "string"
+                                  },
+                                  "storedFileName": {
+                                    "type": "string"
+                                  },
+                                  "contentType": {
+                                    "type": "string"
+                                  },
+                                  "sizeBytes": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "fileId",
+                                  "itemId",
+                                  "order",
+                                  "fileName",
+                                  "storedFileName",
+                                  "contentType",
+                                  "sizeBytes"
+                                ]
+                              }
+                            },
+                            "createdAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "itemId",
+                            "type",
+                            "title",
+                            "sourceDeviceId",
+                            "text",
+                            "url",
+                            "files",
+                            "createdAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "deliveryId",
+                        "itemId",
+                        "targetDeviceId",
+                        "state",
+                        "createdAt",
+                        "acknowledgedAt",
+                        "viewedAt",
+                        "item"
+                      ]
+                    }
+                  },
+                  "required": ["delivery"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Delivery not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deliveries/{deliveryId}/viewed": {
+      "post": {
+        "tags": ["Deliveries"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "delivery_123"
+            },
+            "required": true,
+            "name": "deliveryId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delivery marked as viewed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "delivery": {
+                      "type": "object",
+                      "properties": {
+                        "deliveryId": {
+                          "type": "string"
+                        },
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "targetDeviceId": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": ["pending", "delivered", "viewed"]
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "acknowledgedAt": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "viewedAt": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "item": {
+                          "type": "object",
+                          "properties": {
+                            "itemId": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": ["text", "url", "file"]
+                            },
+                            "title": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "sourceDeviceId": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "url": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "files": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "fileId": {
+                                    "type": "string"
+                                  },
+                                  "itemId": {
+                                    "type": "string"
+                                  },
+                                  "order": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "fileName": {
+                                    "type": "string"
+                                  },
+                                  "storedFileName": {
+                                    "type": "string"
+                                  },
+                                  "contentType": {
+                                    "type": "string"
+                                  },
+                                  "sizeBytes": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "fileId",
+                                  "itemId",
+                                  "order",
+                                  "fileName",
+                                  "storedFileName",
+                                  "contentType",
+                                  "sizeBytes"
+                                ]
+                              }
+                            },
+                            "createdAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "itemId",
+                            "type",
+                            "title",
+                            "sourceDeviceId",
+                            "text",
+                            "url",
+                            "files",
+                            "createdAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "deliveryId",
+                        "itemId",
+                        "targetDeviceId",
+                        "state",
+                        "createdAt",
+                        "acknowledgedAt",
+                        "viewedAt",
+                        "item"
+                      ]
+                    }
+                  },
+                  "required": ["delivery"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Delivery not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deliveries/{deliveryId}/download": {
+      "get": {
+        "tags": ["Deliveries"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "delivery_123"
+            },
+            "required": true,
+            "name": "deliveryId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delivery content downloaded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": {
+                      "type": "object",
+                      "properties": {
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": ["text", "url", "file"]
+                        },
+                        "title": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "sourceDeviceId": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "url": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "files": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "fileId": {
+                                "type": "string"
+                              },
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "order": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "fileName": {
+                                "type": "string"
+                              },
+                              "storedFileName": {
+                                "type": "string"
+                              },
+                              "contentType": {
+                                "type": "string"
+                              },
+                              "sizeBytes": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "fileId",
+                              "itemId",
+                              "order",
+                              "fileName",
+                              "storedFileName",
+                              "contentType",
+                              "sizeBytes"
+                            ]
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "itemId",
+                        "type",
+                        "title",
+                        "sourceDeviceId",
+                        "text",
+                        "url",
+                        "files",
+                        "createdAt"
+                      ]
+                    },
+                    "files": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "fileId": {
+                            "type": "string"
+                          },
+                          "fileName": {
+                            "type": "string"
+                          },
+                          "contentType": {
+                            "type": "string"
+                          },
+                          "sizeBytes": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "base64Content": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "fileId",
+                          "fileName",
+                          "contentType",
+                          "sizeBytes",
+                          "base64Content"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["item", "files"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Delivery not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items": {
+      "get": {
+        "tags": ["Items"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true,
+              "maximum": 500
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Items listed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "item": {
+                            "type": "object",
+                            "properties": {
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": ["text", "url", "file"]
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "sourceDeviceId": {
+                                "type": "string"
+                              },
+                              "text": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "url": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "files": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "fileId": {
+                                      "type": "string"
+                                    },
+                                    "itemId": {
+                                      "type": "string"
+                                    },
+                                    "order": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "fileName": {
+                                      "type": "string"
+                                    },
+                                    "storedFileName": {
+                                      "type": "string"
+                                    },
+                                    "contentType": {
+                                      "type": "string"
+                                    },
+                                    "sizeBytes": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    }
+                                  },
+                                  "required": [
+                                    "fileId",
+                                    "itemId",
+                                    "order",
+                                    "fileName",
+                                    "storedFileName",
+                                    "contentType",
+                                    "sizeBytes"
+                                  ]
+                                }
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "itemId",
+                              "type",
+                              "title",
+                              "sourceDeviceId",
+                              "text",
+                              "url",
+                              "files",
+                              "createdAt"
+                            ]
+                          },
+                          "deliveries": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "deliveryId": {
+                                  "type": "string"
+                                },
+                                "targetDeviceId": {
+                                  "type": "string"
+                                },
+                                "state": {
+                                  "type": "string",
+                                  "enum": ["pending", "delivered", "viewed"]
+                                },
+                                "createdAt": {
+                                  "type": "string"
+                                },
+                                "acknowledgedAt": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "viewedAt": {
+                                  "type": "string",
+                                  "nullable": true
+                                }
+                              },
+                              "required": [
+                                "deliveryId",
+                                "targetDeviceId",
+                                "state",
+                                "createdAt",
+                                "acknowledgedAt",
+                                "viewedAt"
+                              ]
+                            }
+                          }
+                        },
+                        "required": ["item", "deliveries"]
+                      }
+                    }
+                  },
+                  "required": ["items"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{itemId}": {
+      "get": {
+        "tags": ["Items"],
+        "security": [
+          {
+            "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "item_123"
+            },
+            "required": true,
+            "name": "itemId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item loaded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": {
+                      "type": "object",
+                      "properties": {
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": ["text", "url", "file"]
+                        },
+                        "title": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "sourceDeviceId": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "url": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "files": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "fileId": {
+                                "type": "string"
+                              },
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "order": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "fileName": {
+                                "type": "string"
+                              },
+                              "storedFileName": {
+                                "type": "string"
+                              },
+                              "contentType": {
+                                "type": "string"
+                              },
+                              "sizeBytes": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "fileId",
+                              "itemId",
+                              "order",
+                              "fileName",
+                              "storedFileName",
+                              "contentType",
+                              "sizeBytes"
+                            ]
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "itemId",
+                        "type",
+                        "title",
+                        "sourceDeviceId",
+                        "text",
+                        "url",
+                        "files",
+                        "createdAt"
+                      ]
+                    },
+                    "deliveries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "deliveryId": {
+                            "type": "string"
+                          },
+                          "targetDeviceId": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": ["pending", "delivered", "viewed"]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "acknowledgedAt": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "viewedAt": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "deliveryId",
+                          "targetDeviceId",
+                          "state",
+                          "createdAt",
+                          "acknowledgedAt",
+                          "viewedAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["item", "deliveries"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Item not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

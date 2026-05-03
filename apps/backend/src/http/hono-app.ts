@@ -121,6 +121,26 @@ const itemListQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(500).optional(),
 });
 
+const fileUploadRequestSchema = z.any().openapi({
+  type: "object",
+  properties: {
+    targetDeviceIds: {
+      type: "string",
+      description: "JSON-encoded array of target device IDs.",
+    },
+    title: {
+      type: "string",
+    },
+    files: {
+      type: "array",
+      items: {
+        type: "string",
+        format: "binary",
+      },
+    },
+  },
+});
+
 type HonoEnvironment = {
   Variables: {
     authenticatedDeviceId: string;
@@ -719,7 +739,17 @@ export async function createHonoApp() {
         path: "/items/file",
         tags: [API_TAGS.items],
         security: AUTH_SECURITY,
-        request: {},
+        request: {
+          body: {
+            content: {
+              "multipart/form-data": {
+                schema: fileUploadRequestSchema,
+                encoding: {},
+              },
+            },
+            required: true,
+          },
+        },
         responses: {
           201: {
             content: {
@@ -757,36 +787,8 @@ export async function createHonoApp() {
       }),
       async (context) => {
         const authenticatedDeviceId = context.get("authenticatedDeviceId");
-        const formData = await context.req.formData();
-        const targetDeviceIds = parseTargetDeviceIds(formData.get("targetDeviceIds"));
-        const titleValue = formData.get("title");
-        const uploadedFiles = formData.getAll("files");
-
-        const files = await Promise.all(
-          uploadedFiles.map(async (uploadedFile) => {
-            if (!(uploadedFile instanceof File)) {
-              throw new HTTPException(400, {
-                message: "Expected file uploads in the `files` form field.",
-              });
-            }
-
-            const arrayBuffer = await uploadedFile.arrayBuffer();
-
-            return {
-              fileName: uploadedFile.name,
-              contentType: uploadedFile.type || "application/octet-stream",
-              content: new Uint8Array(arrayBuffer),
-            };
-          }),
-        );
-
-        const result = await createFileItem(authenticatedDeviceId, {
-          ...(typeof titleValue === "string" && titleValue.trim() !== ""
-            ? { title: titleValue }
-            : {}),
-          targetDeviceIds,
-          files,
-        });
+        const input = await parseFileUploadRequest(context.req);
+        const result = await createFileItem(authenticatedDeviceId, input);
 
         return context.json(presentCreateItemOutput(result), 201);
       },
@@ -1227,6 +1229,68 @@ function assertAuthenticatedDeviceMatchesTargetDevice(
   }
 
   throw new HTTPException(403, { message: errorMessage });
+}
+
+async function parseFileUploadRequest(
+  request: Request | { formData(): Promise<FormData> },
+): Promise<{
+  title?: string;
+  targetDeviceIds: string[];
+  files: {
+    fileName: string;
+    contentType: string;
+    content: Uint8Array;
+  }[];
+}> {
+  const formData = await request.formData();
+  const targetDeviceIds = parseTargetDeviceIds(formData.get("targetDeviceIds"));
+  const files = await parseUploadedFiles(formData.getAll("files"));
+  const title = normalizeOptionalFormString(formData.get("title"));
+
+  return {
+    ...(title !== undefined ? { title } : {}),
+    targetDeviceIds,
+    files,
+  };
+}
+
+async function parseUploadedFiles(uploadedFiles: FormDataEntryValue[]): Promise<
+  {
+    fileName: string;
+    contentType: string;
+    content: Uint8Array;
+  }[]
+> {
+  return Promise.all(
+    uploadedFiles.map(async (uploadedFile) => {
+      if (!(uploadedFile instanceof File)) {
+        throw new HTTPException(400, {
+          message: "Expected file uploads in the `files` form field.",
+        });
+      }
+
+      const arrayBuffer = await uploadedFile.arrayBuffer();
+
+      return {
+        fileName: uploadedFile.name,
+        contentType: uploadedFile.type || "application/octet-stream",
+        content: new Uint8Array(arrayBuffer),
+      };
+    }),
+  );
+}
+
+function normalizeOptionalFormString(value: FormDataEntryValue | null): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmedValue = value.trim();
+  if (trimmedValue === "") {
+    return undefined;
+  }
+
+  return trimmedValue;
 }
 
 function parseTargetDeviceIds(value: FormDataEntryValue | null): string[] {
