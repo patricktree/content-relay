@@ -3,11 +3,6 @@ import fs from "node:fs";
 import path from "node:path";
 
 import {
-  allocatePort,
-  listenOnPort,
-  withRelayTestEnvironment as withBaseRelayTestEnvironment,
-} from "@content-relay/backend-test-utils";
-import {
   createDeviceHttpClient,
   simulatePlatformDelivery,
   type SimulatedDeliveryResult,
@@ -16,6 +11,11 @@ import {
   LocalDeviceProfileStore,
   type LocalDeviceProfile,
 } from "@content-relay/profile-store-node";
+import {
+  allocatePort,
+  listenOnPort,
+  withRelayTestEnvironment as withBaseRelayTestEnvironment,
+} from "@content-relay/relay-hub-test-utils";
 import type {
   DeliveryResource,
   DevicePlatform,
@@ -44,35 +44,35 @@ export type ReceivePendingOptions = {
 export type RelayTestEnvironment = {
   profileStore: LocalDeviceProfileStore;
   rootDirectory: string;
-  serverBaseUrl: string;
+  relayHubBaseUrl: string;
 };
 
 export async function withRelayTestEnvironment(
   run: (environment: RelayTestEnvironment) => Promise<void>,
 ): Promise<void> {
-  await withBaseRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
+  await withBaseRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     await run({
       profileStore: new LocalDeviceProfileStore(path.join(rootDirectory, "profiles")),
       rootDirectory,
-      serverBaseUrl,
+      relayHubBaseUrl,
     });
   });
 }
 
 export async function registerProfile(input: {
   profileStore: LocalDeviceProfileStore;
-  serverBaseUrl: string;
+  relayHubBaseUrl: string;
   nickname: string;
   platform: DevicePlatform;
   makeActive?: boolean;
   profileId?: string;
 }): Promise<LocalDeviceProfile> {
   const invite = await parseResponse(
-    rpcClient.createInvite(input.serverBaseUrl, { expiresInSeconds: 900 }),
+    rpcClient.createInvite(input.relayHubBaseUrl, { expiresInSeconds: 900 }),
   );
   const pushRegistration = buildPushRegistration(input.platform, input.nickname);
   const registration = await parseResponse(
-    rpcClient.registerDevice(input.serverBaseUrl, {
+    rpcClient.registerDevice(input.relayHubBaseUrl, {
       nickname: input.nickname,
       platform: input.platform,
       invite: invite.inviteCode,

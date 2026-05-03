@@ -1,6 +1,6 @@
 # Content Relay
 
-Content Relay lets a user send items between their personal devices through a private relay server. This context defines the product language used to describe those devices and app surfaces.
+Content Relay lets a user send items between their personal devices through a private Relay Hub. This context defines the product language used to describe those devices and app surfaces.
 
 ## Language
 

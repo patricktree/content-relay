@@ -42,7 +42,7 @@ enum ComposePayloadType: String, CaseIterable, Identifiable {
 
 @MainActor
 final class SettingsViewModel: ObservableObject {
-  @Published var serverBaseURL: String
+  @Published var relayHubBaseURL: String
   @Published var deviceId: String
   @Published var pollIntervalSeconds: String
   @Published var statusMessage: String = ""
@@ -58,7 +58,7 @@ final class SettingsViewModel: ObservableObject {
     importAction: @escaping @MainActor () async -> SettingsImportResult,
     testAction: @escaping @MainActor (SettingsSnapshot) async -> String
   ) {
-    self.serverBaseURL = initialSnapshot.serverBaseURL
+    self.relayHubBaseURL = initialSnapshot.relayHubBaseURL
     self.deviceId = initialSnapshot.deviceId
     self.pollIntervalSeconds = initialSnapshot.pollIntervalSeconds
     self.saveAction = saveAction
@@ -67,7 +67,7 @@ final class SettingsViewModel: ObservableObject {
   }
 
   func apply(snapshot: SettingsSnapshot) {
-    serverBaseURL = snapshot.serverBaseURL
+    relayHubBaseURL = snapshot.relayHubBaseURL
     deviceId = snapshot.deviceId
     pollIntervalSeconds = snapshot.pollIntervalSeconds
   }
@@ -104,7 +104,7 @@ final class SettingsViewModel: ObservableObject {
 
   var currentSnapshot: SettingsSnapshot {
     SettingsSnapshot(
-      serverBaseURL: serverBaseURL,
+      relayHubBaseURL: relayHubBaseURL,
       deviceId: deviceId,
       pollIntervalSeconds: pollIntervalSeconds
     )
@@ -382,7 +382,7 @@ private struct SettingsView: View {
         .fixedSize(horizontal: false, vertical: true)
 
       Group {
-        labeledField("Server base URL", text: $viewModel.serverBaseURL)
+        labeledField("Relay Hub base URL", text: $viewModel.relayHubBaseURL)
         labeledField("Device ID", text: $viewModel.deviceId)
         labeledField("Poll interval (seconds)", text: $viewModel.pollIntervalSeconds)
       }

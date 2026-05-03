@@ -2,18 +2,18 @@ import ContentRelayMacOSCore
 import Foundation
 
 struct SavedRelayConfiguration: Codable, Equatable {
-  let serverBaseURL: String
+  let relayHubBaseURL: String
   let deviceId: String
   let pollIntervalSeconds: Int
   let lastUsedTargetDeviceIds: [String]
 
   init(
-    serverBaseURL: String,
+    relayHubBaseURL: String,
     deviceId: String,
     pollIntervalSeconds: Int,
     lastUsedTargetDeviceIds: [String] = []
   ) {
-    self.serverBaseURL = serverBaseURL
+    self.relayHubBaseURL = relayHubBaseURL
     self.deviceId = deviceId
     self.pollIntervalSeconds = pollIntervalSeconds
     self.lastUsedTargetDeviceIds = lastUsedTargetDeviceIds
@@ -21,7 +21,7 @@ struct SavedRelayConfiguration: Codable, Equatable {
 
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    self.serverBaseURL = try container.decode(String.self, forKey: .serverBaseURL)
+    self.relayHubBaseURL = try container.decode(String.self, forKey: .relayHubBaseURL)
     self.deviceId = try container.decode(String.self, forKey: .deviceId)
     self.pollIntervalSeconds = try container.decode(Int.self, forKey: .pollIntervalSeconds)
     self.lastUsedTargetDeviceIds = try container.decodeIfPresent([String].self, forKey: .lastUsedTargetDeviceIds) ?? []
@@ -29,12 +29,12 @@ struct SavedRelayConfiguration: Codable, Equatable {
 }
 
 struct SettingsSnapshot: Equatable {
-  var serverBaseURL: String
+  var relayHubBaseURL: String
   var deviceId: String
   var pollIntervalSeconds: String
 
   static let empty = SettingsSnapshot(
-    serverBaseURL: "",
+    relayHubBaseURL: "",
     deviceId: "",
     pollIntervalSeconds: "15"
   )
@@ -62,16 +62,16 @@ final class RelayAppConfigurationStore {
       return nil
     }
 
-    guard let serverBaseURL = URL(string: configuration.serverBaseURL) else {
+    guard let relayHubBaseURL = URL(string: configuration.relayHubBaseURL) else {
       throw NSError(
         domain: "ContentRelayMacOS",
         code: 1,
-        userInfo: [NSLocalizedDescriptionKey: "The saved server URL is invalid."]
+        userInfo: [NSLocalizedDescriptionKey: "The saved Relay Hub URL is invalid."]
       )
     }
 
     return RelayDeviceCredentials(
-      serverBaseURL: serverBaseURL,
+      relayHubBaseURL: relayHubBaseURL,
       deviceId: configuration.deviceId
     )
   }
@@ -79,10 +79,10 @@ final class RelayAppConfigurationStore {
   func save(snapshot: SettingsSnapshot) throws {
     let currentConfiguration = try loadSavedConfiguration()
     let pollIntervalSeconds = try parsePollIntervalSeconds(snapshot.pollIntervalSeconds)
-    let normalizedServerBaseURL = try normalizeServerBaseURL(snapshot.serverBaseURL)
+    let normalizedServerBaseURL = try normalizeRelayHubBaseURL(snapshot.relayHubBaseURL)
 
     let configuration = SavedRelayConfiguration(
-      serverBaseURL: normalizedServerBaseURL.absoluteString,
+      relayHubBaseURL: normalizedServerBaseURL.absoluteString,
       deviceId: snapshot.deviceId.trimmingCharacters(in: .whitespacesAndNewlines),
       pollIntervalSeconds: pollIntervalSeconds,
       lastUsedTargetDeviceIds: currentConfiguration?.lastUsedTargetDeviceIds ?? []
@@ -94,7 +94,7 @@ final class RelayAppConfigurationStore {
   func rememberLastUsedTargetDeviceIds(_ deviceIds: [String]) throws {
     let currentConfiguration = try requireSavedConfiguration()
     let configuration = SavedRelayConfiguration(
-      serverBaseURL: currentConfiguration.serverBaseURL,
+      relayHubBaseURL: currentConfiguration.relayHubBaseURL,
       deviceId: currentConfiguration.deviceId,
       pollIntervalSeconds: currentConfiguration.pollIntervalSeconds,
       lastUsedTargetDeviceIds: Array(NSOrderedSet(array: deviceIds)) as? [String] ?? []
@@ -118,7 +118,7 @@ final class RelayAppConfigurationStore {
     let configuration = try loadSavedConfiguration()
 
     return SettingsSnapshot(
-      serverBaseURL: configuration?.serverBaseURL ?? "",
+      relayHubBaseURL: configuration?.relayHubBaseURL ?? "",
       deviceId: configuration?.deviceId ?? "",
       pollIntervalSeconds: String(configuration?.pollIntervalSeconds ?? 15)
     )
@@ -215,13 +215,13 @@ private struct PersistedHandledDeliveryState: Codable {
   var handledDeliveryIds: [String]
 }
 
-private func normalizeServerBaseURL(_ rawValue: String) throws -> URL {
+private func normalizeRelayHubBaseURL(_ rawValue: String) throws -> URL {
   let trimmedValue = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
   guard let url = URL(string: trimmedValue), let scheme = url.scheme, ["http", "https"].contains(scheme) else {
     throw NSError(
       domain: "ContentRelayMacOS",
       code: 4,
-      userInfo: [NSLocalizedDescriptionKey: "Enter a valid absolute server URL."]
+      userInfo: [NSLocalizedDescriptionKey: "Enter a valid absolute Relay Hub URL."]
     )
   }
 
@@ -230,7 +230,7 @@ private func normalizeServerBaseURL(_ rawValue: String) throws -> URL {
     throw NSError(
       domain: "ContentRelayMacOS",
       code: 5,
-      userInfo: [NSLocalizedDescriptionKey: "The server URL could not be normalized."]
+      userInfo: [NSLocalizedDescriptionKey: "The Relay Hub URL could not be normalized."]
     )
   }
 

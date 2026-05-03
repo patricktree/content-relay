@@ -5,9 +5,9 @@ import path from "node:path";
 import url from "node:url";
 import { expect, test } from "vitest";
 
-import { withRelayTestEnvironment } from "@content-relay/backend-test-utils";
 import { createHttpClient, type SimulatedDeliveryResult } from "@content-relay/client";
 import type { LocalDeviceProfile } from "@content-relay/profile-store-node";
+import { withRelayTestEnvironment } from "@content-relay/relay-hub-test-utils";
 import type {
   CreateInviteResponse,
   CreateItemResponse,
@@ -36,7 +36,7 @@ type CliSerializedProfile = Pick<
   | "nickname"
   | "platform"
   | "deviceId"
-  | "serverBaseUrl"
+  | "relayHubBaseUrl"
   | "createdAt"
   | "updatedAt"
   | "lastUsedTargetDeviceIds"
@@ -61,11 +61,11 @@ type CliDownloadDeliveryResponse = {
 };
 
 test("invite create returns a usable invite", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
 
     const inviteCreateResult = await runCli(
-      ["--json", "--server", serverBaseUrl, "invite", "create", "--expires-in", "1800"],
+      ["--json", "--relay-hub-url", relayHubBaseUrl, "invite", "create", "--expires-in", "1800"],
       { configDirectory },
     );
     expect(inviteCreateResult.exitCode).toBe(0);
@@ -77,8 +77,8 @@ test("invite create returns a usable invite", async () => {
     const registerResult = await runCli(
       [
         "--json",
-        "--server",
-        serverBaseUrl,
+        "--relay-hub-url",
+        relayHubBaseUrl,
         "device",
         "register",
         "--name",
@@ -95,13 +95,13 @@ test("invite create returns a usable invite", async () => {
 });
 
 test("device management commands cover list, rename, push-token, and delete", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const primaryInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
+    const primaryInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const primaryInvite = (await primaryInviteResponse.json()) as CreateInviteResponse;
-    const secondaryInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
+    const secondaryInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const secondaryInvite = (await secondaryInviteResponse.json()) as CreateInviteResponse;
@@ -111,14 +111,14 @@ test("device management commands cover list, rename, push-token, and delete", as
       inviteCode: primaryInvite.inviteCode,
       nickname: "Developer CLI",
       platform: "cli",
-      serverBaseUrl,
+      relayHubBaseUrl,
     });
     await registerCliProfile({
       configDirectory,
       inviteCode: secondaryInvite.inviteCode,
       nickname: "Developer iPhone Sim",
       platform: "ios",
-      serverBaseUrl,
+      relayHubBaseUrl,
     });
 
     const usePrimaryResult = await runCli(["--json", "device", "use", "Developer CLI"], {
@@ -192,9 +192,9 @@ test("device management commands cover list, rename, push-token, and delete", as
 });
 
 test("device register persists a profile that device current can load", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const inviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
+    const inviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const invite = (await inviteResponse.json()) as CreateInviteResponse;
@@ -202,8 +202,8 @@ test("device register persists a profile that device current can load", async ()
     const registerResult = await runCli(
       [
         "--json",
-        "--server",
-        serverBaseUrl,
+        "--relay-hub-url",
+        relayHubBaseUrl,
         "device",
         "register",
         "--name",
@@ -219,7 +219,7 @@ test("device register persists a profile that device current can load", async ()
     const registeredProfile = parseJsonStdout<CliSerializedProfile>(registerResult);
     expect(registeredProfile.nickname).toBe("Developer CLI");
     expect(registeredProfile.platform).toBe("cli");
-    expect(registeredProfile.serverBaseUrl).toBe(serverBaseUrl);
+    expect(registeredProfile.relayHubBaseUrl).toBe(relayHubBaseUrl);
     expect(registeredProfile.isActive).toBe(true);
 
     const currentResult = await runCli(["--json", "device", "current"], {
@@ -233,13 +233,13 @@ test("device register persists a profile that device current can load", async ()
 });
 
 test("send text, receive once, and delivery open", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const senderInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
+    const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const senderInvite = (await senderInviteResponse.json()) as CreateInviteResponse;
-    const receiverInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
+    const receiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;
@@ -249,14 +249,14 @@ test("send text, receive once, and delivery open", async () => {
       inviteCode: senderInvite.inviteCode,
       nickname: "Developer CLI",
       platform: "cli",
-      serverBaseUrl,
+      relayHubBaseUrl,
     });
     await registerCliProfile({
       configDirectory,
       inviteCode: receiverInvite.inviteCode,
       nickname: "Developer iPhone Sim",
       platform: "ios",
-      serverBaseUrl,
+      relayHubBaseUrl,
     });
 
     const useSenderResult = await runCli(["--json", "device", "use", "Developer CLI"], {
@@ -315,13 +315,13 @@ test("send text, receive once, and delivery open", async () => {
 });
 
 test("send url and item list expose sent URL items", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const senderInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
+    const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const senderInvite = (await senderInviteResponse.json()) as CreateInviteResponse;
-    const receiverInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
+    const receiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;
@@ -331,14 +331,14 @@ test("send url and item list expose sent URL items", async () => {
       inviteCode: senderInvite.inviteCode,
       nickname: "Developer CLI",
       platform: "cli",
-      serverBaseUrl,
+      relayHubBaseUrl,
     });
     await registerCliProfile({
       configDirectory,
       inviteCode: receiverInvite.inviteCode,
       nickname: "Developer iPad Sim",
       platform: "ios",
-      serverBaseUrl,
+      relayHubBaseUrl,
     });
 
     const useSenderResult = await runCli(["--json", "device", "use", "Developer CLI"], {
@@ -380,13 +380,13 @@ test("send url and item list expose sent URL items", async () => {
 });
 
 test("delivery list, show, ack, and viewed manage delivery state transitions", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const senderInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
+    const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const senderInvite = (await senderInviteResponse.json()) as CreateInviteResponse;
-    const receiverInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
+    const receiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;
@@ -396,14 +396,14 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
       inviteCode: senderInvite.inviteCode,
       nickname: "Developer CLI",
       platform: "cli",
-      serverBaseUrl,
+      relayHubBaseUrl,
     });
     await registerCliProfile({
       configDirectory,
       inviteCode: receiverInvite.inviteCode,
       nickname: "Developer Android Sim",
       platform: "android",
-      serverBaseUrl,
+      relayHubBaseUrl,
     });
 
     const useSenderResult = await runCli(["--json", "device", "use", "Developer CLI"], {
@@ -504,17 +504,17 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
 });
 
 test("send file and delivery download write the files", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
     const alphaFilePath = path.join(rootDirectory, "alpha.txt");
     const betaFilePath = path.join(rootDirectory, "beta.txt");
     await fs.promises.writeFile(alphaFilePath, "alpha\n", "utf8");
     await fs.promises.writeFile(betaFilePath, "beta\n", "utf8");
-    const senderInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
+    const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const senderInvite = (await senderInviteResponse.json()) as CreateInviteResponse;
-    const receiverInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
+    const receiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
     const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;
@@ -524,14 +524,14 @@ test("send file and delivery download write the files", async () => {
       inviteCode: senderInvite.inviteCode,
       nickname: "Developer CLI",
       platform: "cli",
-      serverBaseUrl,
+      relayHubBaseUrl,
     });
     await registerCliProfile({
       configDirectory,
       inviteCode: receiverInvite.inviteCode,
       nickname: "Developer Pixel Sim",
       platform: "android",
-      serverBaseUrl,
+      relayHubBaseUrl,
     });
 
     const useSenderResult = await runCli(["--json", "device", "use", "Developer CLI"], {
@@ -603,13 +603,13 @@ async function registerCliProfile(input: {
   inviteCode: string;
   nickname: string;
   platform: DevicePlatform;
-  serverBaseUrl: string;
+  relayHubBaseUrl: string;
 }): Promise<void> {
   const registerResult = await runCli(
     [
       "--json",
-      "--server",
-      input.serverBaseUrl,
+      "--relay-hub-url",
+      input.relayHubBaseUrl,
       "device",
       "register",
       "--name",

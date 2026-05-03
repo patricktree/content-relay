@@ -32,7 +32,7 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
 
   public init(credentials: RelayDeviceCredentials, session: URLSession = .shared) {
     self.underlyingClient = Client(
-      serverURL: credentials.serverBaseURL,
+      serverURL: credentials.relayHubBaseURL,
       transport: URLSessionTransport(configuration: .init(
         session: session,
         httpBodyProcessingMode: .buffered

@@ -10,7 +10,7 @@ func sendsDeviceHeadersAndDecodesPendingDeliveries() async throws {
   let session = URLSession(configuration: configuration)
   let client = URLSessionRelayAPIClient(
     credentials: RelayDeviceCredentials(
-      serverBaseURL: URL(string: "http://127.0.0.1:8787")!,
+      relayHubBaseURL: URL(string: "http://127.0.0.1:8787")!,
       deviceId: "device_macos"
     ),
     session: session
@@ -31,7 +31,7 @@ func listsDevicesAndSendsJSONItemRequests() async throws {
   let session = URLSession(configuration: configuration)
   let client = URLSessionRelayAPIClient(
     credentials: RelayDeviceCredentials(
-      serverBaseURL: URL(string: "http://127.0.0.1:8787")!,
+      relayHubBaseURL: URL(string: "http://127.0.0.1:8787")!,
       deviceId: "device_macos"
     ),
     session: session
@@ -72,7 +72,7 @@ func sendsMultipartFileUploadsAndDownloadsFiles() async throws {
   let session = URLSession(configuration: configuration)
   let client = URLSessionRelayAPIClient(
     credentials: RelayDeviceCredentials(
-      serverBaseURL: URL(string: "http://127.0.0.1:8787")!,
+      relayHubBaseURL: URL(string: "http://127.0.0.1:8787")!,
       deviceId: "device_macos"
     ),
     session: session
@@ -109,7 +109,7 @@ func sendsMultipartFileUploadsWithGeneratedClient() async throws {
   let session = URLSession(configuration: configuration)
   let client = OpenAPIRelayAPIClient(
     credentials: RelayDeviceCredentials(
-      serverBaseURL: URL(string: "http://127.0.0.1:8787")!,
+      relayHubBaseURL: URL(string: "http://127.0.0.1:8787")!,
       deviceId: "device_macos"
     ),
     session: session
@@ -126,7 +126,7 @@ func sendsMultipartFileUploadsWithGeneratedClient() async throws {
   #expect(uploadResponse.deliveries.count == 1)
 }
 
-@Test("URLSession relay API client surfaces backend error payloads")
+@Test("URLSession relay API client surfaces Relay Hub error payloads")
 func surfacesBackendErrorPayloads() async throws {
   let configuration = URLSessionConfiguration.ephemeral
   configuration.protocolClasses = [InvalidDeviceStubURLProtocol.self]
@@ -134,7 +134,7 @@ func surfacesBackendErrorPayloads() async throws {
   let session = URLSession(configuration: configuration)
   let client = URLSessionRelayAPIClient(
     credentials: RelayDeviceCredentials(
-      serverBaseURL: URL(string: "http://127.0.0.1:8787")!,
+      relayHubBaseURL: URL(string: "http://127.0.0.1:8787")!,
       deviceId: "bad_device"
     ),
     session: session

@@ -1,0 +1,47 @@
+{
+  "name": "@content-relay/relay-hub-test-utils",
+  "private": true,
+  "files": [
+    "src/**"
+  ],
+  "type": "module",
+  "imports": {
+    "#pkg/*.ts": {
+      "types": "./dist/types/*.d.ts",
+      "default": "./src/*.ts"
+    },
+    "#pkg/*": {
+      "types": "./dist/types/*",
+      "default": "./src/*"
+    }
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsgo --build ./tsconfig.json",
+    "clean": "del-cli --dot=true \"dist\" \"*.tsbuildinfo\"",
+    "dev": "tsgo --build ./tsconfig.json --watch",
+    "lint": "eslint --max-warnings 0 .",
+    "lint:fix": "pnpm run lint --fix"
+  },
+  "dependencies": {
+    "@content-relay/relay-hub": "workspace:*",
+    "@content-relay/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@content-relay/config-eslint": "workspace:*",
+    "@content-relay/config-typescript": "workspace:*",
+    "@types/node": "catalog:",
+    "@typescript/native-preview": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": "^24"
+  }
+}

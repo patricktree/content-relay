@@ -84,7 +84,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -158,7 +158,7 @@
                       "type": "string",
                       "enum": ["cli", "macos", "ios", "android", "generic"]
                     },
-                    "serverBaseUrl": {
+                    "relayHubBaseUrl": {
                       "type": "string",
                       "format": "uri"
                     },
@@ -166,7 +166,7 @@
                       "type": "string"
                     }
                   },
-                  "required": ["deviceId", "nickname", "platform", "serverBaseUrl", "createdAt"]
+                  "required": ["deviceId", "nickname", "platform", "relayHubBaseUrl", "createdAt"]
                 }
               }
             }
@@ -220,7 +220,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -296,7 +296,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -446,7 +446,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -535,7 +535,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -659,7 +659,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -962,7 +962,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1265,7 +1265,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1567,7 +1567,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1746,7 +1746,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1963,7 +1963,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2167,7 +2167,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2371,7 +2371,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2575,7 +2575,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2771,7 +2771,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2983,7 +2983,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3185,7 +3185,7 @@
             }
           },
           "500": {
-            "description": "Unexpected server error.",
+            "description": "Unexpected Relay Hub error.",
             "content": {
               "application/json": {
                 "schema": {

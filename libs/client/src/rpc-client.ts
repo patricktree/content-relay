@@ -7,12 +7,12 @@ import {
 } from "#pkg/http-client.ts";
 
 export const rpcClient = {
-  async createInvite(serverBaseUrl: string, input: { expiresInSeconds: number }) {
-    return createHttpClient({ serverBaseUrl }).invites.$post({ json: input });
+  async createInvite(relayHubBaseUrl: string, input: { expiresInSeconds: number }) {
+    return createHttpClient({ relayHubBaseUrl }).invites.$post({ json: input });
   },
 
   async registerDevice(
-    serverBaseUrl: string,
+    relayHubBaseUrl: string,
     input: {
       nickname: string;
       platform: DevicePlatform;
@@ -20,7 +20,7 @@ export const rpcClient = {
       pushRegistration?: PushRegistration;
     },
   ) {
-    return createHttpClient({ serverBaseUrl }).devices.register.$post({ json: input });
+    return createHttpClient({ relayHubBaseUrl }).devices.register.$post({ json: input });
   },
 
   async listDevices(opts: CreateDeviceHttpClientOptions) {

@@ -1,6 +1,6 @@
 # content-relay
 
-Content relay for sending text, URLs, and file bundles between personal devices over a Tailnet-hosted server.
+Content relay for sending text, URLs, and file bundles between personal devices over a Tailnet-hosted Relay Hub.
 
 ## What this project is for
 
@@ -17,18 +17,18 @@ See more in
 
 ## Example flow: run the macOS app on this Mac
 
-1. Start the server:
+1. Start the Relay Hub:
    ```sh
-   pnpm --filter '@content-relay/backend' exec node ./src/bin.ts --data-dir="${HOME}/.content-relay"
+   pnpm --filter '@content-relay/relay-hub' exec node ./src/bin.ts --data-dir="${HOME}/.content-relay"
    ```
-2. Create an invite on your server:
+2. Create an invite on your Relay Hub:
    ```sh
-   pnpm --filter '@content-relay/cli' exec node ./src/cli.ts --server http://YOUR-PI:PORT invite create
+   pnpm --filter '@content-relay/cli' exec node ./src/cli.ts --relay-hub-url http://YOUR-PI:PORT invite create
    ```
 3. Copy the `inviteCode` from the output.
 4. Register this Mac as a `macos` device:
    ```sh
-   pnpm --filter '@content-relay/cli' exec node ./src/cli.ts --server http://YOUR-PI:PORT device register --name "mac" --platform macos --invite INVITE_CODE
+   pnpm --filter '@content-relay/cli' exec node ./src/cli.ts --relay-hub-url http://YOUR-PI:PORT device register --name "mac" --platform macos --invite INVITE_CODE
    ```
 5. Make that profile active:
    ```sh

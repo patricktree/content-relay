@@ -271,7 +271,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
       throw NSError(
         domain: "ContentRelayMacOS",
         code: 40,
-        userInfo: [NSLocalizedDescriptionKey: "The app is not configured. Open Settings to import or paste the server URL and device ID."]
+        userInfo: [NSLocalizedDescriptionKey: "The app is not configured. Open Settings to import or paste the Relay Hub URL and device ID."]
       )
     }
 
@@ -285,7 +285,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
 
   private func makeClient(from snapshot: SettingsSnapshot? = nil) throws -> any RelayAPIClient {
     if let snapshot {
-      let serverBaseURL = try normalizedURL(from: snapshot.serverBaseURL)
+      let relayHubBaseURL = try normalizedURL(from: snapshot.relayHubBaseURL)
       let deviceId = snapshot.deviceId.trimmingCharacters(in: .whitespacesAndNewlines)
 
       guard !deviceId.isEmpty else {
@@ -298,7 +298,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
 
       return OpenAPIRelayAPIClient(
         credentials: RelayDeviceCredentials(
-          serverBaseURL: serverBaseURL,
+          relayHubBaseURL: relayHubBaseURL,
           deviceId: deviceId
         )
       )
@@ -372,7 +372,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
     do {
       let importedProfile = try CLIProfileImporter.importPreferredMacOSProfile()
       let snapshot = SettingsSnapshot(
-        serverBaseURL: importedProfile.serverBaseURL.absoluteString,
+        relayHubBaseURL: importedProfile.relayHubBaseURL.absoluteString,
         deviceId: importedProfile.deviceId,
         pollIntervalSeconds: String((try? configurationStore.currentPollIntervalSeconds()) ?? 15)
       )
@@ -720,12 +720,12 @@ private func statusMessage(for processedCount: Int, trigger: FetchTrigger) -> St
 private func normalizedURL(from value: String) throws -> URL {
   let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
   guard !trimmedValue.isEmpty else {
-    throw composeError("Enter a server base URL.")
+    throw composeError("Enter a Relay Hub base URL.")
   }
 
   let normalizedValue = trimmedValue.hasSuffix("/") ? String(trimmedValue.dropLast()) : trimmedValue
   guard let url = URL(string: normalizedValue), let scheme = url.scheme, ["http", "https"].contains(scheme) else {
-    throw composeError("Enter a valid absolute server URL.")
+    throw composeError("Enter a valid absolute Relay Hub URL.")
   }
 
   return url

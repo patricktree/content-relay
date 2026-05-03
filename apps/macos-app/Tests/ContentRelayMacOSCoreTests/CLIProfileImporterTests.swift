@@ -17,14 +17,14 @@ func importsActiveMacOSProfile() throws {
       "profiles": [
         {
           "profileId": "cli_profile",
-          "serverBaseUrl": "http://127.0.0.1:3000",
+          "relayHubBaseUrl": "http://127.0.0.1:3000",
           "deviceId": "device_cli",
           "nickname": "CLI",
           "platform": "cli"
         },
         {
           "profileId": "mac_profile",
-          "serverBaseUrl": "http://100.64.0.1:8787",
+          "relayHubBaseUrl": "http://100.64.0.1:8787",
           "deviceId": "device_macos",
           "nickname": "My Mac",
           "platform": "macos"
@@ -38,7 +38,7 @@ func importsActiveMacOSProfile() throws {
 
   #expect(importedProfile.nickname == "My Mac")
   #expect(importedProfile.deviceId == "device_macos")
-  #expect(importedProfile.serverBaseURL.absoluteString == "http://100.64.0.1:8787")
+  #expect(importedProfile.relayHubBaseURL.absoluteString == "http://100.64.0.1:8787")
 }
 
 @Test("CLI profile importer rejects missing macOS profiles")
@@ -56,7 +56,7 @@ func rejectsMissingMacOSProfiles() throws {
       "profiles": [
         {
           "profileId": "cli_profile",
-          "serverBaseUrl": "http://127.0.0.1:3000",
+          "relayHubBaseUrl": "http://127.0.0.1:3000",
           "deviceId": "device_cli",
           "nickname": "CLI",
           "platform": "cli"

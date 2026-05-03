@@ -5,8 +5,8 @@ import { findWorkspaceProjects, type Project } from "#pkg/find-workspace-project
 import { monorepoPackagePrefix } from "#pkg/helpers.ts";
 
 /**
- * @param filter Pnpm-style filter, e.g. ["@content-relay/web-app...", "@content-relay/backend..."].
- *   See also https://pnpm.io/filtering.
+ * @param filter Pnpm-style filter, e.g. ["@content-relay/web-app...",
+ *   "@content-relay/relay-hub..."]. See also https://pnpm.io/filtering.
  */
 export const filterWorkspaceProjects = async (opts: {
   filter: string[];

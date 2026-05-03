@@ -49,7 +49,7 @@ export const registerDeviceResponseSchema = z.object({
   deviceId: z.string(),
   nickname: z.string(),
   platform: devicePlatformSchema,
-  serverBaseUrl: z.string().url(),
+  relayHubBaseUrl: z.string().url(),
   createdAt: z.string(),
 });
 

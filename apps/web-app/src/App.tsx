@@ -13,7 +13,7 @@ type SendItemType = "text" | "url";
 
 type RegisteredDeviceProfile = {
   deviceId: string;
-  serverBaseUrl: string;
+  relayHubBaseUrl: string;
 };
 
 type SendItemInput = {
@@ -28,7 +28,7 @@ type StoredDraft = {
   deviceId: string;
   manualTargetDeviceIds: string;
   selectedTargetDeviceIds: string[];
-  serverBaseUrl: string;
+  relayHubBaseUrl: string;
   title: string;
   value: string;
 };
@@ -45,7 +45,7 @@ const DEFAULT_DRAFT: StoredDraft = {
   deviceId: "",
   manualTargetDeviceIds: "",
   selectedTargetDeviceIds: [],
-  serverBaseUrl: "",
+  relayHubBaseUrl: "",
   title: "",
   value: "",
 };
@@ -70,7 +70,7 @@ export function App(): React.JSX.Element {
 
   const profile: RegisteredDeviceProfile = {
     deviceId: draft.deviceId.trim(),
-    serverBaseUrl: trimTrailingSlash(draft.serverBaseUrl),
+    relayHubBaseUrl: trimTrailingSlash(draft.relayHubBaseUrl),
   };
 
   const devicesQuery = useQuery({
@@ -213,16 +213,16 @@ export function App(): React.JSX.Element {
         <Card>
           <SectionTitle>Device setup</SectionTitle>
           <Field>
-            <Label htmlFor="server-base-url">Server URL</Label>
+            <Label htmlFor="relay-hub-base-url">Relay Hub URL</Label>
             <Input
-              id="server-base-url"
+              id="relay-hub-base-url"
               autoCapitalize="none"
               autoCorrect="off"
               inputMode="url"
-              onChange={(event) => updateDraft(setDraft, { serverBaseUrl: event.target.value })}
+              onChange={(event) => updateDraft(setDraft, { relayHubBaseUrl: event.target.value })}
               placeholder="https://relay.example.com"
               spellCheck={false}
-              value={draft.serverBaseUrl}
+              value={draft.relayHubBaseUrl}
             />
           </Field>
           <Field>
@@ -428,7 +428,7 @@ function readStoredDraft(): StoredDraft {
       manualTargetDeviceIds: parsed.manualTargetDeviceIds ?? DEFAULT_DRAFT.manualTargetDeviceIds,
       selectedTargetDeviceIds:
         parsed.selectedTargetDeviceIds ?? DEFAULT_DRAFT.selectedTargetDeviceIds,
-      serverBaseUrl: parsed.serverBaseUrl ?? DEFAULT_DRAFT.serverBaseUrl,
+      relayHubBaseUrl: parsed.relayHubBaseUrl ?? DEFAULT_DRAFT.relayHubBaseUrl,
       title: parsed.title ?? DEFAULT_DRAFT.title,
       value: parsed.value ?? DEFAULT_DRAFT.value,
     };

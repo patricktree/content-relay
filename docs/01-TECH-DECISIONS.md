@@ -27,7 +27,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 - `interfaces`
   - `Hono` route handlers, CLI wiring, Capacitor mobile integration, and macOS app integration
 
-## Server
+## Relay Hub
 
 ### Runtime and HTTP API
 
@@ -60,7 +60,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 
 - Generate IDs with platform primitives such as `crypto.randomUUID()`.
 - Standardize time handling on `Temporal` via [`temporal-polyfill`](https://www.npmjs.com/package/temporal-polyfill).
-- Use `Temporal.Instant` for persisted server timestamps where possible.
+- Use `Temporal.Instant` for persisted Relay Hub timestamps where possible.
 
 ### Observability
 
@@ -70,22 +70,22 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 
 ### Delivery and retries
 
-- Delivery remains pull-based with the server as source of truth.
-- Recipients fetch pending deliveries from the server.
+- Delivery remains pull-based with the Relay Hub as source of truth.
+- Recipients fetch pending deliveries from the Relay Hub.
 - Retry behavior for wake notifications should stay simple and database-driven in v1.
-- Do not introduce a separate queue system in v1 for server-side retries.
+- Do not introduce a separate queue system in v1 for Relay Hub-side retries.
 
 ### Uploads
 
 - File uploads use standard `multipart/form-data`.
 - A single file-upload request may contain **one or more files**.
 - Multiple files uploaded in one send must be stored and delivered as **one logical item/unit**.
-- The server data model must support a **one-to-many** relationship from a file item to its contained files.
+- The Relay Hub data model must support a **one-to-many** relationship from a file item to its contained files.
 - Do not use a resumable upload protocol such as `tus` in v1.
 
 ### Push delivery
 
-- Keep delivery pull-based with the server as source of truth.
+- Keep delivery pull-based with the Relay Hub as source of truth.
 - Treat push as a **wake + notification** mechanism, not as the authoritative payload channel.
 - Use one push-provider port with platform-specific infrastructure adapters.
 - Push provider is inferred from device platform:
@@ -98,7 +98,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 ## Shared contracts
 
 - Use `zod` as the shared runtime schema system.
-- Share wire-format schemas and inferred TypeScript types across server and clients.
+- Share wire-format schemas and inferred TypeScript types across the Relay Hub and clients.
 - Keep transport/client helpers thin and avoid pulling framework or UI concerns into shared packages.
 - Canonical device platforms are:
   - `cli`
@@ -153,7 +153,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
   - `itemId`
   - `itemType`
 - Treat push payload fields other than identifiers as presentation hints only.
-- On notification tap, the app should fetch authoritative delivery state from the server before routing.
+- On notification tap, the app should fetch authoritative delivery state from the Relay Hub before routing.
 
 ### Mobile foreground behavior
 
@@ -196,7 +196,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 
 ### Delivery / wake model
 
-- macOS delivery remains pull-based with the server as source of truth
+- macOS delivery remains pull-based with the Relay Hub as source of truth
 - The app should launch at login and remain available in the background during the user session
 - Fetch pending deliveries on launch, on reconnect, and on a simple periodic timer
 - Do not depend on Chromium extension lifecycle or Web Push for macOS receive in v1
@@ -230,9 +230,9 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 
 - Use `vitest` for tests.
 
-### Server end-to-end tests
+### Relay Hub end-to-end tests
 
-- Exercise a real started HTTP server.
+- Exercise a real started HTTP Relay Hub.
 - Use `fetch` in tests rather than framework-specific request helpers.
 - Prefer driving the system through the shared headless client core so end-to-end tests match the CLI behavior used for manual validation.
 
@@ -254,9 +254,9 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 
 - Exact package/workspace layout details beyond the major package boundaries
 - Invite-link implementation details
-- Exact OpenTelemetry exporter and backend choice
+- Exact OpenTelemetry exporter and telemetry backend choice
 - Exact iOS share-extension implementation details and limits
 - Exact Android share-intent implementation details and limits
 - Exact mobile file download/storage UX inside Capacitor
 - Exact macOS app window/popover UX for received text and file items
-- Whether a future Chromium extension should talk directly to the server or hand off to the macOS app for send actions
+- Whether a future Chromium extension should talk directly to the Relay Hub or hand off to the macOS app for send actions

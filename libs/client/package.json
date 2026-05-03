@@ -31,16 +31,16 @@
     "lint:fix": "pnpm run lint --fix"
   },
   "dependencies": {
-    "@content-relay/backend": "workspace:*",
+    "@content-relay/relay-hub": "workspace:*",
     "@content-relay/shared": "workspace:*",
     "hono": "catalog:",
     "temporal-polyfill": "^0.3.2"
   },
   "devDependencies": {
-    "@content-relay/backend-test-utils": "workspace:*",
     "@content-relay/config-eslint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
     "@content-relay/profile-store-node": "workspace:*",
+    "@content-relay/relay-hub-test-utils": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "eslint": "catalog:",

@@ -145,7 +145,7 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
     let (data, response) = try await session.data(for: request)
 
     guard let httpResponse = response as? HTTPURLResponse else {
-      throw RelayAPIError(statusCode: -1, message: "The relay server did not return an HTTP response.")
+      throw RelayAPIError(statusCode: -1, message: "The Relay Hub did not return an HTTP response.")
     }
 
     guard (200...299).contains(httpResponse.statusCode) else {
@@ -163,7 +163,7 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
   ) throws -> URLRequest {
     let normalizedPath = path.hasPrefix("/") ? path : "/\(path)"
 
-    guard let url = URL(string: normalizedPath, relativeTo: credentials.serverBaseURL)?.absoluteURL else {
+    guard let url = URL(string: normalizedPath, relativeTo: credentials.relayHubBaseURL)?.absoluteURL else {
       throw RelayAPIError(statusCode: -1, message: "The relay request URL could not be constructed.")
     }
 

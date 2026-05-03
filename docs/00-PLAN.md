@@ -10,7 +10,7 @@ Supported recipient platforms:
 - **iOS** via the shared **Capacitor Mobile App**
 - **macOS** via a native **menu bar app**
 
-The central server runs on a **Raspberry Pi inside the Tailnet**.
+The central **Relay Hub** runs on a **Raspberry Pi inside the Tailnet**.
 
 ## Desired behavior
 
@@ -33,7 +33,7 @@ The central server runs on a **Raspberry Pi inside the Tailnet**.
 
 ### Delivery expectations
 
-- The server stores every shared item locally.
+- The Relay Hub stores every shared item locally.
 - If the recipient is offline, delivery is retried when it reconnects.
 - The system acts as a permanent archive until items are manually deleted.
 - Delivery is **at-least-once**; clients must deduplicate by delivery ID.
@@ -65,7 +65,7 @@ Initial send surfaces should include:
 ### Headless validation surface
 
 - The CLI is the **primary early development and testing surface**.
-- It must be possible to exercise the real server from the terminal without running the macOS app or the Capacitor mobile app.
+- It must be possible to exercise the real Relay Hub from the terminal without running the macOS app or the Capacitor mobile app.
 - The CLI should support multiple locally stored registered-device profiles so the developer can simulate devices such as:
   - `cli`
   - `macos`
@@ -86,15 +86,15 @@ Initial send surfaces should include:
   - notification permission must be granted
   - native push registration must succeed
   - the push token must be uploaded during registration
-  - the server must not create a partially registered mobile device
-- If mobile registration fails before the final server registration step, the invite remains unused.
+  - the Relay Hub must not create a partially registered mobile device
+- If mobile registration fails before the final Relay Hub registration step, the invite remains unused.
 
 ### Connectivity and trust model
 
 - The system is **Tailnet-only**.
 - Every participating device must have **Tailscale installed and connected**.
 - Clients identify themselves with their registered **device ID** over the Tailnet.
-- No public internet fallback for the Pi server.
+- No public internet fallback for the Pi Relay Hub.
 
 ### UI design principles
 
@@ -178,7 +178,7 @@ The most important remaining feasibility watch areas are:
 
 The macOS app should still get a small early prototype, but it is no longer the architectural gate for the project.
 
-## Server architecture
+## Relay Hub architecture
 
 ### Stack
 
@@ -262,17 +262,17 @@ Semantics:
 
 ### Recommended flow
 
-1. Sender uploads item to server
-2. Server persists item and target deliveries
-3. Server attempts a **best-effort immediate wake/notification** for mobile recipients
-4. Recipient fetches authoritative item state from the server
+1. Sender uploads item to the Relay Hub
+2. The Relay Hub persists the item and target deliveries
+3. The Relay Hub attempts a **best-effort immediate wake/notification** for mobile recipients
+4. Recipient fetches authoritative item state from the Relay Hub
 5. Recipient acknowledges delivery
 6. Recipient marks viewed after user open
 
 ### Sender-side semantics
 
-- Send succeeds when the server has **accepted and stored** the item.
-- If the server is unreachable while sending, **fail immediately with a clear error**.
+- Send succeeds when the Relay Hub has **accepted and stored** the item.
+- If the Relay Hub is unreachable while sending, **fail immediately with a clear error**.
 - If immediate mobile push wake fails, send still succeeds once the item is durably stored.
 - Sender should be able to inspect **per-device status** later:
   - pending
@@ -296,14 +296,14 @@ Defer browser-specific send affordances such as the following to a possible futu
 
 ## Suggested milestone plan
 
-### Milestone 0: Core backend foundation + headless CLI test harness
+### Milestone 0: Core Relay Hub foundation + headless CLI test harness
 
-Goal: build the first complete vertical slice through the system so the developer can validate the real server and core product behavior before native clients exist.
+Goal: build the first complete vertical slice through the system so the developer can validate the real Relay Hub and core product behavior before native clients exist.
 
 Deliverables:
 
 - CLI spec locked in [02-CLI-SPEC.md](./02-CLI-SPEC.md)
-- Node.js / TypeScript server
+- Node.js / TypeScript Relay Hub
 - SQLite schema
 - filesystem blob storage
 - invite creation + device registration
@@ -318,7 +318,7 @@ Deliverables:
 - CLI receive flows for pending fetch, ack, viewed, and file download
 - platform-profile simulation for `cli`, `macos`, `ios`, and `android`
 - end-to-end test scenarios covering multi-target sends, offline receive, delivery deduplication, and multi-file bundles
-- backend hardening around the first headless vertical slice
+- Relay Hub hardening around the first headless vertical slice
 
 ### Milestone 1: macOS app shell
 
@@ -340,7 +340,7 @@ Deliverables:
 - file upload from the app UI
 - receive URL/text/file according to chosen behavior
 - deduplication by delivery ID
-- status updates back to server
+- status updates back to the Relay Hub
 - browser-specific send integration explicitly deferred to a possible future Chromium extension
 
 ### Milestone 3: shared mobile app foundation
@@ -360,7 +360,7 @@ Deliverables:
 - text detail screen
 - file detail / download screen
 - URL handoff to the default browser
-- proper error handling for Tailnet/server unavailability
+- proper error handling for Tailnet/Relay Hub unavailability
 
 ### Milestone 4: shared mobile send flows
 
@@ -421,7 +421,7 @@ This is not final, but it is the shape the implementation should likely converge
 
 ## Non-goals for v1
 
-- Public internet access to the Pi server
+- Public internet access to the Pi Relay Hub
 - Complex auth beyond Tailnet-only device identity
 - URL metadata scraping
 - Local recipient archive/cache
@@ -451,4 +451,4 @@ The system is successful when all of the following are true:
 
 ## Recommended immediate next step
 
-Implement **Milestone 0: Core backend foundation + headless CLI test harness** first as the initial vertical slice through the system. Build just enough backend surface and CLI capability to support real registration, send, receive, ack, viewed, inspection, and file-download flows from the terminal.
+Implement **Milestone 0: Core Relay Hub foundation + headless CLI test harness** first as the initial vertical slice through the system. Build just enough Relay Hub surface and CLI capability to support real registration, send, receive, ack, viewed, inspection, and file-download flows from the terminal.

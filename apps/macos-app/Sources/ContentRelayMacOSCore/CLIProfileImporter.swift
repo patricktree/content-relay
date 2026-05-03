@@ -63,21 +63,21 @@ private struct PersistedProfilesFile: Decodable {
 
 private struct PersistedCLIProfile: Decodable {
   let profileId: String
-  let serverBaseUrl: String
+  let relayHubBaseUrl: String
   let deviceId: String
   let nickname: String
   let platform: String
 
   func toImportedProfile() throws -> ImportedCLIProfile {
-    guard let serverBaseURL = URL(string: serverBaseUrl) else {
+    guard let relayHubBaseURL = URL(string: relayHubBaseUrl) else {
       throw CLIProfileImportError.invalidProfilesFile(
-        "The imported CLI profile has an invalid server URL: \(serverBaseUrl)"
+        "The imported CLI profile has an invalid Relay Hub URL: \(relayHubBaseUrl)"
       )
     }
 
     return ImportedCLIProfile(
       nickname: nickname,
-      serverBaseURL: serverBaseURL,
+      relayHubBaseURL: relayHubBaseURL,
       deviceId: deviceId
     )
   }

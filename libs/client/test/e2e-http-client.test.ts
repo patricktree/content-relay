@@ -15,7 +15,7 @@ import {
   createHonoApp,
   runWithDiContainer,
   startServer,
-} from "@content-relay/backend";
+} from "@content-relay/relay-hub";
 import type { DeliveryListState, DeviceSummary } from "@content-relay/shared";
 
 import {
@@ -37,23 +37,23 @@ import {
 } from "./test-helpers.ts";
 
 test("milestone 0 flow covers registration, send, receive, viewed, and file download", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, rootDirectory, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ profileStore, rootDirectory, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
       makeActive: true,
     });
     const iosProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
     const androidProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer Pixel Sim",
       platform: "android",
     });
@@ -193,13 +193,13 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
 });
 
 test("invite codes are single-use", async () => {
-  await withRelayTestEnvironment(async ({ serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ relayHubBaseUrl }) => {
     const invite = await parseOkResponse(
-      rpcClient.createInvite(serverBaseUrl, { expiresInSeconds: 900 }),
+      rpcClient.createInvite(relayHubBaseUrl, { expiresInSeconds: 900 }),
     );
 
     await parseOkResponse(
-      rpcClient.registerDevice(serverBaseUrl, {
+      rpcClient.registerDevice(relayHubBaseUrl, {
         nickname: "Developer CLI",
         platform: "cli",
         invite: invite.inviteCode,
@@ -207,7 +207,7 @@ test("invite codes are single-use", async () => {
     );
 
     const registerAgainPromise = parseOkResponse(
-      rpcClient.registerDevice(serverBaseUrl, {
+      rpcClient.registerDevice(relayHubBaseUrl, {
         nickname: "Developer iPhone Sim",
         platform: "ios",
         invite: invite.inviteCode,
@@ -227,17 +227,17 @@ test("invite codes are single-use", async () => {
 });
 
 test("text send rejects a single-line URL payload", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
       makeActive: true,
     });
     const receiverProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
@@ -261,17 +261,17 @@ test("text send rejects a single-line URL payload", async () => {
 });
 
 test("macos simulated receive auto-marks text and url deliveries viewed", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
       makeActive: true,
     });
     const macosProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer Mac",
       platform: "macos",
     });
@@ -322,17 +322,17 @@ test("macos simulated receive auto-marks text and url deliveries viewed", async 
 });
 
 test("deleting a device invalidates its authentication and hides it from active device listings", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
       makeActive: true,
     });
     const receiverProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
@@ -363,10 +363,10 @@ test("deleting a device invalidates its authentication and hides it from active 
 });
 
 test("push tokens can be upserted for the authenticated device", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const profile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
@@ -411,17 +411,17 @@ test("push tokens can be upserted for the authenticated device", async () => {
 });
 
 test("device routes support rename, listing, and same-device identity guards", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
       makeActive: true,
     });
     const receiverProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
@@ -496,17 +496,17 @@ test("device routes support rename, listing, and same-device identity guards", a
 });
 
 test("item and delivery routes list and fetch the authenticated device resources", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
       makeActive: true,
     });
     const receiverProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
@@ -584,17 +584,17 @@ test("item and delivery routes list and fetch the authenticated device resources
 });
 
 test("file uploads reject empty payloads and write single-file downloads", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, rootDirectory, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ profileStore, rootDirectory, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
       makeActive: true,
     });
     const receiverProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer Android Sim",
       platform: "android",
     });
@@ -651,23 +651,23 @@ test("file uploads reject empty payloads and write single-file downloads", async
 });
 
 test("receivePendingDeliveries respects deduplication, simulation, and acknowledgement options", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
       makeActive: true,
     });
     const iosProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
     const macosProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer Mac",
       platform: "macos",
     });
@@ -754,22 +754,22 @@ test("receivePendingDeliveries respects deduplication, simulation, and acknowled
 });
 
 test("validation errors are returned for JSON, query, and multipart routes", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
       makeActive: true,
     });
     const receiverProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
 
-    const invalidInviteResponse = await createHttpClient({ serverBaseUrl }).invites.$post({
+    const invalidInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 0 },
     });
     expect(invalidInviteResponse.status).toBe(400);
@@ -778,7 +778,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
     });
 
     const invalidRegisterResponse = await createHttpClient({
-      serverBaseUrl,
+      relayHubBaseUrl,
     }).devices.register.$post({
       json: {
         nickname: "   ",
@@ -793,7 +793,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
     });
 
     const missingMobilePushRegistrationResponse = await createHttpClient({
-      serverBaseUrl,
+      relayHubBaseUrl,
     }).devices.register.$post({
       json: {
         nickname: "Developer iPhone Sim",
@@ -807,7 +807,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
     });
 
     const nonMobilePushRegistrationResponse = await createHttpClient({
-      serverBaseUrl,
+      relayHubBaseUrl,
     }).devices.register.$post({
       json: {
         nickname: "Developer CLI",
@@ -896,7 +896,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       "files",
       new File([Buffer.from("alpha\n")], "alpha.txt", { type: "text/plain" }),
     );
-    const missingTargetDeviceIdsResponse = await fetch(`${serverBaseUrl}/items/file`, {
+    const missingTargetDeviceIdsResponse = await fetch(`${relayHubBaseUrl}/items/file`, {
       method: "POST",
       headers: createAuthHeaders(senderProfile),
       body: missingTargetDeviceIdsForm,
@@ -912,7 +912,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       "files",
       new File([Buffer.from("beta\n")], "beta.txt", { type: "text/plain" }),
     );
-    const invalidJsonTargetDeviceIdsResponse = await fetch(`${serverBaseUrl}/items/file`, {
+    const invalidJsonTargetDeviceIdsResponse = await fetch(`${relayHubBaseUrl}/items/file`, {
       method: "POST",
       headers: createAuthHeaders(senderProfile),
       body: invalidJsonTargetDeviceIdsForm,
@@ -928,7 +928,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       "files",
       new File([Buffer.from("gamma\n")], "gamma.txt", { type: "text/plain" }),
     );
-    const invalidTargetDeviceIdArrayResponse = await fetch(`${serverBaseUrl}/items/file`, {
+    const invalidTargetDeviceIdArrayResponse = await fetch(`${relayHubBaseUrl}/items/file`, {
       method: "POST",
       headers: createAuthHeaders(senderProfile),
       body: invalidTargetDeviceIdArrayForm,
@@ -942,7 +942,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
 
     const noFilesForm = new FormData();
     noFilesForm.set("targetDeviceIds", JSON.stringify([receiverProfile.deviceId]));
-    const noFilesResponse = await fetch(`${serverBaseUrl}/items/file`, {
+    const noFilesResponse = await fetch(`${relayHubBaseUrl}/items/file`, {
       method: "POST",
       headers: createAuthHeaders(senderProfile),
       body: noFilesForm,
@@ -955,7 +955,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
     const invalidFileFieldForm = new FormData();
     invalidFileFieldForm.set("targetDeviceIds", JSON.stringify([receiverProfile.deviceId]));
     invalidFileFieldForm.set("files", "not-a-file");
-    const invalidFileFieldResponse = await fetch(`${serverBaseUrl}/items/file`, {
+    const invalidFileFieldResponse = await fetch(`${relayHubBaseUrl}/items/file`, {
       method: "POST",
       headers: createAuthHeaders(senderProfile),
       body: invalidFileFieldForm,
@@ -968,17 +968,17 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
 });
 
 test("resource lookup routes reject unknown resources and invalid file downloads", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
       makeActive: true,
     });
     const receiverProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
@@ -1036,8 +1036,8 @@ test("resource lookup routes reject unknown resources and invalid file downloads
 });
 
 test("items, deliveries, and devices collection routes reject unauthenticated requests", async () => {
-  await withRelayTestEnvironment(async ({ serverBaseUrl }) => {
-    const client = createHttpClient({ serverBaseUrl });
+  await withRelayTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const client = createHttpClient({ relayHubBaseUrl });
 
     const listDevicesPromise = parseOkResponse(client.devices.$get());
     await expect(listDevicesPromise).rejects.toThrow(ParseOkResponseDetailedError);
@@ -1075,10 +1075,10 @@ test("items, deliveries, and devices collection routes reject unauthenticated re
 });
 
 test("http client trims trailing slashes and preserves raw text and malformed JSON responses", async () => {
-  await withRelayTestEnvironment(async ({ serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ relayHubBaseUrl }) => {
     const invite = await parseOkResponse(
       createHttpClient({
-        serverBaseUrl: `${serverBaseUrl}/`,
+        relayHubBaseUrl: `${relayHubBaseUrl}/`,
       }).invites.$post({
         json: { expiresInSeconds: 900 },
       }),
@@ -1087,7 +1087,7 @@ test("http client trims trailing slashes and preserves raw text and malformed JS
 
     const registration = await parseOkResponse(
       createHttpClient({
-        serverBaseUrl: `${serverBaseUrl}/`,
+        relayHubBaseUrl: `${relayHubBaseUrl}/`,
       }).devices.register.$post({
         json: {
           nickname: "Trailing Slash Device",
@@ -1096,7 +1096,7 @@ test("http client trims trailing slashes and preserves raw text and malformed JS
         },
       }),
     );
-    expect(registration.serverBaseUrl).toBe(serverBaseUrl);
+    expect(registration.relayHubBaseUrl).toBe(relayHubBaseUrl);
   });
 
   const port = await allocatePort();
@@ -1118,7 +1118,7 @@ test("http client trims trailing slashes and preserves raw text and malformed JS
   await listenOnPort(server, port);
 
   try {
-    const client = createHttpClient({ serverBaseUrl: `http://127.0.0.1:${port}/` });
+    const client = createHttpClient({ relayHubBaseUrl: `http://127.0.0.1:${port}/` });
 
     const textErrorPromise = parseOkResponse(
       client.invites.$post({ json: { expiresInSeconds: 900 } }),
@@ -1153,11 +1153,11 @@ test("server errors are normalized to JSON 500 responses", async () => {
 
   try {
     const port = await allocatePort();
-    const serverBaseUrl = `http://127.0.0.1:${port}`;
+    const relayHubBaseUrl = `http://127.0.0.1:${port}`;
 
     const diContainer = await createDependencyContainer({
-      dataDirectory: path.join(rootDirectory, "server-data"),
-      serverBaseUrl,
+      dataDirectory: path.join(rootDirectory, "relay-hub-data"),
+      relayHubBaseUrl,
     });
 
     await runWithDiContainer(diContainer, async () => {
@@ -1169,7 +1169,7 @@ test("server errors are normalized to JSON 500 responses", async () => {
       const server = await startServer({ app, port });
 
       try {
-        const genericErrorResponse = await fetch(`${serverBaseUrl}/boom`);
+        const genericErrorResponse = await fetch(`${relayHubBaseUrl}/boom`);
         expect(genericErrorResponse.status).toBe(500);
         expect(await genericErrorResponse.json()).toMatchObject({
           error: expect.stringMatching(/^boom$/i),
@@ -1184,23 +1184,23 @@ test("server errors are normalized to JSON 500 responses", async () => {
 });
 
 test("profile store reuses remembered targets when no explicit targets are provided", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, serverBaseUrl }) => {
+  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
       makeActive: true,
     });
     const iosProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
     const androidProfile = await registerProfile({
       profileStore,
-      serverBaseUrl,
+      relayHubBaseUrl,
       nickname: "Developer Pixel Sim",
       platform: "android",
     });

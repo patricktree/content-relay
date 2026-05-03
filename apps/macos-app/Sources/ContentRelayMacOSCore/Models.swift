@@ -127,23 +127,23 @@ public struct RelayErrorResponse: Codable, Sendable {
 }
 
 public struct RelayDeviceCredentials: Equatable, Sendable {
-  public let serverBaseURL: URL
+  public let relayHubBaseURL: URL
   public let deviceId: String
 
-  public init(serverBaseURL: URL, deviceId: String) {
-    self.serverBaseURL = serverBaseURL
+  public init(relayHubBaseURL: URL, deviceId: String) {
+    self.relayHubBaseURL = relayHubBaseURL
     self.deviceId = deviceId
   }
 }
 
 public struct ImportedCLIProfile: Equatable, Sendable {
   public let nickname: String
-  public let serverBaseURL: URL
+  public let relayHubBaseURL: URL
   public let deviceId: String
 
-  public init(nickname: String, serverBaseURL: URL, deviceId: String) {
+  public init(nickname: String, relayHubBaseURL: URL, deviceId: String) {
     self.nickname = nickname
-    self.serverBaseURL = serverBaseURL
+    self.relayHubBaseURL = relayHubBaseURL
     self.deviceId = deviceId
   }
 }

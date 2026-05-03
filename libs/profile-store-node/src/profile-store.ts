@@ -14,7 +14,7 @@ type PersistedProfiles = {
 
 export type LocalDeviceProfile = {
   profileId: string;
-  serverBaseUrl: string;
+  relayHubBaseUrl: string;
   deviceId: string;
   nickname: string;
   platform: DevicePlatform;
@@ -86,7 +86,7 @@ export class LocalDeviceProfileStore {
     const now = Temporal.Now.instant().toString();
     const nextProfile: LocalDeviceProfile = {
       profileId: input.profileId ?? input.deviceId,
-      serverBaseUrl: normalizeServerBaseUrl(input.serverBaseUrl),
+      relayHubBaseUrl: normalizeRelayHubBaseUrl(input.relayHubBaseUrl),
       deviceId: input.deviceId,
       nickname: input.nickname,
       platform: input.platform,
@@ -247,7 +247,7 @@ export class LocalDeviceProfileStore {
   ): Promise<LocalDeviceProfile> {
     return await this.updateProfile(profileId, (profile) => ({
       ...profile,
-      serverBaseUrl: normalizeServerBaseUrl(registration.serverBaseUrl),
+      relayHubBaseUrl: normalizeRelayHubBaseUrl(registration.relayHubBaseUrl),
       deviceId: registration.deviceId,
       nickname: registration.nickname,
       platform: registration.platform,
@@ -303,6 +303,6 @@ function isMissingFileError(error: unknown): boolean {
   return error instanceof Error && "code" in error && error.code === "ENOENT";
 }
 
-function normalizeServerBaseUrl(serverBaseUrl: string): string {
-  return serverBaseUrl.replace(/\/$/, "");
+function normalizeRelayHubBaseUrl(relayHubBaseUrl: string): string {
+  return relayHubBaseUrl.replace(/\/$/, "");
 }

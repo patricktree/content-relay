@@ -42,9 +42,9 @@
     "commander": "^14.0.3"
   },
   "devDependencies": {
-    "@content-relay/backend-test-utils": "workspace:*",
     "@content-relay/config-eslint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
+    "@content-relay/relay-hub-test-utils": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "eslint": "catalog:",

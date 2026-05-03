@@ -52,7 +52,7 @@ type SerializedProfile = Pick<
   | "nickname"
   | "platform"
   | "deviceId"
-  | "serverBaseUrl"
+  | "relayHubBaseUrl"
   | "createdAt"
   | "updatedAt"
   | "lastUsedTargetDeviceIds"
@@ -69,7 +69,7 @@ const program = new Command()
   .showHelpAfterError()
   .addOption(new Option("--json", "emit JSON responses"))
   .addOption(
-    new Option("--server <url>", "server base URL for registration").argParser((value) =>
+    new Option("--relay-hub-url <url>", "Relay Hub base URL for registration").argParser((value) =>
       assertValidAbsoluteUrl(value),
     ),
   )
@@ -90,14 +90,14 @@ inviteCommand
   .description("Create an invite")
   .option("--expires-in <seconds>", "invite expiration in seconds", parsePositiveInteger)
   .action(async (options) => {
-    const serverBaseUrl = program.opts().server;
+    const relayHubBaseUrl = program.opts().relayHubUrl;
 
-    if (serverBaseUrl === undefined) {
-      throw new Error("Missing required --server <url> option.");
+    if (relayHubBaseUrl === undefined) {
+      throw new Error("Missing required --relay-hub-url <url> option.");
     }
 
     const invite = await parseOkResponse(
-      rpcClient.createInvite(serverBaseUrl, { expiresInSeconds: options.expiresIn ?? 900 }),
+      rpcClient.createInvite(relayHubBaseUrl, { expiresInSeconds: options.expiresIn ?? 900 }),
     );
 
     await writeSuccess(invite);
@@ -115,10 +115,10 @@ deviceCommand
   .option("--push-token <token>", "push token override for simulated mobile registration")
   .requiredOption("--invite <inviteCode>", "invite code")
   .action(async (options) => {
-    const serverBaseUrl = program.opts().server;
+    const relayHubBaseUrl = program.opts().relayHubUrl;
 
-    if (serverBaseUrl === undefined) {
-      throw new Error("Missing required --server <url> option.");
+    if (relayHubBaseUrl === undefined) {
+      throw new Error("Missing required --relay-hub-url <url> option.");
     }
 
     const pushRegistration = buildCliPushRegistration({
@@ -127,7 +127,7 @@ deviceCommand
       pushTokenOverride: options.pushToken,
     });
     const registration = await parseOkResponse(
-      rpcClient.registerDevice(serverBaseUrl, {
+      rpcClient.registerDevice(relayHubBaseUrl, {
         nickname: options.name,
         platform: options.platform,
         invite: options.invite,
@@ -162,7 +162,7 @@ deviceCommand
 
 deviceCommand
   .command("list")
-  .description("List registered devices from the server")
+  .description("List registered devices from the Relay Hub")
   .action(async () => {
     const profile = await resolveSelectedProfile();
     const devices = await parseOkResponse(rpcClient.listDevices(profile));
@@ -581,7 +581,7 @@ function serializeProfile(
     nickname: profile.nickname,
     platform: profile.platform,
     deviceId: profile.deviceId,
-    serverBaseUrl: profile.serverBaseUrl,
+    relayHubBaseUrl: profile.relayHubBaseUrl,
     createdAt: profile.createdAt,
     updatedAt: profile.updatedAt,
     lastUsedTargetDeviceIds: profile.lastUsedTargetDeviceIds,
