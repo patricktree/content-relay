@@ -373,8 +373,12 @@ private struct SettingsView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
-      Text("Content Relay")
-        .font(.system(size: 24, weight: .semibold))
+      HStack(alignment: .center, spacing: 12) {
+        BrandMark(size: 28)
+
+        Text("Content Relay")
+          .font(.system(size: 24, weight: .semibold))
+      }
 
       Text("Import an active `macos` CLI profile or paste the credentials manually.")
         .font(.system(size: 14))
@@ -435,8 +439,12 @@ private struct ComposeView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
-      Text("Send with Content Relay")
-        .font(.system(size: 24, weight: .semibold))
+      HStack(alignment: .center, spacing: 12) {
+        BrandMark(size: 28)
+
+        Text("Send with Content Relay")
+          .font(.system(size: 24, weight: .semibold))
+      }
 
       Picker("Payload Type", selection: $viewModel.selectedPayloadType) {
         ForEach(ComposePayloadType.allCases) { payloadType in

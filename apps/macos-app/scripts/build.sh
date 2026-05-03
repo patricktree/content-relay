@@ -18,6 +18,8 @@ mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 
 cp "$BUILD_DIR/$EXECUTABLE_NAME" "$APP_DIR/Contents/MacOS/$EXECUTABLE_NAME"
 cp "$PACKAGE_DIR/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
+cp "$PACKAGE_DIR/Resources/ContentRelay.icns" "$APP_DIR/Contents/Resources/ContentRelay.icns"
+cp "$PACKAGE_DIR/Resources/content-relay-logo.pdf" "$APP_DIR/Contents/Resources/content-relay-logo.pdf"
 
 plutil -lint "$APP_DIR/Contents/Info.plist" >/dev/null
 

@@ -152,7 +152,9 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
   }
 
   private func configureMenuBar() {
-    statusItem.button?.title = "Relay"
+    statusItem.button?.image = ContentRelayBranding.makeStatusBarImage()
+    statusItem.button?.imagePosition = .imageOnly
+    statusItem.button?.title = ""
 
     statusLineMenuItem.isEnabled = false
     lastErrorMenuItem.isEnabled = false

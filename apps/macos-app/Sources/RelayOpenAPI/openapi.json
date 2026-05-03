@@ -24,7 +24,9 @@
   "paths": {
     "/invites": {
       "post": {
-        "tags": ["Invites"],
+        "tags": [
+          "Invites"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -62,7 +64,11 @@
                       "type": "string"
                     }
                   },
-                  "required": ["inviteCode", "inviteUrl", "expiresAt"]
+                  "required": [
+                    "inviteCode",
+                    "inviteUrl",
+                    "expiresAt"
+                  ]
                 }
               }
             }
@@ -78,7 +84,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -94,7 +102,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -104,7 +114,9 @@
     },
     "/devices/register": {
       "post": {
-        "tags": ["Devices"],
+        "tags": [
+          "Devices"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -118,7 +130,13 @@
                   },
                   "platform": {
                     "type": "string",
-                    "enum": ["cli", "macos", "ios", "android", "generic"]
+                    "enum": [
+                      "cli",
+                      "macos",
+                      "ios",
+                      "android",
+                      "generic"
+                    ]
                   },
                   "invite": {
                     "type": "string",
@@ -132,10 +150,16 @@
                         "minLength": 1
                       }
                     },
-                    "required": ["token"]
+                    "required": [
+                      "token"
+                    ]
                   }
                 },
-                "required": ["nickname", "platform", "invite"]
+                "required": [
+                  "nickname",
+                  "platform",
+                  "invite"
+                ]
               }
             }
           }
@@ -156,7 +180,13 @@
                     },
                     "platform": {
                       "type": "string",
-                      "enum": ["cli", "macos", "ios", "android", "generic"]
+                      "enum": [
+                        "cli",
+                        "macos",
+                        "ios",
+                        "android",
+                        "generic"
+                      ]
                     },
                     "relayHubBaseUrl": {
                       "type": "string",
@@ -166,7 +196,13 @@
                       "type": "string"
                     }
                   },
-                  "required": ["deviceId", "nickname", "platform", "relayHubBaseUrl", "createdAt"]
+                  "required": [
+                    "deviceId",
+                    "nickname",
+                    "platform",
+                    "relayHubBaseUrl",
+                    "createdAt"
+                  ]
                 }
               }
             }
@@ -182,7 +218,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -198,7 +236,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -214,7 +254,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -230,7 +272,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -240,7 +284,9 @@
     },
     "/devices": {
       "get": {
-        "tags": ["Devices"],
+        "tags": [
+          "Devices"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -264,7 +310,13 @@
                       },
                       "platform": {
                         "type": "string",
-                        "enum": ["cli", "macos", "ios", "android", "generic"]
+                        "enum": [
+                          "cli",
+                          "macos",
+                          "ios",
+                          "android",
+                          "generic"
+                        ]
                       },
                       "createdAt": {
                         "type": "string"
@@ -273,7 +325,13 @@
                         "type": "string"
                       }
                     },
-                    "required": ["deviceId", "nickname", "platform", "createdAt", "updatedAt"]
+                    "required": [
+                      "deviceId",
+                      "nickname",
+                      "platform",
+                      "createdAt",
+                      "updatedAt"
+                    ]
                   }
                 }
               }
@@ -290,7 +348,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -306,7 +366,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -316,7 +378,9 @@
     },
     "/devices/{deviceId}": {
       "patch": {
-        "tags": ["Devices"],
+        "tags": [
+          "Devices"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -346,7 +410,9 @@
                     "minLength": 1
                   }
                 },
-                "required": ["nickname"]
+                "required": [
+                  "nickname"
+                ]
               }
             }
           }
@@ -367,7 +433,13 @@
                     },
                     "platform": {
                       "type": "string",
-                      "enum": ["cli", "macos", "ios", "android", "generic"]
+                      "enum": [
+                        "cli",
+                        "macos",
+                        "ios",
+                        "android",
+                        "generic"
+                      ]
                     },
                     "createdAt": {
                       "type": "string"
@@ -376,7 +448,13 @@
                       "type": "string"
                     }
                   },
-                  "required": ["deviceId", "nickname", "platform", "createdAt", "updatedAt"]
+                  "required": [
+                    "deviceId",
+                    "nickname",
+                    "platform",
+                    "createdAt",
+                    "updatedAt"
+                  ]
                 }
               }
             }
@@ -392,7 +470,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -408,7 +488,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -424,7 +506,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -440,7 +524,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -456,7 +542,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -464,7 +552,9 @@
         }
       },
       "delete": {
-        "tags": ["Devices"],
+        "tags": [
+          "Devices"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -497,7 +587,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -513,7 +605,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -529,7 +623,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -545,7 +641,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -555,7 +653,9 @@
     },
     "/devices/{deviceId}/push-token": {
       "post": {
-        "tags": ["Devices"],
+        "tags": [
+          "Devices"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -585,7 +685,9 @@
                     "minLength": 1
                   }
                 },
-                "required": ["token"]
+                "required": [
+                  "token"
+                ]
               }
             }
           }
@@ -605,7 +707,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -621,7 +725,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -637,7 +743,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -653,7 +761,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -669,7 +779,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -679,7 +791,9 @@
     },
     "/items/text": {
       "post": {
-        "tags": ["Items"],
+        "tags": [
+          "Items"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -708,7 +822,10 @@
                     "minItems": 1
                   }
                 },
-                "required": ["text", "targetDeviceIds"]
+                "required": [
+                  "text",
+                  "targetDeviceIds"
+                ]
               }
             }
           }
@@ -729,7 +846,11 @@
                         },
                         "type": {
                           "type": "string",
-                          "enum": ["text", "url", "file"]
+                          "enum": [
+                            "text",
+                            "url",
+                            "file"
+                          ]
                         },
                         "title": {
                           "type": "string",
@@ -817,7 +938,11 @@
                           },
                           "state": {
                             "type": "string",
-                            "enum": ["pending", "delivered", "viewed"]
+                            "enum": [
+                              "pending",
+                              "delivered",
+                              "viewed"
+                            ]
                           },
                           "createdAt": {
                             "type": "string"
@@ -838,7 +963,11 @@
                               },
                               "type": {
                                 "type": "string",
-                                "enum": ["text", "url", "file"]
+                                "enum": [
+                                  "text",
+                                  "url",
+                                  "file"
+                                ]
                               },
                               "title": {
                                 "type": "string",
@@ -924,7 +1053,10 @@
                       }
                     }
                   },
-                  "required": ["item", "deliveries"]
+                  "required": [
+                    "item",
+                    "deliveries"
+                  ]
                 }
               }
             }
@@ -940,7 +1072,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -956,7 +1090,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -972,7 +1108,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -982,7 +1120,9 @@
     },
     "/items/url": {
       "post": {
-        "tags": ["Items"],
+        "tags": [
+          "Items"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -1011,7 +1151,10 @@
                     "minItems": 1
                   }
                 },
-                "required": ["url", "targetDeviceIds"]
+                "required": [
+                  "url",
+                  "targetDeviceIds"
+                ]
               }
             }
           }
@@ -1032,7 +1175,11 @@
                         },
                         "type": {
                           "type": "string",
-                          "enum": ["text", "url", "file"]
+                          "enum": [
+                            "text",
+                            "url",
+                            "file"
+                          ]
                         },
                         "title": {
                           "type": "string",
@@ -1120,7 +1267,11 @@
                           },
                           "state": {
                             "type": "string",
-                            "enum": ["pending", "delivered", "viewed"]
+                            "enum": [
+                              "pending",
+                              "delivered",
+                              "viewed"
+                            ]
                           },
                           "createdAt": {
                             "type": "string"
@@ -1141,7 +1292,11 @@
                               },
                               "type": {
                                 "type": "string",
-                                "enum": ["text", "url", "file"]
+                                "enum": [
+                                  "text",
+                                  "url",
+                                  "file"
+                                ]
                               },
                               "title": {
                                 "type": "string",
@@ -1227,7 +1382,10 @@
                       }
                     }
                   },
-                  "required": ["item", "deliveries"]
+                  "required": [
+                    "item",
+                    "deliveries"
+                  ]
                 }
               }
             }
@@ -1243,7 +1401,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -1259,7 +1419,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -1275,7 +1437,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -1285,7 +1449,9 @@
     },
     "/items/file": {
       "post": {
-        "tags": ["Items"],
+        "tags": [
+          "Items"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -1334,7 +1500,11 @@
                         },
                         "type": {
                           "type": "string",
-                          "enum": ["text", "url", "file"]
+                          "enum": [
+                            "text",
+                            "url",
+                            "file"
+                          ]
                         },
                         "title": {
                           "type": "string",
@@ -1422,7 +1592,11 @@
                           },
                           "state": {
                             "type": "string",
-                            "enum": ["pending", "delivered", "viewed"]
+                            "enum": [
+                              "pending",
+                              "delivered",
+                              "viewed"
+                            ]
                           },
                           "createdAt": {
                             "type": "string"
@@ -1443,7 +1617,11 @@
                               },
                               "type": {
                                 "type": "string",
-                                "enum": ["text", "url", "file"]
+                                "enum": [
+                                  "text",
+                                  "url",
+                                  "file"
+                                ]
                               },
                               "title": {
                                 "type": "string",
@@ -1529,7 +1707,10 @@
                       }
                     }
                   },
-                  "required": ["item", "deliveries"]
+                  "required": [
+                    "item",
+                    "deliveries"
+                  ]
                 }
               }
             }
@@ -1545,7 +1726,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -1561,7 +1744,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -1577,7 +1762,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -1587,7 +1774,9 @@
     },
     "/deliveries/pending": {
       "get": {
-        "tags": ["Deliveries"],
+        "tags": [
+          "Deliveries"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -1617,7 +1806,11 @@
                           },
                           "state": {
                             "type": "string",
-                            "enum": ["pending", "delivered", "viewed"]
+                            "enum": [
+                              "pending",
+                              "delivered",
+                              "viewed"
+                            ]
                           },
                           "createdAt": {
                             "type": "string"
@@ -1638,7 +1831,11 @@
                               },
                               "type": {
                                 "type": "string",
-                                "enum": ["text", "url", "file"]
+                                "enum": [
+                                  "text",
+                                  "url",
+                                  "file"
+                                ]
                               },
                               "title": {
                                 "type": "string",
@@ -1724,7 +1921,9 @@
                       }
                     }
                   },
-                  "required": ["deliveries"]
+                  "required": [
+                    "deliveries"
+                  ]
                 }
               }
             }
@@ -1740,7 +1939,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -1756,7 +1957,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -1766,7 +1969,9 @@
     },
     "/deliveries": {
       "get": {
-        "tags": ["Deliveries"],
+        "tags": [
+          "Deliveries"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -1776,7 +1981,12 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["pending", "delivered", "viewed", "all"]
+              "enum": [
+                "pending",
+                "delivered",
+                "viewed",
+                "all"
+              ]
             },
             "required": false,
             "name": "state",
@@ -1818,7 +2028,11 @@
                           },
                           "state": {
                             "type": "string",
-                            "enum": ["pending", "delivered", "viewed"]
+                            "enum": [
+                              "pending",
+                              "delivered",
+                              "viewed"
+                            ]
                           },
                           "createdAt": {
                             "type": "string"
@@ -1839,7 +2053,11 @@
                               },
                               "type": {
                                 "type": "string",
-                                "enum": ["text", "url", "file"]
+                                "enum": [
+                                  "text",
+                                  "url",
+                                  "file"
+                                ]
                               },
                               "title": {
                                 "type": "string",
@@ -1925,7 +2143,9 @@
                       }
                     }
                   },
-                  "required": ["deliveries"]
+                  "required": [
+                    "deliveries"
+                  ]
                 }
               }
             }
@@ -1941,7 +2161,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -1957,7 +2179,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -1973,7 +2197,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -1983,7 +2209,9 @@
     },
     "/deliveries/{deliveryId}": {
       "get": {
-        "tags": ["Deliveries"],
+        "tags": [
+          "Deliveries"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -2023,7 +2251,11 @@
                         },
                         "state": {
                           "type": "string",
-                          "enum": ["pending", "delivered", "viewed"]
+                          "enum": [
+                            "pending",
+                            "delivered",
+                            "viewed"
+                          ]
                         },
                         "createdAt": {
                           "type": "string"
@@ -2044,7 +2276,11 @@
                             },
                             "type": {
                               "type": "string",
-                              "enum": ["text", "url", "file"]
+                              "enum": [
+                                "text",
+                                "url",
+                                "file"
+                              ]
                             },
                             "title": {
                               "type": "string",
@@ -2129,7 +2365,9 @@
                       ]
                     }
                   },
-                  "required": ["delivery"]
+                  "required": [
+                    "delivery"
+                  ]
                 }
               }
             }
@@ -2145,7 +2383,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2161,7 +2401,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2177,7 +2419,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2187,7 +2431,9 @@
     },
     "/deliveries/{deliveryId}/ack": {
       "post": {
-        "tags": ["Deliveries"],
+        "tags": [
+          "Deliveries"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -2227,7 +2473,11 @@
                         },
                         "state": {
                           "type": "string",
-                          "enum": ["pending", "delivered", "viewed"]
+                          "enum": [
+                            "pending",
+                            "delivered",
+                            "viewed"
+                          ]
                         },
                         "createdAt": {
                           "type": "string"
@@ -2248,7 +2498,11 @@
                             },
                             "type": {
                               "type": "string",
-                              "enum": ["text", "url", "file"]
+                              "enum": [
+                                "text",
+                                "url",
+                                "file"
+                              ]
                             },
                             "title": {
                               "type": "string",
@@ -2333,7 +2587,9 @@
                       ]
                     }
                   },
-                  "required": ["delivery"]
+                  "required": [
+                    "delivery"
+                  ]
                 }
               }
             }
@@ -2349,7 +2605,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2365,7 +2623,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2381,7 +2641,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2391,7 +2653,9 @@
     },
     "/deliveries/{deliveryId}/viewed": {
       "post": {
-        "tags": ["Deliveries"],
+        "tags": [
+          "Deliveries"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -2431,7 +2695,11 @@
                         },
                         "state": {
                           "type": "string",
-                          "enum": ["pending", "delivered", "viewed"]
+                          "enum": [
+                            "pending",
+                            "delivered",
+                            "viewed"
+                          ]
                         },
                         "createdAt": {
                           "type": "string"
@@ -2452,7 +2720,11 @@
                             },
                             "type": {
                               "type": "string",
-                              "enum": ["text", "url", "file"]
+                              "enum": [
+                                "text",
+                                "url",
+                                "file"
+                              ]
                             },
                             "title": {
                               "type": "string",
@@ -2537,7 +2809,9 @@
                       ]
                     }
                   },
-                  "required": ["delivery"]
+                  "required": [
+                    "delivery"
+                  ]
                 }
               }
             }
@@ -2553,7 +2827,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2569,7 +2845,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2585,7 +2863,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2595,7 +2875,9 @@
     },
     "/deliveries/{deliveryId}/download": {
       "get": {
-        "tags": ["Deliveries"],
+        "tags": [
+          "Deliveries"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -2629,7 +2911,11 @@
                         },
                         "type": {
                           "type": "string",
-                          "enum": ["text", "url", "file"]
+                          "enum": [
+                            "text",
+                            "url",
+                            "file"
+                          ]
                         },
                         "title": {
                           "type": "string",
@@ -2733,7 +3019,10 @@
                       }
                     }
                   },
-                  "required": ["item", "files"]
+                  "required": [
+                    "item",
+                    "files"
+                  ]
                 }
               }
             }
@@ -2749,7 +3038,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2765,7 +3056,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2781,7 +3074,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2791,7 +3086,9 @@
     },
     "/items": {
       "get": {
-        "tags": ["Items"],
+        "tags": [
+          "Items"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -2831,7 +3128,11 @@
                               },
                               "type": {
                                 "type": "string",
-                                "enum": ["text", "url", "file"]
+                                "enum": [
+                                  "text",
+                                  "url",
+                                  "file"
+                                ]
                               },
                               "title": {
                                 "type": "string",
@@ -2916,7 +3217,11 @@
                                 },
                                 "state": {
                                   "type": "string",
-                                  "enum": ["pending", "delivered", "viewed"]
+                                  "enum": [
+                                    "pending",
+                                    "delivered",
+                                    "viewed"
+                                  ]
                                 },
                                 "createdAt": {
                                   "type": "string"
@@ -2941,11 +3246,16 @@
                             }
                           }
                         },
-                        "required": ["item", "deliveries"]
+                        "required": [
+                          "item",
+                          "deliveries"
+                        ]
                       }
                     }
                   },
-                  "required": ["items"]
+                  "required": [
+                    "items"
+                  ]
                 }
               }
             }
@@ -2961,7 +3271,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2977,7 +3289,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -2993,7 +3307,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -3003,7 +3319,9 @@
     },
     "/items/{itemId}": {
       "get": {
-        "tags": ["Items"],
+        "tags": [
+          "Items"
+        ],
         "security": [
           {
             "RelayDeviceIdHeader": []
@@ -3037,7 +3355,11 @@
                         },
                         "type": {
                           "type": "string",
-                          "enum": ["text", "url", "file"]
+                          "enum": [
+                            "text",
+                            "url",
+                            "file"
+                          ]
                         },
                         "title": {
                           "type": "string",
@@ -3122,7 +3444,11 @@
                           },
                           "state": {
                             "type": "string",
-                            "enum": ["pending", "delivered", "viewed"]
+                            "enum": [
+                              "pending",
+                              "delivered",
+                              "viewed"
+                            ]
                           },
                           "createdAt": {
                             "type": "string"
@@ -3147,7 +3473,10 @@
                       }
                     }
                   },
-                  "required": ["item", "deliveries"]
+                  "required": [
+                    "item",
+                    "deliveries"
+                  ]
                 }
               }
             }
@@ -3163,7 +3492,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -3179,7 +3510,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -3195,7 +3528,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }

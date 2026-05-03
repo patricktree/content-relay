@@ -10,6 +10,8 @@
   <string>me.patricktree.ContentRelayMacOS</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
+  <key>CFBundleIconFile</key>
+  <string>ContentRelay</string>
   <key>CFBundleName</key>
   <string>Content Relay</string>
   <key>CFBundlePackageType</key>

@@ -7,6 +7,7 @@ import type { DeviceSummary } from "@content-relay/shared";
 import { isValidAbsoluteUrl } from "@content-relay/shared";
 
 import { addAndroidShareListener, consumePendingAndroidShare } from "#pkg/android-share.ts";
+import logoUrl from "#pkg/assets/content-relay-logo.svg";
 import type { ShareDraft } from "#pkg/share-draft.ts";
 
 type SendItemType = "text" | "url";
@@ -202,7 +203,10 @@ export function App(): React.JSX.Element {
     <Page>
       <Shell>
         <Header>
-          <Eyebrow>Content Relay</Eyebrow>
+          <Brand>
+            <Logo alt="" aria-hidden="true" src={logoUrl} />
+            <Eyebrow>Content Relay</Eyebrow>
+          </Brand>
           <Title>Send</Title>
           <Subtitle>
             Configure this device, confirm targets, and send text or URLs from the app or the
@@ -545,6 +549,18 @@ const Header = styled.header`
   display: grid;
   gap: 6px;
   padding: 0 2px;
+`;
+
+const Brand = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: center;
+`;
+
+const Logo = styled.img`
+  width: 24px;
+  height: 24px;
+  display: block;
 `;
 
 const Eyebrow = styled.p`
