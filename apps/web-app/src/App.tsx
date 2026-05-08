@@ -149,6 +149,19 @@ export function App(): React.JSX.Element {
       }
 
       const availableDevices = result.data ?? [];
+      const removedSelectedDeviceIds = getUnavailableSelectedTargetDeviceIds(
+        draft.selectedTargetDeviceIds,
+        availableDevices,
+      );
+
+      if (removedSelectedDeviceIds.length > 0) {
+        updateDraft(setDraft, {
+          selectedTargetDeviceIds: removeIds(
+            draft.selectedTargetDeviceIds,
+            removedSelectedDeviceIds,
+          ),
+        });
+      }
 
       setStatus({ kind: "success", message: `Loaded ${availableDevices.length} devices.` });
     } catch (error) {
@@ -470,6 +483,21 @@ function toggleId(values: string[], value: string, shouldInclude: boolean): stri
   }
 
   return values.filter((entry) => entry !== value);
+}
+
+export function getUnavailableSelectedTargetDeviceIds(
+  selectedTargetDeviceIds: string[],
+  availableDevices: DeviceSummary[],
+): string[] {
+  const availableDeviceIds = new Set(availableDevices.map((device) => device.deviceId));
+
+  return selectedTargetDeviceIds.filter((deviceId) => !availableDeviceIds.has(deviceId));
+}
+
+function removeIds(values: string[], valuesToRemove: string[]): string[] {
+  const valuesToRemoveSet = new Set(valuesToRemove);
+
+  return values.filter((value) => !valuesToRemoveSet.has(value));
 }
 
 function trimTrailingSlash(value: string): string {
