@@ -13,13 +13,13 @@
     "build": "turbo run turbo:build",
     "clean": "pnpm run --parallel clean",
     "dev": "turbo run turbo:dev",
+    "fix": "pnpm run format && pnpm run lint:fix",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "lint": "turbo run turbo:lint",
     "lint:fix": "turbo run turbo:lint:fix",
     "postinstall": "sh ./postinstall.sh",
     "test": "turbo run turbo:test",
-    "fix": "pnpm run format && pnpm run lint:fix",
     "verify": "turbo run turbo:build turbo:lint turbo:test"
   },
   "devDependencies": {

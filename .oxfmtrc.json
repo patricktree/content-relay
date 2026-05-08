@@ -1,5 +1,8 @@
 {
   "ignorePatterns": ["/pnpm-workspace.yaml"],
+  "sortPackageJson": {
+    "sortScripts": true
+  },
   "sortImports": {
     "customGroups": [
       {

@@ -3,13 +3,13 @@
   "private": true,
   "scripts": {
     "build": "turbo run turbo:build",
-    "turbo:build": "cp ./node_modules/@content-relay/client/dist/content-relay-hub-openapi.json ./Sources/RelayOpenAPI/openapi.json && ./scripts/build.sh",
     "clean": "del-cli --dot=true \".build\" \"dist\"",
     "lint": "turbo run turbo:lint",
-    "turbo:lint": "swift build -c debug -Xswiftc -warnings-as-errors",
     "lint:fix": "turbo run turbo:lint:fix",
-    "turbo:lint:fix": "pnpm run turbo:lint",
     "test": "turbo run turbo:test",
+    "turbo:build": "cp ./node_modules/@content-relay/client/dist/content-relay-hub-openapi.json ./Sources/RelayOpenAPI/openapi.json && ./scripts/build.sh",
+    "turbo:lint": "swift build -c debug -Xswiftc -warnings-as-errors",
+    "turbo:lint:fix": "pnpm run turbo:lint",
     "turbo:test": "swift test"
   },
   "devDependencies": {

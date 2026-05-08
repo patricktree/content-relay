@@ -24,16 +24,16 @@
   },
   "scripts": {
     "build": "turbo run turbo:build",
-    "turbo:build": "tsgo --build ./tsconfig.json && node ./scripts/export-openapi-json.ts && oxfmt ./dist/content-relay-hub-openapi.json",
     "clean": "del-cli --dot=true \"dist\" \"*.tsbuildinfo\"",
     "dev": "tsgo --build ./tsconfig.json --watch",
-    "turbo:dev": "tsgo --build ./tsconfig.json --watch",
-    "test": "turbo run turbo:test",
-    "turbo:test": "vitest run",
     "lint": "turbo run turbo:lint",
-    "turbo:lint": "eslint --max-warnings 0 .",
     "lint:fix": "turbo run turbo:lint:fix",
-    "turbo:lint:fix": "pnpm run turbo:lint --fix"
+    "test": "turbo run turbo:test",
+    "turbo:build": "tsgo --build ./tsconfig.json && node ./scripts/export-openapi-json.ts && oxfmt ./dist/content-relay-hub-openapi.json",
+    "turbo:dev": "tsgo --build ./tsconfig.json --watch",
+    "turbo:lint": "eslint --max-warnings 0 .",
+    "turbo:lint:fix": "pnpm run turbo:lint --fix",
+    "turbo:test": "vitest run"
   },
   "dependencies": {
     "@content-relay/relay-hub": "workspace:*",

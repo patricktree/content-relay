@@ -3,8 +3,8 @@
   "private": true,
   "scripts": {
     "build": "turbo run turbo:build",
-    "turbo:build": "pnpm run native:sync",
-    "native:sync": "cap sync"
+    "native:sync": "cap sync",
+    "turbo:build": "pnpm run native:sync"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",

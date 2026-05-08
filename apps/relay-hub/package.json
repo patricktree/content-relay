@@ -27,13 +27,13 @@
   },
   "scripts": {
     "build": "turbo run turbo:build",
-    "turbo:build": "tsgo --build ./tsconfig.json",
     "clean": "del-cli --dot=true \"dist\" \"*.tsbuildinfo\"",
     "dev": "tsgo --build ./tsconfig.json --watch",
-    "turbo:dev": "tsgo --build ./tsconfig.json --watch",
     "lint": "turbo run turbo:lint",
-    "turbo:lint": "eslint --max-warnings 0 .",
     "lint:fix": "turbo run turbo:lint:fix",
+    "turbo:build": "tsgo --build ./tsconfig.json",
+    "turbo:dev": "tsgo --build ./tsconfig.json --watch",
+    "turbo:lint": "eslint --max-warnings 0 .",
     "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
   "dependencies": {
