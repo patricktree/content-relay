@@ -136,7 +136,7 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
 
     const fileItem = await parseOkResponse(
       rpcClient.sendFiles(senderProfile, {
-        targetDeviceIds: [androidProfile.deviceId],
+        targetDeviceIds: [androidProfile.deviceId, iosProfile.deviceId],
         title: "Trip docs",
         files: [
           { content: alphaFileContent, basename: path.basename(alphaFilePath) },
@@ -146,6 +146,14 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     );
     expect(fileItem.item.type).toBe("file");
     expect(fileItem.item.files).toHaveLength(2);
+
+    const fileBlobDirectory = path.join(
+      rootDirectory,
+      "relay-hub-data",
+      "blobs",
+      fileItem.item.itemId,
+    );
+    await expect(fs.promises.stat(fileBlobDirectory)).resolves.toBeDefined();
 
     const androidPendingBeforeAck = await parseOkResponse(
       rpcClient.fetchPendingDeliveries(androidProfile),
@@ -189,6 +197,21 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     const downloadedBeta = await fs.promises.readFile(downloadedBetaPath, "utf8");
     expect(downloadedAlpha).toBe("alpha\n");
     expect(downloadedBeta).toBe("beta\n");
+
+    await expect(fs.promises.stat(fileBlobDirectory)).resolves.toBeDefined();
+
+    const iosFileReceive = await receivePendingDeliveries(iosProfile, profileStore, {
+      acknowledge: true,
+      simulatePlatform: true,
+      deduplicate: true,
+    });
+    const iosFileDelivery = iosFileReceive.find(
+      (entry) => entry.delivery.item.itemId === fileItem.item.itemId,
+    );
+    expect(iosFileDelivery).toBeDefined();
+    assert(iosFileDelivery !== undefined);
+    expect(iosFileDelivery.delivery.state).toBe("delivered");
+    await expect(fs.promises.stat(fileBlobDirectory)).rejects.toMatchObject({ code: "ENOENT" });
   });
 });
 
@@ -625,15 +648,15 @@ test("file uploads reject empty payloads and write single-file downloads", async
     expect(fileDeliveryId).toBeDefined();
     assert(fileDeliveryId !== undefined);
 
+    const download = await parseOkResponse(
+      rpcClient.downloadDelivery(receiverProfile, fileDeliveryId),
+    );
+
     const acknowledgeResponse = await rpcClient.acknowledgeDelivery(
       receiverProfile,
       fileDeliveryId,
     );
     expect(acknowledgeResponse.status).toBe(200);
-
-    const download = await parseOkResponse(
-      rpcClient.downloadDelivery(receiverProfile, fileDeliveryId),
-    );
 
     const explicitFilePath = path.join(rootDirectory, "single-download.txt");
     const explicitOutputPaths = await writeDownloadedDelivery(download, explicitFilePath);

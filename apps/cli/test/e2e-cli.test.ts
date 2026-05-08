@@ -518,6 +518,11 @@ test("send file and delivery download write the files", async () => {
       json: { expiresInSeconds: 900 },
     });
     const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;
+    const secondReceiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
+      json: { expiresInSeconds: 900 },
+    });
+    const secondReceiverInvite =
+      (await secondReceiverInviteResponse.json()) as CreateInviteResponse;
 
     await registerCliProfile({
       configDirectory,
@@ -531,6 +536,13 @@ test("send file and delivery download write the files", async () => {
       inviteCode: receiverInvite.inviteCode,
       nickname: "Developer Pixel Sim",
       platform: "android",
+      relayHubBaseUrl,
+    });
+    await registerCliProfile({
+      configDirectory,
+      inviteCode: secondReceiverInvite.inviteCode,
+      nickname: "Developer iPhone Sim",
+      platform: "ios",
       relayHubBaseUrl,
     });
 
@@ -548,6 +560,7 @@ test("send file and delivery download write the files", async () => {
         betaFilePath,
         "--to",
         "Developer Pixel Sim",
+        "Developer iPhone Sim",
         "--title",
         "Trip docs",
       ],

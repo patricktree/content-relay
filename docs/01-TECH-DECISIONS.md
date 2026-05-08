@@ -49,6 +49,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 - Model file storage as a dedicated `BlobStore` port.
 - Keep blob storage separate from metadata persistence.
 - Keep file metadata in SQLite and file contents on the filesystem.
+- Delete filesystem blobs for a file item after every recipient delivery for that item has been acknowledged.
 
 ### Trust and device identity
 

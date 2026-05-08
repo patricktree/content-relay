@@ -35,7 +35,7 @@ The central **Relay Hub** runs on a **Raspberry Pi inside the Tailnet**.
 
 - The Relay Hub stores every shared item locally.
 - If the recipient is offline, delivery is retried when it reconnects.
-- The system acts as a permanent archive until items are manually deleted.
+- The system keeps item metadata as an archive, but file blobs are deleted once every recipient device has acknowledged the send.
 - Delivery is **at-least-once**; clients must deduplicate by delivery ID.
 
 ## Fixed product decisions
@@ -247,8 +247,9 @@ Semantics:
 
 ### Retention
 
-- Keep items **forever until manually deleted**
-- Archive is the default behavior
+- Keep item metadata **forever until manually deleted**
+- Delete file blobs for a file item once all recipient delivery records are acknowledged (`delivered` or `viewed`)
+- Archive is the default behavior for send history/status, not for file contents after all recipients acknowledge receipt
 - Store data **unencrypted at rest** in v1
 
 ## Delivery protocol
@@ -440,7 +441,7 @@ The system is successful when all of the following are true:
 
 1. The CLI can exercise registration, sending, receiving, delivery acknowledgements, viewed transitions, and file downloads without needing any native client.
 2. A registered sender can send text, URLs, and files to one or more devices.
-3. The Pi stores every item locally and durably.
+3. The Pi stores every item locally and durably, then prunes file blobs after all recipient devices acknowledge a file send.
 4. Offline recipients receive pending items after reconnecting.
 5. Android app recipients get useful notifications with preview content.
 6. iOS recipients get useful notifications with preview content.
