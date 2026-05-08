@@ -1,0 +1,93 @@
+name: Build and publish Docker image - `relay-hub`
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  CONTENT_RELAY_PROJECT_NAME: "@content-relay/relay-hub"
+  DOCKER_IMAGE_NAME: relay-hub
+
+concurrency:
+  group: build-and-publish-relay-hub-docker-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish:
+    name: Build and publish Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4.0.0
+        with:
+          platforms: arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4.0.0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6.0.5
+        with:
+          cache: true
+
+      - name: Install dependencies and Node.js (via package.json#devEngines.runtime)
+        run: pnpm install --frozen-lockfile
+
+      - name: Run codebase build
+        run: pnpm --filter '${{ env.CONTENT_RELAY_PROJECT_NAME }}' run build
+
+      - name: Create temporary directory for Docker build context
+        id: create-docker-build-context-dir
+        run: |
+          TMPDIR=$(mktemp -d)
+          echo "docker-build-context-dir=$TMPDIR" >> "$GITHUB_OUTPUT"
+
+      - name: Create pruned monorepo
+        id: create-pruned-monorepo
+        run: |
+          pnpm exec node ./tooling/create-pruned-monorepo-cli/src/cli.ts \
+            --project-name '${{ env.CONTENT_RELAY_PROJECT_NAME }}' \
+            --target-dir "${{ steps.create-docker-build-context-dir.outputs.docker-build-context-dir }}"
+
+      - name: Copy Dockerfile to build context
+        run: cp ./apps/relay-hub/Dockerfile "${{ steps.create-docker-build-context-dir.outputs.docker-build-context-dir }}/Dockerfile"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve Docker image tags
+        id: docker-image-tags
+        run: |
+          image_name="ghcr.io/${{ github.repository }}/${{ env.DOCKER_IMAGE_NAME }}"
+          {
+            echo "tags<<EOF"
+            echo "${image_name}:${{ github.sha }}"
+            if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+              echo "${image_name}:latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run Docker build and push
+        uses: docker/build-push-action@v7.1.0
+        with:
+          context: "${{ steps.create-docker-build-context-dir.outputs.docker-build-context-dir }}"
+          push: true
+          tags: ${{ steps.docker-image-tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          platforms: linux/arm64

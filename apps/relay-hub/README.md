@@ -1,36 +1,18 @@
 # @content-relay/relay-hub
 
-## Build a Docker image tarball
+## Docker image publishing
 
-Use `scripts/build-relay-hub-docker-image.sh` to build a Docker image for the Relay Hub and export it as a tarball.
+GitHub Actions builds and publishes the Relay Hub Docker image.
 
-```sh
-./apps/relay-hub/scripts/build-relay-hub-docker-image.sh
-```
-
-What the script does:
-
-- resolves paths relative to the script, so it can run from anywhere in the repo
-- creates a pruned monorepo that contains `@content-relay/relay-hub` and its production dependencies
-- copies `apps/relay-hub/Dockerfile` into that pruned workspace
-- builds a `linux/arm64` Docker image with `docker buildx`
-- exports the image as a Docker tarball instead of pushing it to a registry
-- tags the image as `content-relay-hub:<git-sha>`
-
-Default output path:
+Workflow:
 
 ```text
-apps/relay-hub/content-relay-hub-docker-image-<git-sha>.tar
+.github/workflows/build-and-publish-docker-image-content-relay-hub.yml
 ```
 
-You can override the output tarball path by passing it as the first argument:
+Published image tags:
 
-```sh
-./apps/relay-hub/scripts/build-relay-hub-docker-image.sh /tmp/content-relay-hub.tar
-```
-
-To load the exported image into Docker later:
-
-```sh
-docker load --input ./apps/relay-hub/content-relay-hub-docker-image-<git-sha>.tar
+```text
+ghcr.io/<owner>/<repo>/relay-hub:latest
+ghcr.io/<owner>/<repo>/relay-hub:<git-sha>
 ```
