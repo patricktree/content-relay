@@ -8,7 +8,14 @@ import tseslint from "typescript-eslint";
 export const config = defineConfig(
   globalIgnores(["**/dist"]),
   js.configs.recommended,
-  nodePlugin.configs["flat/recommended-module"],
+  {
+    extends: [nodePlugin.configs["flat/recommended-module"]],
+    settings: {
+      node: {
+        version: "^24",
+      },
+    },
+  },
   {
     rules: {
       /* covered by TypeScript anyways */

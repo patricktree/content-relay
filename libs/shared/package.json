@@ -38,8 +38,5 @@
     "@typescript/native-preview": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:"
-  },
-  "engines": {
-    "node": "^24"
   }
 }
