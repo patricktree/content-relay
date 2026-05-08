@@ -20,12 +20,17 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsgo --build ./tsconfig.json && vite build",
+    "build": "turbo run turbo:build",
+    "turbo:build": "tsgo --build ./tsconfig.json && vite build",
     "clean": "del-cli --dot=true \"dist\" \"*.tsbuildinfo\"",
     "dev": "vite",
-    "lint": "eslint --max-warnings 0 .",
-    "lint:fix": "pnpm run lint --fix",
-    "test": "vitest run"
+    "turbo:dev": "vite",
+    "lint": "turbo run turbo:lint",
+    "turbo:lint": "eslint --max-warnings 0 .",
+    "lint:fix": "turbo run turbo:lint:fix",
+    "turbo:lint:fix": "pnpm run turbo:lint --fix",
+    "test": "turbo run turbo:test",
+    "turbo:test": "vitest run"
   },
   "dependencies": {
     "@capacitor/core": "^8.3.1",

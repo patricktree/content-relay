@@ -2,7 +2,8 @@
   "name": "@content-relay/mobile-app",
   "private": true,
   "scripts": {
-    "build": "pnpm run native:sync",
+    "build": "turbo run turbo:build",
+    "turbo:build": "pnpm run native:sync",
     "native:sync": "cap sync"
   },
   "dependencies": {

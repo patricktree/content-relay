@@ -2,12 +2,9 @@
   "$schema": "./node_modules/turbo/schema.json",
   "noUpdateNotifier": true,
   "tasks": {
-    "clean": {
-      "cache": false,
-    },
-    "build": {
+    "turbo:build": {
       "cache": true,
-      "dependsOn": ["^build"],
+      "dependsOn": ["^turbo:build"],
       "outputs": [
         /* TypeScript */
         "dist/**",
@@ -16,26 +13,26 @@
         ".build/**",
       ],
     },
-    "dev": {
+    "turbo:dev": {
       "cache": false,
       "persistent": true,
     },
-    "lint": {
+    "turbo:lint": {
       "cache": true,
-      "dependsOn": ["^build"],
+      "dependsOn": ["^turbo:build"],
       "outputs": [],
     },
-    "lint:fix": {
+    "turbo:lint:fix": {
       "cache": true,
-      "dependsOn": ["^build"],
+      "dependsOn": ["^turbo:build"],
       "outputs": [
         /* TypeScript */
         "src/**",
       ],
     },
-    "test": {
+    "turbo:test": {
       "cache": true,
-      "dependsOn": ["build"],
+      "dependsOn": ["turbo:build"],
     },
   },
 }

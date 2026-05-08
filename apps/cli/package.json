@@ -23,12 +23,17 @@
     }
   },
   "scripts": {
-    "build": "tsgo --build ./tsconfig.json",
+    "build": "turbo run turbo:build",
+    "turbo:build": "tsgo --build ./tsconfig.json",
     "clean": "del-cli --dot=true \"dist\" \"*.tsbuildinfo\"",
     "dev": "tsgo --build ./tsconfig.json --watch",
-    "test": "vitest run",
-    "lint": "eslint --max-warnings 0 .",
-    "lint:fix": "pnpm run lint --fix"
+    "turbo:dev": "tsgo --build ./tsconfig.json --watch",
+    "test": "turbo run turbo:test",
+    "turbo:test": "vitest run",
+    "lint": "turbo run turbo:lint",
+    "turbo:lint": "eslint --max-warnings 0 .",
+    "lint:fix": "turbo run turbo:lint:fix",
+    "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
   "dependencies": {
     "@commander-js/extra-typings": "^14.0.0",
