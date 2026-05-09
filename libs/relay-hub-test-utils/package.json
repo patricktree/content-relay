@@ -25,7 +25,7 @@
   "scripts": {
     "build": "turbo run turbo:build",
     "clean": "del-cli --dot=true \"dist\" \"*.tsbuildinfo\"",
-    "dev": "tsgo --build ./tsconfig.json --watch",
+    "dev": "turbo run turbo:dev",
     "lint": "turbo run turbo:lint",
     "lint:fix": "turbo run turbo:lint:fix",
     "turbo:build": "tsgo --build ./tsconfig.json",
