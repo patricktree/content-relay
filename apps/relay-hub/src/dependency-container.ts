@@ -1,6 +1,8 @@
 import { Container } from "dioma";
 import path from "node:path";
 
+import { ensureDirectoryExists } from "@content-relay/utils-node/fs.utils";
+
 import { FileSystemBlobStore } from "#pkg/infrastructure/blob-store/file-system-blob-store.ts";
 import { SqliteRelayHubRepository } from "#pkg/infrastructure/db/sqlite-relay-hub-repository.ts";
 import { SystemClock } from "#pkg/infrastructure/system-clock.ts";
@@ -8,7 +10,6 @@ import { blobStoreToken } from "#pkg/interfaces/blob-store.interface.ts";
 import { clockToken } from "#pkg/interfaces/clock.interface.ts";
 import { relayRepositoryToken } from "#pkg/interfaces/relay-hub-repository.interface.ts";
 import { relayHubBaseUrlToken } from "#pkg/use-cases/shared.ts";
-import { ensureDirectoryExists } from "#pkg/util/fs.util.ts";
 
 export type CreateDependencyContainerOptions = {
   relayHubBaseUrl: string;

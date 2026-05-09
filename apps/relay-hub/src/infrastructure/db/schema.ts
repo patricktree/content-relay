@@ -1,6 +1,6 @@
 import { integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
-import { deliveryStates, devicePlatforms, relayItemTypes } from "@content-relay/shared";
+import { deliveryStates, devicePlatforms, relayItemTypes } from "@content-relay/contracts";
 
 export const devicesTable = sqliteTable(
   "devices",

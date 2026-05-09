@@ -45,20 +45,109 @@ importers:
         specifier: 2.9.6
         version: 2.9.6
 
-  apps/relay-hub:
+  apps/cli:
     dependencies:
       '@commander-js/extra-typings':
         specifier: ^14.0.0
         version: 14.0.0(commander@14.0.3)
+      '@content-relay/client':
+        specifier: workspace:*
+        version: link:../../libs/client
+      '@content-relay/contracts':
+        specifier: workspace:*
+        version: link:../../libs/contracts
       '@content-relay/o11y.logs':
         specifier: workspace:*
         version: link:../../libs/o11y.logs
       '@content-relay/o11y.node-sdk':
         specifier: workspace:*
         version: link:../../libs/o11y.node-sdk
-      '@content-relay/shared':
+      '@content-relay/profile-store-node':
         specifier: workspace:*
-        version: link:../../libs/shared
+        version: link:../../libs/profile-store-node
+      '@content-relay/utils-ecma':
+        specifier: workspace:*
+        version: link:../../libs/utils-ecma
+      '@patricktree/commons-ecma':
+        specifier: ^3.1.1
+        version: 3.1.1
+      commander:
+        specifier: ^14.0.3
+        version: 14.0.3
+    devDependencies:
+      '@content-relay/config-eslint':
+        specifier: workspace:*
+        version: link:../../tooling/config-eslint
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@content-relay/relay-hub-test-utils':
+        specifier: workspace:*
+        version: link:../../libs/relay-hub-test-utils
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260428.1
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.5(@types/node@24.12.2)
+
+  apps/macos-app:
+    devDependencies:
+      '@content-relay/client':
+        specifier: workspace:*
+        version: link:../../libs/client
+
+  apps/mobile-app:
+    dependencies:
+      '@capacitor/android':
+        specifier: ^8.3.1
+        version: 8.3.1(@capacitor/core@8.3.1)
+      '@capacitor/core':
+        specifier: ^8.3.1
+        version: 8.3.1
+      '@capacitor/ios':
+        specifier: ^8.3.1
+        version: 8.3.1(@capacitor/core@8.3.1)
+      '@content-relay/web-app':
+        specifier: workspace:*
+        version: link:../web-app
+    devDependencies:
+      '@capacitor/cli':
+        specifier: ^8.3.1
+        version: 8.3.1
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
+
+  apps/relay-hub:
+    dependencies:
+      '@commander-js/extra-typings':
+        specifier: ^14.0.0
+        version: 14.0.0(commander@14.0.3)
+      '@content-relay/contracts':
+        specifier: workspace:*
+        version: link:../../libs/contracts
+      '@content-relay/o11y.logs':
+        specifier: workspace:*
+        version: link:../../libs/o11y.logs
+      '@content-relay/o11y.node-sdk':
+        specifier: workspace:*
+        version: link:../../libs/o11y.node-sdk
+      '@content-relay/utils-node':
+        specifier: workspace:*
+        version: link:../../libs/utils-node
       '@hono/node-server':
         specifier: ^2.0.0
         version: 2.0.0(hono@4.12.15)
@@ -118,92 +207,6 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
-  apps/cli:
-    dependencies:
-      '@commander-js/extra-typings':
-        specifier: ^14.0.0
-        version: 14.0.0(commander@14.0.3)
-      '@content-relay/client':
-        specifier: workspace:*
-        version: link:../../libs/client
-      '@content-relay/o11y.logs':
-        specifier: workspace:*
-        version: link:../../libs/o11y.logs
-      '@content-relay/o11y.node-sdk':
-        specifier: workspace:*
-        version: link:../../libs/o11y.node-sdk
-      '@content-relay/profile-store-node':
-        specifier: workspace:*
-        version: link:../../libs/profile-store-node
-      '@content-relay/shared':
-        specifier: workspace:*
-        version: link:../../libs/shared
-      '@patricktree/commons-ecma':
-        specifier: ^3.1.1
-        version: 3.1.1
-      '@patricktree/commons-node':
-        specifier: ^3.1.1
-        version: 3.1.1
-      commander:
-        specifier: ^14.0.3
-        version: 14.0.3
-    devDependencies:
-      '@content-relay/relay-hub-test-utils':
-        specifier: workspace:*
-        version: link:../../libs/relay-hub-test-utils
-      '@content-relay/config-eslint':
-        specifier: workspace:*
-        version: link:../../tooling/config-eslint
-      '@content-relay/config-typescript':
-        specifier: workspace:*
-        version: link:../../tooling/config-typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.12.2
-      '@typescript/native-preview':
-        specifier: 'catalog:'
-        version: 7.0.0-dev.20260428.1
-      eslint:
-        specifier: 'catalog:'
-        version: 10.2.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.5(@types/node@24.12.2)
-
-  apps/macos-app:
-    devDependencies:
-      '@content-relay/client':
-        specifier: workspace:*
-        version: link:../../libs/client
-
-  apps/mobile-app:
-    dependencies:
-      '@capacitor/android':
-        specifier: ^8.3.1
-        version: 8.3.1(@capacitor/core@8.3.1)
-      '@capacitor/core':
-        specifier: ^8.3.1
-        version: 8.3.1
-      '@capacitor/ios':
-        specifier: ^8.3.1
-        version: 8.3.1(@capacitor/core@8.3.1)
-      '@content-relay/web-app':
-        specifier: workspace:*
-        version: link:../web-app
-    devDependencies:
-      '@capacitor/cli':
-        specifier: ^8.3.1
-        version: 8.3.1
-      '@content-relay/config-typescript':
-        specifier: workspace:*
-        version: link:../../tooling/config-typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.12.2
-
   apps/web-app:
     dependencies:
       '@capacitor/core':
@@ -212,9 +215,9 @@ importers:
       '@content-relay/client':
         specifier: workspace:*
         version: link:../../libs/client
-      '@content-relay/shared':
+      '@content-relay/contracts':
         specifier: workspace:*
-        version: link:../../libs/shared
+        version: link:../../libs/contracts
       '@linaria/core':
         specifier: ^7.0.0
         version: 7.0.0
@@ -271,52 +274,24 @@ importers:
         specifier: 'catalog:'
         version: 4.1.5(@types/node@24.12.2)
 
-  libs/relay-hub-test-utils:
-    dependencies:
-      '@content-relay/relay-hub':
-        specifier: workspace:*
-        version: link:../../apps/relay-hub
-      '@content-relay/shared':
-        specifier: workspace:*
-        version: link:../shared
-    devDependencies:
-      '@content-relay/config-eslint':
-        specifier: workspace:*
-        version: link:../../tooling/config-eslint
-      '@content-relay/config-typescript':
-        specifier: workspace:*
-        version: link:../../tooling/config-typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.12.2
-      '@typescript/native-preview':
-        specifier: 'catalog:'
-        version: 7.0.0-dev.20260428.1
-      eslint:
-        specifier: 'catalog:'
-        version: 10.2.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
   libs/client:
     dependencies:
+      '@content-relay/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@content-relay/relay-hub':
         specifier: workspace:*
         version: link:../../apps/relay-hub
-      '@content-relay/shared':
-        specifier: workspace:*
-        version: link:../shared
       hono:
         specifier: 'catalog:'
         version: 4.12.15
       temporal-polyfill:
         specifier: ^0.3.2
         version: 0.3.2
+      type-fest:
+        specifier: ^5.6.0
+        version: 5.6.0
     devDependencies:
-      '@content-relay/relay-hub-test-utils':
-        specifier: workspace:*
-        version: link:../relay-hub-test-utils
       '@content-relay/config-eslint':
         specifier: workspace:*
         version: link:../../tooling/config-eslint
@@ -326,6 +301,9 @@ importers:
       '@content-relay/profile-store-node':
         specifier: workspace:*
         version: link:../profile-store-node
+      '@content-relay/relay-hub-test-utils':
+        specifier: workspace:*
+        version: link:../relay-hub-test-utils
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.2
@@ -341,6 +319,28 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.5(@types/node@24.12.2)
+
+  libs/contracts:
+    dependencies:
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@content-relay/config-eslint':
+        specifier: workspace:*
+        version: link:../../tooling/config-eslint
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260428.1
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   libs/o11y.logs:
     dependencies:
@@ -406,9 +406,9 @@ importers:
 
   libs/profile-store-node:
     dependencies:
-      '@content-relay/shared':
+      '@content-relay/contracts':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../contracts
       temporal-polyfill:
         specifier: ^0.3.2
         version: 0.3.2
@@ -432,11 +432,14 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
-  libs/shared:
+  libs/relay-hub-test-utils:
     dependencies:
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
+      '@content-relay/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@content-relay/relay-hub':
+        specifier: workspace:*
+        version: link:../../apps/relay-hub
     devDependencies:
       '@content-relay/config-eslint':
         specifier: workspace:*
@@ -444,6 +447,48 @@ importers:
       '@content-relay/config-typescript':
         specifier: workspace:*
         version: link:../../tooling/config-typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260428.1
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  libs/utils-ecma:
+    devDependencies:
+      '@content-relay/config-eslint':
+        specifier: workspace:*
+        version: link:../../tooling/config-eslint
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260428.1
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  libs/utils-node:
+    devDependencies:
+      '@content-relay/config-eslint':
+        specifier: workspace:*
+        version: link:../../tooling/config-eslint
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
       '@typescript/native-preview':
         specifier: 'catalog:'
         version: 7.0.0-dev.20260428.1
@@ -4195,6 +4240,10 @@ packages:
     engines: {node: '>=18.12'}
     hasBin: true
 
+  tagged-tag@1.0.0:
+    resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
+    engines: {node: '>=20'}
+
   tapable@2.3.3:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
@@ -4307,6 +4356,10 @@ packages:
   type-fest@0.6.0:
     resolution: {integrity: sha512-q+MB8nYR1KDLrgr4G5yemftpMC7/QLqVndBmEEdqzmNj5dcFOO4Oo8qlwZE3ULT3+Zim1F8Kq4cBnikNhlCMlg==}
     engines: {node: '>=8'}
+
+  type-fest@5.6.0:
+    resolution: {integrity: sha512-8ZiHFm91orbSAe2PSAiSVBVko18pbhbiB3U9GglSzF/zCGkR+rxpHx6sEMCUm4kxY4LjDIUGgCfUMtwfZfjfUA==}
+    engines: {node: '>=20'}
 
   typescript-eslint@8.59.0:
     resolution: {integrity: sha512-BU3ONW9X+v90EcCH9ZS6LMackcVtxRLlI3XrYyqZIwVSHIk7Qf7bFw1z0M9Q0IUxhTMZCf8piY9hTYaNEIASrw==}
@@ -8576,6 +8629,8 @@ snapshots:
       better-path-resolve: 1.0.0
       rename-overwrite: 6.0.6
 
+  tagged-tag@1.0.0: {}
+
   tapable@2.3.3: {}
 
   tar-fs@2.1.4:
@@ -8689,6 +8744,10 @@ snapshots:
   type-fest@0.20.2: {}
 
   type-fest@0.6.0: {}
+
+  type-fest@5.6.0:
+    dependencies:
+      tagged-tag: 1.0.0
 
   typescript-eslint@8.59.0(eslint@10.2.1)(typescript@6.0.3):
     dependencies:

@@ -1,4 +1,4 @@
-import type { DeliveryResource, DevicePlatform, RelayItemType } from "@content-relay/shared";
+import type { DeliveryResource, DevicePlatform, RelayItemType } from "@content-relay/contracts";
 
 export type SimulatedDeliveryAction =
   | "printed"

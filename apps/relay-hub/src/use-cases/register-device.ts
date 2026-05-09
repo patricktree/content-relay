@@ -6,7 +6,7 @@ import {
   pushRegistrationSchema,
   type DevicePlatform,
   type PushRegistration,
-} from "@content-relay/shared";
+} from "@content-relay/contracts";
 
 import { getDiContainer } from "#pkg/dependency-container-context.ts";
 import { RelayInvalidInputError } from "#pkg/errors.ts";

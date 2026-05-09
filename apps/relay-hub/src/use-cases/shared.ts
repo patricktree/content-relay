@@ -1,7 +1,7 @@
 import { Token } from "dioma";
 import { randomUUID } from "node:crypto";
 
-import { assertValidAbsoluteUrl } from "@content-relay/shared";
+import { assertValidAbsoluteUrl } from "@content-relay/contracts";
 
 import { RelayInvalidInputError } from "#pkg/errors.ts";
 

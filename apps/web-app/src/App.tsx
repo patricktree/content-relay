@@ -2,8 +2,8 @@ import { styled } from "@linaria/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 
-import { rpcClient, parseOkResponse } from "@content-relay/client";
-import type { DeviceSummary } from "@content-relay/shared";
+import { isParseResponseError, parseOkResponse, rpcClient } from "@content-relay/client";
+import type { DeviceSummary } from "@content-relay/contracts";
 
 import {
   addAndroidShareListener,
@@ -643,7 +643,7 @@ function trimTrailingSlash(value: string): string {
 }
 
 function formatErrorMessage(error: unknown): string {
-  if (isDetailedError(error)) {
+  if (isParseResponseError(error)) {
     const detailData =
       typeof error.detail === "object" && error.detail !== null && "data" in error.detail
         ? error.detail.data
@@ -670,18 +670,6 @@ function formatErrorMessage(error: unknown): string {
   }
 
   return `Unexpected error: ${String(error)}`;
-}
-
-function isDetailedError(error: unknown): error is {
-  detail?: unknown;
-  statusCode: number;
-} {
-  return (
-    error !== null &&
-    typeof error === "object" &&
-    "statusCode" in error &&
-    typeof error.statusCode === "number"
-  );
 }
 
 const Page = styled.main`

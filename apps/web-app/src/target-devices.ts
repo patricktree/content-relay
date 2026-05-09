@@ -1,4 +1,4 @@
-import type { DeviceSummary } from "@content-relay/shared";
+import type { DeviceSummary } from "@content-relay/contracts";
 
 export function parseManualTargetDeviceIds(value: string): string[] {
   return value

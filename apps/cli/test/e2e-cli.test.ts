@@ -6,8 +6,6 @@ import url from "node:url";
 import { expect, test } from "vitest";
 
 import { createHttpClient, type SimulatedDeliveryResult } from "@content-relay/client";
-import type { LocalDeviceProfile } from "@content-relay/profile-store-node";
-import { withRelayTestEnvironment } from "@content-relay/relay-hub-test-utils";
 import type {
   CreateInviteResponse,
   CreateItemResponse,
@@ -18,7 +16,9 @@ import type {
   DevicePlatform,
   ItemListEntry,
   ItemListResponse,
-} from "@content-relay/shared";
+} from "@content-relay/contracts";
+import type { LocalDeviceProfile } from "@content-relay/profile-store-node";
+import { withRelayTestEnvironment } from "@content-relay/relay-hub-test-utils";
 
 const cliPackageDirectory = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "..");
 const workspaceRootDirectory = path.resolve(cliPackageDirectory, "../..");

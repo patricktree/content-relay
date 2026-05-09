@@ -7,6 +7,13 @@ import {
   simulatePlatformDelivery,
   type SimulatedDeliveryResult,
 } from "@content-relay/client";
+import type {
+  DeliveryResource,
+  DevicePlatform,
+  DownloadDeliveryResponse,
+  PushRegistration,
+} from "@content-relay/contracts";
+import { isMobileDevicePlatform } from "@content-relay/contracts";
 import {
   LocalDeviceProfileStore,
   type LocalDeviceProfile,
@@ -16,13 +23,6 @@ import {
   listenOnPort,
   withRelayTestEnvironment as withBaseRelayTestEnvironment,
 } from "@content-relay/relay-hub-test-utils";
-import type {
-  DeliveryResource,
-  DevicePlatform,
-  DownloadDeliveryResponse,
-  PushRegistration,
-} from "@content-relay/shared";
-import { isMobileDevicePlatform } from "@content-relay/shared";
 
 import { rpcClient } from "#pkg/rpc-client.ts";
 

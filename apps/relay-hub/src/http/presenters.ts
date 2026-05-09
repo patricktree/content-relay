@@ -14,7 +14,7 @@ import type {
   ItemListResponse,
   ItemResource,
   RegisterDeviceResponse,
-} from "@content-relay/shared";
+} from "@content-relay/contracts";
 
 import type {
   DeliveryRecord,

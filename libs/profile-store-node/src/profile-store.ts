@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { Temporal } from "temporal-polyfill";
 
-import type { DevicePlatform, RegisterDeviceResponse } from "@content-relay/shared";
+import type { DevicePlatform, RegisterDeviceResponse } from "@content-relay/contracts";
 
 const PROFILES_FILE_NAME = "profiles.json";
 
