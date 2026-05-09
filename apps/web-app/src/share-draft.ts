@@ -1,4 +1,4 @@
-import { isValidAbsoluteUrl } from "@content-relay/shared";
+import { isValidAbsoluteUrl } from "@content-relay/contracts";
 
 export type ShareDraft = {
   dedupeKey: string;

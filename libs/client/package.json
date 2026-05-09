@@ -36,10 +36,11 @@
     "turbo:test": "vitest run"
   },
   "dependencies": {
+    "@content-relay/contracts": "workspace:*",
     "@content-relay/relay-hub": "workspace:*",
-    "@content-relay/shared": "workspace:*",
     "hono": "catalog:",
-    "temporal-polyfill": "^0.3.2"
+    "temporal-polyfill": "^0.3.2",
+    "type-fest": "^5.6.0"
   },
   "devDependencies": {
     "@content-relay/config-eslint": "workspace:*",

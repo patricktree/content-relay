@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import type { DeviceSummary } from "@content-relay/shared";
+import type { DeviceSummary } from "@content-relay/contracts";
 
 import {
   getUnavailableSelectedTargetDeviceIds,

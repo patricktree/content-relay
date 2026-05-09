@@ -1,6 +1,6 @@
-import { rpcClient, parseOkResponse } from "@content-relay/client";
-import type { CreateItemResponse } from "@content-relay/shared";
-import { isValidAbsoluteUrl } from "@content-relay/shared";
+import { parseOkResponse, rpcClient } from "@content-relay/client";
+import type { CreateItemResponse } from "@content-relay/contracts";
+import { isValidAbsoluteUrl } from "@content-relay/contracts";
 
 export type SendItemType = "text" | "url";
 

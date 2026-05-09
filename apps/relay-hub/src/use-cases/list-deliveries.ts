@@ -1,4 +1,4 @@
-import { deliveryListStateSchema } from "@content-relay/shared";
+import { deliveryListStateSchema } from "@content-relay/contracts";
 
 import { getDiContainer } from "#pkg/dependency-container-context.ts";
 import { relayRepositoryToken } from "#pkg/interfaces/relay-hub-repository.interface.ts";

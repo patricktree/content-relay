@@ -1,4 +1,4 @@
-import { assertValidAbsoluteUrl } from "@content-relay/shared";
+import { assertValidAbsoluteUrl } from "@content-relay/contracts";
 
 import { createItem, type CreateItemOutput } from "#pkg/use-cases/create-item.ts";
 

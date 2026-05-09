@@ -13,6 +13,9 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
+        // With singleTask launch mode, Android delivers repeat share actions to the existing
+        // activity instead of creating a new one. Keep the current intent fresh so Capacitor
+        // can forward the latest shared text to AndroidSharePlugin.
         setIntent(intent);
         super.onNewIntent(intent);
     }

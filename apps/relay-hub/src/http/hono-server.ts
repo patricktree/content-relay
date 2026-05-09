@@ -20,12 +20,18 @@ export async function startServer(options: {
     await closeServer();
   }
 
-  processUtil.asyncExitHook(async function shutdownHonoServerOnProcessExit() {
-    logger.info("Process exiting, shutting down relay-hub...");
-    await stopServer();
-  }, 5_000);
+  const unsubscribeExitHook = processUtil.asyncExitHook(
+    async function shutdownHonoServerOnProcessExit() {
+      logger.info("Process exiting, shutting down relay-hub...");
+      await stopServer();
+    },
+    5_000,
+  );
 
   return {
-    stop: stopServer,
+    async stop() {
+      unsubscribeExitHook();
+      await stopServer();
+    },
   };
 }

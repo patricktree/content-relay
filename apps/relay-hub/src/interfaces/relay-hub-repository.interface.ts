@@ -1,7 +1,7 @@
 import { Token } from "dioma";
 import { type InferSelectModel } from "drizzle-orm";
 
-import type { DeliveryState, FileMetadata } from "@content-relay/shared";
+import type { DeliveryState, FileMetadata } from "@content-relay/contracts";
 
 import {
   deliveriesTable,

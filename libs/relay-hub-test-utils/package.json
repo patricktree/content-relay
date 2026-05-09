@@ -34,8 +34,8 @@
     "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
   "dependencies": {
-    "@content-relay/relay-hub": "workspace:*",
-    "@content-relay/shared": "workspace:*"
+    "@content-relay/contracts": "workspace:*",
+    "@content-relay/relay-hub": "workspace:*"
   },
   "devDependencies": {
     "@content-relay/config-eslint": "workspace:*",

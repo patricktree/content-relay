@@ -10,19 +10,15 @@ import path from "node:path";
 import util from "node:util";
 import { expect, test } from "vitest";
 
+import type { DeliveryListState, DeviceSummary } from "@content-relay/contracts";
 import {
   createDependencyContainer,
   createHonoApp,
   runWithDiContainer,
   startServer,
 } from "@content-relay/relay-hub";
-import type { DeliveryListState, DeviceSummary } from "@content-relay/shared";
 
-import {
-  createHttpClient,
-  parseOkResponse,
-  ParseOkResponseDetailedError,
-} from "#pkg/http-client.ts";
+import { createHttpClient, isParseResponseError, parseOkResponse } from "#pkg/http-client.ts";
 import { rpcClient } from "#pkg/rpc-client.ts";
 
 import {
@@ -237,7 +233,7 @@ test("invite codes are single-use", async () => {
         pushRegistration: { token: "simulated-ios-invite-reuse-token" },
       }),
     );
-    await expect(registerAgainPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(registerAgainPromise).rejects.toSatisfy(isParseResponseError);
     await expect(registerAgainPromise).rejects.toMatchObject({
       statusCode: 400,
       detail: {
@@ -271,7 +267,7 @@ test("text send rejects a single-line URL payload", async () => {
         targetDeviceIds: [receiverProfile.deviceId],
       }),
     );
-    await expect(sendTextPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(sendTextPromise).rejects.toSatisfy(isParseResponseError);
     await expect(sendTextPromise).rejects.toMatchObject({
       statusCode: 400,
       detail: {
@@ -370,7 +366,7 @@ test("deleting a device invalidates its authentication and hides it from active 
     const listDeliveriesPromise = parseOkResponse(
       rpcClient.listDeliveries(receiverProfile, { state: "all", limit: 10 }),
     );
-    await expect(listDeliveriesPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(listDeliveriesPromise).rejects.toSatisfy(isParseResponseError);
     await expect(listDeliveriesPromise).rejects.toMatchObject({
       statusCode: 401,
       detail: {
@@ -421,7 +417,7 @@ test("push tokens can be upserted for the authenticated device", async () => {
         json: { token: "ExponentPushToken[device-token-3]" },
       }),
     );
-    await expect(upsertDeletedDevicePushTokenPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(upsertDeletedDevicePushTokenPromise).rejects.toSatisfy(isParseResponseError);
     await expect(upsertDeletedDevicePushTokenPromise).rejects.toMatchObject({
       statusCode: 401,
       detail: {
@@ -475,7 +471,7 @@ test("device routes support rename, listing, and same-device identity guards", a
         json: { nickname: "Malicious Rename" },
       }),
     );
-    await expect(renameAnotherDevicePromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(renameAnotherDevicePromise).rejects.toSatisfy(isParseResponseError);
     await expect(renameAnotherDevicePromise).rejects.toMatchObject({
       statusCode: 403,
       detail: {
@@ -490,7 +486,7 @@ test("device routes support rename, listing, and same-device identity guards", a
         param: { deviceId: senderProfile.deviceId },
       }),
     );
-    await expect(deleteAnotherDevicePromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(deleteAnotherDevicePromise).rejects.toSatisfy(isParseResponseError);
     await expect(deleteAnotherDevicePromise).rejects.toMatchObject({
       statusCode: 403,
       detail: {
@@ -506,7 +502,7 @@ test("device routes support rename, listing, and same-device identity guards", a
         json: { token: "ExponentPushToken[cross-device]" },
       }),
     );
-    await expect(updateAnotherDevicePushTokenPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(updateAnotherDevicePushTokenPromise).rejects.toSatisfy(isParseResponseError);
     await expect(updateAnotherDevicePushTokenPromise).rejects.toMatchObject({
       statusCode: 403,
       detail: {
@@ -1022,7 +1018,7 @@ test("resource lookup routes reject unknown resources and invalid file downloads
     const missingDeliveryPromise = parseOkResponse(
       rpcClient.getDelivery(receiverProfile, "delivery_missing"),
     );
-    await expect(missingDeliveryPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(missingDeliveryPromise).rejects.toSatisfy(isParseResponseError);
     await expect(missingDeliveryPromise).rejects.toMatchObject({
       statusCode: 404,
       detail: {
@@ -1033,7 +1029,7 @@ test("resource lookup routes reject unknown resources and invalid file downloads
     });
 
     const missingItemPromise = parseOkResponse(rpcClient.getItem(senderProfile, "item_missing"));
-    await expect(missingItemPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(missingItemPromise).rejects.toSatisfy(isParseResponseError);
     await expect(missingItemPromise).rejects.toMatchObject({
       statusCode: 404,
       detail: {
@@ -1046,7 +1042,7 @@ test("resource lookup routes reject unknown resources and invalid file downloads
     const invalidDownloadPromise = parseOkResponse(
       rpcClient.downloadDelivery(receiverProfile, deliveryId),
     );
-    await expect(invalidDownloadPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(invalidDownloadPromise).rejects.toSatisfy(isParseResponseError);
     await expect(invalidDownloadPromise).rejects.toMatchObject({
       statusCode: 400,
       detail: {
@@ -1063,7 +1059,7 @@ test("items, deliveries, and devices collection routes reject unauthenticated re
     const client = createHttpClient({ relayHubBaseUrl });
 
     const listDevicesPromise = parseOkResponse(client.devices.$get());
-    await expect(listDevicesPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(listDevicesPromise).rejects.toSatisfy(isParseResponseError);
     await expect(listDevicesPromise).rejects.toMatchObject({
       statusCode: 401,
       detail: {
@@ -1074,7 +1070,7 @@ test("items, deliveries, and devices collection routes reject unauthenticated re
     });
 
     const listItemsPromise = parseOkResponse(client.items.$get({ query: {} }));
-    await expect(listItemsPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(listItemsPromise).rejects.toSatisfy(isParseResponseError);
     await expect(listItemsPromise).rejects.toMatchObject({
       statusCode: 401,
       detail: {
@@ -1085,7 +1081,7 @@ test("items, deliveries, and devices collection routes reject unauthenticated re
     });
 
     const listDeliveriesWithoutAuthPromise = parseOkResponse(client.deliveries.$get({ query: {} }));
-    await expect(listDeliveriesWithoutAuthPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(listDeliveriesWithoutAuthPromise).rejects.toSatisfy(isParseResponseError);
     await expect(listDeliveriesWithoutAuthPromise).rejects.toMatchObject({
       statusCode: 401,
       detail: {
@@ -1146,7 +1142,7 @@ test("http client trims trailing slashes and preserves raw text and malformed JS
     const textErrorPromise = parseOkResponse(
       client.invites.$post({ json: { expiresInSeconds: 900 } }),
     );
-    await expect(textErrorPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(textErrorPromise).rejects.toSatisfy(isParseResponseError);
     await expect(textErrorPromise).rejects.toMatchObject({
       statusCode: 503,
       detail: {
@@ -1157,7 +1153,7 @@ test("http client trims trailing slashes and preserves raw text and malformed JS
     const malformedJsonPromise = parseOkResponse(
       client.invites.$post({ json: { expiresInSeconds: 900 } }),
     );
-    await expect(malformedJsonPromise).rejects.toThrow(ParseOkResponseDetailedError);
+    await expect(malformedJsonPromise).rejects.toSatisfy(isParseResponseError);
     await expect(malformedJsonPromise).rejects.toMatchObject({
       statusCode: 500,
       detail: {

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { type FileMetadata } from "@content-relay/shared";
+import { type FileMetadata } from "@content-relay/contracts";
 
 import { getDiContainer } from "#pkg/dependency-container-context.ts";
 import { RelayInvalidInputError } from "#pkg/errors.ts";

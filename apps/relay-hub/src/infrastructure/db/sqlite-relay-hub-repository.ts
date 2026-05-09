@@ -4,7 +4,7 @@ import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3"
 import path from "node:path";
 import { Temporal } from "temporal-polyfill";
 
-import type { FileMetadata } from "@content-relay/shared";
+import type { FileMetadata } from "@content-relay/contracts";
 
 import {
   deliveriesTable,

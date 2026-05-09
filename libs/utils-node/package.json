@@ -1,5 +1,5 @@
 {
-  "name": "@content-relay/shared",
+  "name": "@content-relay/utils-node",
   "private": true,
   "files": [
     "src/**"
@@ -17,9 +17,9 @@
   },
   "exports": {
     "./package.json": "./package.json",
-    ".": {
-      "types": "./dist/types/index.d.ts",
-      "default": "./src/index.ts"
+    "./*": {
+      "types": "./dist/types/*.d.ts",
+      "default": "./src/*.ts"
     }
   },
   "scripts": {
@@ -33,12 +33,10 @@
     "turbo:lint": "eslint --max-warnings 0 .",
     "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
-  "dependencies": {
-    "zod": "^4.3.6"
-  },
   "devDependencies": {
     "@content-relay/config-eslint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
+    "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:"

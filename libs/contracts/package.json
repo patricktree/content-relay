@@ -1,9 +1,9 @@
 {
-  "name": "@content-relay/cli",
+  "name": "@content-relay/contracts",
   "private": true,
-  "bin": {
-    "relay": "./src/cli.ts"
-  },
+  "files": [
+    "src/**"
+  ],
   "type": "module",
   "imports": {
     "#pkg/*.ts": {
@@ -28,39 +28,19 @@
     "dev": "turbo run turbo:dev",
     "lint": "turbo run turbo:lint",
     "lint:fix": "turbo run turbo:lint:fix",
-    "test": "turbo run turbo:test",
     "turbo:build": "tsgo --build ./tsconfig.json",
     "turbo:dev": "tsgo --build ./tsconfig.json --watch",
     "turbo:lint": "eslint --max-warnings 0 .",
-    "turbo:lint:fix": "pnpm run turbo:lint --fix",
-    "turbo:test": "vitest run"
+    "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
   "dependencies": {
-    "@commander-js/extra-typings": "^14.0.0",
-    "@content-relay/client": "workspace:*",
-    "@content-relay/contracts": "workspace:*",
-    "@content-relay/o11y.logs": "workspace:*",
-    "@content-relay/o11y.node-sdk": "workspace:*",
-    "@content-relay/profile-store-node": "workspace:*",
-    "@content-relay/utils-ecma": "workspace:*",
-    "@patricktree/commons-ecma": "^3.1.1",
-    "commander": "^14.0.3"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@content-relay/config-eslint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
-    "@content-relay/relay-hub-test-utils": "workspace:*",
-    "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "eslint": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
-  },
-  "engines": {
-    "runtime": {
-      "name": "node",
-      "version": "^24",
-      "onFail": "error"
-    }
+    "typescript": "catalog:"
   }
 }

@@ -1,4 +1,4 @@
-import type { DevicePlatform, DeliveryListState, PushRegistration } from "@content-relay/shared";
+import type { DevicePlatform, DeliveryListState, PushRegistration } from "@content-relay/contracts";
 
 import {
   createDeviceHttpClient,

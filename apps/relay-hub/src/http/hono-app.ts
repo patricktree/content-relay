@@ -3,7 +3,6 @@ import { type Context, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 
-import { createLogger } from "@content-relay/o11y.logs";
 import {
   createInviteRequestSchema,
   createInviteResponseSchema,
@@ -20,7 +19,8 @@ import {
   registerDeviceRequestSchema,
   registerDeviceResponseSchema,
   updateDeviceRequestSchema,
-} from "@content-relay/shared";
+} from "@content-relay/contracts";
+import { createLogger } from "@content-relay/o11y.logs";
 
 import {
   RelayAuthenticationFailedError,
