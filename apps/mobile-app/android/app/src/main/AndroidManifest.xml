@@ -22,6 +22,35 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+        </activity>
+
+        <!--
+            ShareActivity handles Android OS share-sheet entrypoints separately from MainActivity.
+            The dialog-style theme keeps the source app visible behind the share UI.
+
+            launchMode="singleTop": if this overlay is already open, Android calls
+            onNewIntent(...) instead of stacking another ShareActivity instance.
+
+            excludeFromRecents="true": this is a transient share popup, not a real app screen
+            users should relaunch from Android's Recents view.
+
+            noHistory="true": once the user leaves the popup, Android should not keep it in the
+            back stack where Back could reopen a stale share intent.
+
+            exported="true": required because other apps and the Android share sheet must be able
+            to launch this Activity through its SEND intent filter.
+        -->
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
+            android:name=".ShareActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.ShareOverlay"
+            android:launchMode="singleTop"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:exported="true">
+
+            <!-- Accept text and URL shares from Android apps. URL shares arrive as text/plain. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />

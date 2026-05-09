@@ -12,9 +12,15 @@ const consumePendingShareResponseSchema = z.object({
   share: androidSharePayloadSchema.nullable().optional(),
 });
 
+export type AndroidShareCompletion = {
+  message: string;
+};
+
 type AndroidSharePayload = z.infer<typeof androidSharePayloadSchema>;
 
 type AndroidSharePlugin = {
+  closeShareOverlay(): Promise<void>;
+  completeShareOverlay(input: AndroidShareCompletion): Promise<void>;
   consumePendingShare(): Promise<z.infer<typeof consumePendingShareResponseSchema>>;
   addListener(
     eventName: "shareIntentReceived",
@@ -58,7 +64,23 @@ export async function consumePendingAndroidShare(): Promise<ShareDraft | null> {
   return parseShareDraft(result.share);
 }
 
-function isAndroidShareAvailable(): boolean {
+export async function closeAndroidShareOverlay(): Promise<void> {
+  if (!isAndroidShareAvailable()) {
+    throw new Error("Android share overlay is not available on this platform.");
+  }
+
+  await androidSharePlugin.closeShareOverlay();
+}
+
+export async function completeAndroidShareOverlay(input: AndroidShareCompletion): Promise<void> {
+  if (!isAndroidShareAvailable()) {
+    throw new Error("Android share overlay is not available on this platform.");
+  }
+
+  await androidSharePlugin.completeShareOverlay(input);
+}
+
+export function isAndroidShareAvailable(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
 }
 

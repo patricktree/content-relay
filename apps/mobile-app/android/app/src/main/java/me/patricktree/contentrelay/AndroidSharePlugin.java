@@ -1,6 +1,8 @@
 package me.patricktree.contentrelay;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.widget.Toast;
 import androidx.annotation.Nullable;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -13,9 +15,16 @@ import org.json.JSONObject;
 @CapacitorPlugin(name = "AndroidShare")
 public class AndroidSharePlugin extends Plugin {
     private static final String SHARE_INTENT_RECEIVED_EVENT = "shareIntentReceived";
+    private static final String DEFAULT_SUCCESS_MESSAGE = "Sent successfully";
 
     @Nullable
     private JSObject pendingShare;
+
+    @Override
+    public void load() {
+        super.load();
+        pendingShare = parseSharedText(getActivity().getIntent());
+    }
 
     @PluginMethod
     public void consumePendingShare(PluginCall call) {
@@ -29,6 +38,28 @@ public class AndroidSharePlugin extends Plugin {
 
         pendingShare = null;
         call.resolve(response);
+    }
+
+    @PluginMethod
+    public void closeShareOverlay(PluginCall call) {
+        Activity activity = getActivity();
+
+        activity.runOnUiThread(() -> {
+            activity.finish();
+            call.resolve();
+        });
+    }
+
+    @PluginMethod
+    public void completeShareOverlay(PluginCall call) {
+        Activity activity = getActivity();
+        String message = call.getString("message", DEFAULT_SUCCESS_MESSAGE);
+
+        activity.runOnUiThread(() -> {
+            activity.finish();
+            Toast.makeText(activity.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+            call.resolve();
+        });
     }
 
     @Override

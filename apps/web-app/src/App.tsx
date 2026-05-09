@@ -4,25 +4,28 @@ import React from "react";
 
 import { rpcClient, parseOkResponse } from "@content-relay/client";
 import type { DeviceSummary } from "@content-relay/shared";
-import { isValidAbsoluteUrl } from "@content-relay/shared";
 
-import { addAndroidShareListener, consumePendingAndroidShare } from "#pkg/android-share.ts";
+import {
+  addAndroidShareListener,
+  closeAndroidShareOverlay,
+  completeAndroidShareOverlay,
+  consumePendingAndroidShare,
+} from "#pkg/android-share.ts";
 import type { ShareDraft } from "#pkg/share-draft.ts";
+import {
+  getUnavailableSelectedTargetDeviceIds,
+  mergeTargetDeviceIds,
+  removeIds,
+  toggleId,
+} from "#pkg/target-devices.ts";
+import {
+  formatSendSuccessMessage,
+  sendItem,
+  type RegisteredDeviceProfile,
+  type SendItemType,
+} from "#pkg/use-cases/send-item.ts";
 
-type SendItemType = "text" | "url";
-
-type RegisteredDeviceProfile = {
-  deviceId: string;
-  relayHubBaseUrl: string;
-};
-
-type SendItemInput = {
-  itemType: SendItemType;
-  profile: RegisteredDeviceProfile;
-  targetDeviceIds: string[];
-  title: string;
-  value: string;
-};
+export { getUnavailableSelectedTargetDeviceIds } from "#pkg/target-devices.ts";
 
 type StoredDraft = {
   deviceId: string;
@@ -40,6 +43,7 @@ type Status =
   | { kind: "success"; message: string };
 
 const STORAGE_KEY = "content-relay.mobile-app.send-draft";
+const SHARE_SUCCESS_MESSAGE = "Sent successfully";
 
 const DEFAULT_DRAFT: StoredDraft = {
   deviceId: "",
@@ -58,16 +62,14 @@ const mobileAppQueryKeys = {
 export function App(): React.JSX.Element {
   const [draft, setDraft] = React.useState<StoredDraft>(readStoredDraft);
   const [itemType, setItemType] = React.useState<SendItemType>("text");
+  const [shareOverlayDraft, setShareOverlayDraft] = React.useState<ShareDraft | null>(null);
   const [status, setStatus] = React.useState<Status>({ kind: "idle" });
   const lastHandledShareDraftKey = React.useRef<string | null>(null);
 
-  const targetDeviceIds = Array.from(
-    new Set([
-      ...draft.selectedTargetDeviceIds,
-      ...parseManualTargetDeviceIds(draft.manualTargetDeviceIds),
-    ]),
+  const targetDeviceIds = mergeTargetDeviceIds(
+    draft.selectedTargetDeviceIds,
+    draft.manualTargetDeviceIds,
   );
-
   const profile: RegisteredDeviceProfile = {
     deviceId: draft.deviceId.trim(),
     relayHubBaseUrl: trimTrailingSlash(draft.relayHubBaseUrl),
@@ -78,42 +80,35 @@ export function App(): React.JSX.Element {
     queryFn: async () => fetchAvailableDevices(profile),
     queryKey: mobileAppQueryKeys.availableDevices(profile),
   });
-  const sendItemMutation = useMutation({
-    mutationFn: sendItem,
-  });
+  const sendItemMutation = useMutation({ mutationFn: sendItem });
   const devices = devicesQuery.data ?? [];
 
   React.useEffect(() => {
     let isDisposed = false;
     let listenerHandle: { remove: () => Promise<void> } | null = null;
 
-    function applyShareDraft(shareDraft: ShareDraft): void {
-      if (lastHandledShareDraftKey.current === shareDraft.dedupeKey) {
+    function applyShareDraft(nextShareDraft: ShareDraft): void {
+      if (lastHandledShareDraftKey.current === nextShareDraft.dedupeKey) {
         return;
       }
 
-      lastHandledShareDraftKey.current = shareDraft.dedupeKey;
-      setItemType(shareDraft.itemType);
+      lastHandledShareDraftKey.current = nextShareDraft.dedupeKey;
+      setShareOverlayDraft(nextShareDraft);
+      setItemType(nextShareDraft.itemType);
       updateDraft(setDraft, {
-        title: shareDraft.title,
-        value: shareDraft.value,
+        title: nextShareDraft.title,
+        value: nextShareDraft.value,
       });
-      setStatus({
-        kind: "success",
-        message:
-          shareDraft.itemType === "url"
-            ? "Imported shared URL from Android."
-            : "Imported shared text from Android.",
-      });
+      setStatus({ kind: "idle" });
     }
 
     async function initializeAndroidShare(): Promise<void> {
-      listenerHandle = await addAndroidShareListener((shareDraft) => {
+      listenerHandle = await addAndroidShareListener((nextShareDraft) => {
         if (isDisposed) {
           return;
         }
 
-        applyShareDraft(shareDraft);
+        applyShareDraft(nextShareDraft);
       });
 
       const pendingShareDraft = await consumePendingAndroidShare();
@@ -137,6 +132,45 @@ export function App(): React.JSX.Element {
       }
     };
   }, []);
+
+  React.useEffect(() => {
+    if (
+      shareOverlayDraft === null ||
+      !hasCompleteProfile(profile) ||
+      devicesQuery.data !== undefined
+    ) {
+      return;
+    }
+
+    void handleRefreshDevices();
+  }, [shareOverlayDraft, profile.deviceId, profile.relayHubBaseUrl, devicesQuery.data]);
+
+  React.useEffect(() => {
+    if (shareOverlayDraft === null || typeof document === "undefined") {
+      return;
+    }
+
+    const rootElement = document.getElementById("root");
+    const previousDocumentBackground = document.documentElement.style.background;
+    const previousBodyBackground = document.body.style.background;
+    const previousRootBackground = rootElement?.style.background;
+
+    document.documentElement.style.background = "transparent";
+    document.body.style.background = "transparent";
+
+    if (rootElement !== null) {
+      rootElement.style.background = "transparent";
+    }
+
+    return () => {
+      document.documentElement.style.background = previousDocumentBackground;
+      document.body.style.background = previousBodyBackground;
+
+      if (rootElement !== null && previousRootBackground !== undefined) {
+        rootElement.style.background = previousRootBackground;
+      }
+    };
+  }, [shareOverlayDraft]);
 
   async function handleRefreshDevices(): Promise<void> {
     try {
@@ -169,22 +203,11 @@ export function App(): React.JSX.Element {
     }
   }
 
-  async function handleSend(): Promise<void> {
+  async function handleSend(input: {
+    targetDeviceIds: string[];
+    isShareOverlay: boolean;
+  }): Promise<void> {
     try {
-      if (targetDeviceIds.length === 0) {
-        throw new Error("Choose at least one target device.");
-      }
-
-      const trimmedValue = draft.value.trim();
-
-      if (itemType === "text" && trimmedValue.length === 0) {
-        throw new Error("Enter the text to send.");
-      }
-
-      if (itemType === "url" && !isValidAbsoluteUrl(trimmedValue)) {
-        throw new Error("Enter a valid absolute URL.");
-      }
-
       setStatus({
         kind: "loading",
         message: itemType === "text" ? "Sending text…" : "Sending URL…",
@@ -193,10 +216,16 @@ export function App(): React.JSX.Element {
       const response = await sendItemMutation.mutateAsync({
         itemType,
         profile,
-        targetDeviceIds,
+        targetDeviceIds: input.targetDeviceIds,
         title: draft.title,
         value: draft.value,
       });
+
+      if (input.isShareOverlay) {
+        setStatus({ kind: "success", message: SHARE_SUCCESS_MESSAGE });
+        await completeAndroidShareOverlay({ message: SHARE_SUCCESS_MESSAGE });
+        return;
+      }
 
       setStatus({
         kind: "success",
@@ -211,6 +240,65 @@ export function App(): React.JSX.Element {
     }
   }
 
+  if (shareOverlayDraft !== null) {
+    return (
+      <ShareOverlay
+        devices={devices}
+        draft={draft}
+        isLoadingDevices={devicesQuery.isFetching}
+        isSending={sendItemMutation.isPending}
+        itemType={itemType}
+        onClose={() => void closeAndroidShareOverlay()}
+        onOpenSetup={() => setShareOverlayDraft(null)}
+        onRefreshDevices={() => void handleRefreshDevices()}
+        onSend={() =>
+          void handleSend({ targetDeviceIds: draft.selectedTargetDeviceIds, isShareOverlay: true })
+        }
+        onToggleDevice={(deviceId, shouldInclude) =>
+          updateDraft(setDraft, {
+            selectedTargetDeviceIds: toggleId(
+              draft.selectedTargetDeviceIds,
+              deviceId,
+              shouldInclude,
+            ),
+          })
+        }
+        profile={profile}
+        status={status}
+      />
+    );
+  }
+
+  return (
+    <SendPage
+      devices={devices}
+      draft={draft}
+      isLoadingDevices={devicesQuery.isFetching}
+      isSending={sendItemMutation.isPending}
+      itemType={itemType}
+      onRefreshDevices={() => void handleRefreshDevices()}
+      onSend={() => void handleSend({ targetDeviceIds, isShareOverlay: false })}
+      onSetItemType={setItemType}
+      onUpdateDraft={(patch) => updateDraft(setDraft, patch)}
+      status={status}
+      targetDeviceCount={targetDeviceIds.length}
+    />
+  );
+}
+
+function SendPage(props: {
+  devices: DeviceSummary[];
+  draft: StoredDraft;
+  isLoadingDevices: boolean;
+  isSending: boolean;
+  itemType: SendItemType;
+  onRefreshDevices: () => void;
+  onSend: () => void;
+  onSetItemType: (itemType: SendItemType) => void;
+  onUpdateDraft: (patch: Partial<StoredDraft>) => void;
+  status: Status;
+  targetDeviceCount: number;
+}): React.JSX.Element {
   return (
     <Page>
       <Shell>
@@ -232,10 +320,10 @@ export function App(): React.JSX.Element {
               autoCapitalize="none"
               autoCorrect="off"
               inputMode="url"
-              onChange={(event) => updateDraft(setDraft, { relayHubBaseUrl: event.target.value })}
+              onChange={(event) => props.onUpdateDraft({ relayHubBaseUrl: event.target.value })}
               placeholder="https://relay.example.com"
               spellCheck={false}
-              value={draft.relayHubBaseUrl}
+              value={props.draft.relayHubBaseUrl}
             />
           </Field>
           <Field>
@@ -244,37 +332,34 @@ export function App(): React.JSX.Element {
               id="device-id"
               autoCapitalize="none"
               autoCorrect="off"
-              onChange={(event) => updateDraft(setDraft, { deviceId: event.target.value })}
+              onChange={(event) => props.onUpdateDraft({ deviceId: event.target.value })}
               placeholder="device_123"
               spellCheck={false}
-              value={draft.deviceId}
+              value={props.draft.deviceId}
             />
           </Field>
           <Row>
-            <SecondaryButton
-              disabled={devicesQuery.isFetching}
-              onClick={() => void handleRefreshDevices()}
-            >
-              {devicesQuery.isFetching ? "Loading…" : "Load devices"}
+            <SecondaryButton disabled={props.isLoadingDevices} onClick={props.onRefreshDevices}>
+              {props.isLoadingDevices ? "Loading…" : "Load devices"}
             </SecondaryButton>
           </Row>
         </Card>
 
         <Card>
           <SectionTitle>Targets</SectionTitle>
-          {devices.length > 0 ? (
+          {props.devices.length > 0 ? (
             <DeviceList>
-              {devices.map((device) => {
-                const isSelected = draft.selectedTargetDeviceIds.includes(device.deviceId);
+              {props.devices.map((device) => {
+                const isSelected = props.draft.selectedTargetDeviceIds.includes(device.deviceId);
 
                 return (
                   <DeviceRow key={device.deviceId}>
                     <Checkbox
                       checked={isSelected}
                       onChange={(event) => {
-                        updateDraft(setDraft, {
+                        props.onUpdateDraft({
                           selectedTargetDeviceIds: toggleId(
-                            draft.selectedTargetDeviceIds,
+                            props.draft.selectedTargetDeviceIds,
                             device.deviceId,
                             event.target.checked,
                           ),
@@ -302,70 +387,196 @@ export function App(): React.JSX.Element {
               autoCapitalize="none"
               autoCorrect="off"
               onChange={(event) =>
-                updateDraft(setDraft, { manualTargetDeviceIds: event.target.value })
+                props.onUpdateDraft({ manualTargetDeviceIds: event.target.value })
               }
               placeholder="One device ID per line, or separate them with commas"
               rows={4}
               spellCheck={false}
-              value={draft.manualTargetDeviceIds}
+              value={props.draft.manualTargetDeviceIds}
             />
           </Field>
-          <Hint>{targetDeviceIds.length} target device(s) selected.</Hint>
+          <Hint>{props.targetDeviceCount} target device(s) selected.</Hint>
         </Card>
 
-        <Card>
-          <SectionTitle>Compose</SectionTitle>
-          <Tabs>
-            <TabButton
-              $active={itemType === "text"}
-              onClick={() => setItemType("text")}
-              type="button"
-            >
-              Text
-            </TabButton>
-            <TabButton
-              $active={itemType === "url"}
-              onClick={() => setItemType("url")}
-              type="button"
-            >
-              URL
-            </TabButton>
-          </Tabs>
-          <Field>
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              onChange={(event) => updateDraft(setDraft, { title: event.target.value })}
-              placeholder="Optional title"
-              value={draft.title}
-            />
-          </Field>
-          <Field>
-            <Label htmlFor="value">{itemType === "text" ? "Text" : "URL"}</Label>
-            <TextArea
-              id="value"
-              autoCapitalize={itemType === "url" ? "none" : "sentences"}
-              autoCorrect={itemType === "url" ? "off" : "on"}
-              inputMode={itemType === "url" ? "url" : "text"}
-              onChange={(event) => updateDraft(setDraft, { value: event.target.value })}
-              placeholder={
-                itemType === "text" ? "What do you want to send?" : "https://example.com"
-              }
-              rows={6}
-              spellCheck={itemType === "text"}
-              value={draft.value}
-            />
-          </Field>
-          <PrimaryButton disabled={sendItemMutation.isPending} onClick={() => void handleSend()}>
-            {sendItemMutation.isPending ? "Sending…" : `Send ${itemType}`}
-          </PrimaryButton>
-        </Card>
+        <ComposeCard
+          draft={props.draft}
+          isSending={props.isSending}
+          itemType={props.itemType}
+          onSend={props.onSend}
+          onSetItemType={props.onSetItemType}
+          onUpdateDraft={props.onUpdateDraft}
+        />
 
-        <StatusCard $kind={status.kind}>
-          {status.kind === "idle" ? "Ready." : status.message}
+        <StatusCard $kind={props.status.kind}>
+          {props.status.kind === "idle" ? "Ready." : props.status.message}
         </StatusCard>
       </Shell>
     </Page>
+  );
+}
+
+function ComposeCard(props: {
+  draft: StoredDraft;
+  isSending: boolean;
+  itemType: SendItemType;
+  onSend: () => void;
+  onSetItemType: (itemType: SendItemType) => void;
+  onUpdateDraft: (patch: Partial<StoredDraft>) => void;
+}): React.JSX.Element {
+  return (
+    <Card>
+      <SectionTitle>Compose</SectionTitle>
+      <Tabs>
+        <TabButton
+          $active={props.itemType === "text"}
+          onClick={() => props.onSetItemType("text")}
+          type="button"
+        >
+          Text
+        </TabButton>
+        <TabButton
+          $active={props.itemType === "url"}
+          onClick={() => props.onSetItemType("url")}
+          type="button"
+        >
+          URL
+        </TabButton>
+      </Tabs>
+      <Field>
+        <Label htmlFor="title">Title</Label>
+        <Input
+          id="title"
+          onChange={(event) => props.onUpdateDraft({ title: event.target.value })}
+          placeholder="Optional title"
+          value={props.draft.title}
+        />
+      </Field>
+      <Field>
+        <Label htmlFor="value">{props.itemType === "text" ? "Text" : "URL"}</Label>
+        <TextArea
+          id="value"
+          autoCapitalize={props.itemType === "url" ? "none" : "sentences"}
+          autoCorrect={props.itemType === "url" ? "off" : "on"}
+          inputMode={props.itemType === "url" ? "url" : "text"}
+          onChange={(event) => props.onUpdateDraft({ value: event.target.value })}
+          placeholder={
+            props.itemType === "text" ? "What do you want to send?" : "https://example.com"
+          }
+          rows={6}
+          spellCheck={props.itemType === "text"}
+          value={props.draft.value}
+        />
+      </Field>
+      <PrimaryButton disabled={props.isSending} onClick={props.onSend}>
+        {props.isSending ? "Sending…" : `Send ${props.itemType}`}
+      </PrimaryButton>
+    </Card>
+  );
+}
+
+function ShareOverlay(props: {
+  devices: DeviceSummary[];
+  draft: StoredDraft;
+  isLoadingDevices: boolean;
+  isSending: boolean;
+  itemType: SendItemType;
+  onClose: () => void;
+  onOpenSetup: () => void;
+  onRefreshDevices: () => void;
+  onSend: () => void;
+  onToggleDevice: (deviceId: string, shouldInclude: boolean) => void;
+  profile: RegisteredDeviceProfile;
+  status: Status;
+}): React.JSX.Element {
+  const hasSetup = hasCompleteProfile(props.profile);
+  const selectedCount = props.draft.selectedTargetDeviceIds.length;
+
+  return (
+    <OverlayPage>
+      <OverlayPanel>
+        <OverlayHeader>
+          <CloseButton aria-label="Close share overlay" onClick={props.onClose} type="button">
+            ×
+          </CloseButton>
+          <OverlayTitle>Share</OverlayTitle>
+        </OverlayHeader>
+
+        <OverlayBody>
+          {!hasSetup ? (
+            <OverlayState>
+              <SectionTitle>Setup needed</SectionTitle>
+              <Hint>Add a Relay Hub URL and Device ID before sending shared content.</Hint>
+              <PrimaryButton onClick={props.onOpenSetup}>Open app setup</PrimaryButton>
+            </OverlayState>
+          ) : (
+            <>
+              <OverlaySection>
+                <OverlaySectionHeader>
+                  <SectionTitle>Send to</SectionTitle>
+                  <SmallButton disabled={props.isLoadingDevices} onClick={props.onRefreshDevices}>
+                    {props.isLoadingDevices ? "Loading…" : "Refresh"}
+                  </SmallButton>
+                </OverlaySectionHeader>
+                {props.devices.length > 0 ? (
+                  <TargetPicker>
+                    {props.devices.map((device) => {
+                      const isSelected = props.draft.selectedTargetDeviceIds.includes(
+                        device.deviceId,
+                      );
+
+                      return (
+                        <TargetChip key={device.deviceId} $selected={isSelected}>
+                          <TargetCheckbox
+                            aria-label={`Select ${device.nickname}`}
+                            checked={isSelected}
+                            onChange={(event) =>
+                              props.onToggleDevice(device.deviceId, event.target.checked)
+                            }
+                            type="checkbox"
+                          />
+                          <TargetAvatar>{device.nickname.slice(0, 1).toUpperCase()}</TargetAvatar>
+                          <TargetName>{device.nickname}</TargetName>
+                        </TargetChip>
+                      );
+                    })}
+                  </TargetPicker>
+                ) : (
+                  <Hint>
+                    {props.isLoadingDevices
+                      ? "Loading target devices…"
+                      : "No target devices are available. Open the full app to finish setup."}
+                  </Hint>
+                )}
+              </OverlaySection>
+
+              <OverlaySection>
+                <SectionTitle>
+                  {props.itemType === "url" ? "URL preview" : "Text preview"}
+                </SectionTitle>
+                <PreviewCard>
+                  {props.draft.title.trim().length > 0 ? (
+                    <PreviewTitle>{props.draft.title}</PreviewTitle>
+                  ) : null}
+                  <PreviewValue>{props.draft.value}</PreviewValue>
+                </PreviewCard>
+              </OverlaySection>
+
+              <PrimaryButton
+                disabled={props.isSending || selectedCount === 0}
+                onClick={props.onSend}
+              >
+                {props.isSending ? "Sending…" : "Send"}
+              </PrimaryButton>
+              <Hint>{selectedCount} target device(s) selected.</Hint>
+            </>
+          )}
+
+          <StatusCard $kind={props.status.kind}>
+            {props.status.kind === "idle" ? "Ready." : props.status.message}
+          </StatusCard>
+        </OverlayBody>
+      </OverlayPanel>
+    </OverlayPage>
   );
 }
 
@@ -373,53 +584,6 @@ async function fetchAvailableDevices(profile: RegisteredDeviceProfile): Promise<
   const devices = await parseOkResponse(rpcClient.listDevices(profile));
 
   return devices.filter((device) => device.deviceId !== profile.deviceId);
-}
-
-async function sendItem(input: SendItemInput) {
-  if (input.targetDeviceIds.length === 0) {
-    throw new Error("Choose at least one target device.");
-  }
-
-  const trimmedTitle = input.title.trim();
-  const trimmedValue = input.value.trim();
-
-  if (input.itemType === "text") {
-    if (trimmedValue.length === 0) {
-      throw new Error("Enter the text to send.");
-    }
-
-    return parseOkResponse(
-      rpcClient.sendText(input.profile, {
-        text: trimmedValue,
-        targetDeviceIds: input.targetDeviceIds,
-        ...(trimmedTitle.length > 0 ? { title: trimmedTitle } : {}),
-      }),
-    );
-  }
-
-  if (!isValidAbsoluteUrl(trimmedValue)) {
-    throw new Error("Enter a valid absolute URL.");
-  }
-
-  return parseOkResponse(
-    rpcClient.sendUrl(input.profile, {
-      url: trimmedValue,
-      targetDeviceIds: input.targetDeviceIds,
-      ...(trimmedTitle.length > 0 ? { title: trimmedTitle } : {}),
-    }),
-  );
-}
-
-function formatSendSuccessMessage(
-  itemType: SendItemType,
-  itemId: string,
-  deliveryCount: number,
-): string {
-  if (itemType === "text") {
-    return `Sent text item ${itemId} to ${deliveryCount} device(s).`;
-  }
-
-  return `Sent URL item ${itemId} to ${deliveryCount} device(s).`;
 }
 
 function readStoredDraft(): StoredDraft {
@@ -470,34 +634,8 @@ function persistDraft(draft: StoredDraft): void {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
 }
 
-function parseManualTargetDeviceIds(value: string): string[] {
-  return value
-    .split(/[\n,]/u)
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0);
-}
-
-function toggleId(values: string[], value: string, shouldInclude: boolean): string[] {
-  if (shouldInclude) {
-    return Array.from(new Set([...values, value]));
-  }
-
-  return values.filter((entry) => entry !== value);
-}
-
-export function getUnavailableSelectedTargetDeviceIds(
-  selectedTargetDeviceIds: string[],
-  availableDevices: DeviceSummary[],
-): string[] {
-  const availableDeviceIds = new Set(availableDevices.map((device) => device.deviceId));
-
-  return selectedTargetDeviceIds.filter((deviceId) => !availableDeviceIds.has(deviceId));
-}
-
-function removeIds(values: string[], valuesToRemove: string[]): string[] {
-  const valuesToRemoveSet = new Set(valuesToRemove);
-
-  return values.filter((value) => !valuesToRemoveSet.has(value));
+function hasCompleteProfile(profile: RegisteredDeviceProfile): boolean {
+  return profile.deviceId.trim().length > 0 && profile.relayHubBaseUrl.trim().length > 0;
 }
 
 function trimTrailingSlash(value: string): string {
@@ -671,12 +809,28 @@ const PrimaryButton = styled.button`
   ${buttonStyles}
   background: #111111;
   color: #ffffff;
+
+  &:disabled {
+    opacity: 0.55;
+  }
 `;
 
 const SecondaryButton = styled.button`
   ${buttonStyles}
   background: #ffffff;
   color: #111111;
+`;
+
+const SmallButton = styled.button`
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid #111111;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111111;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
 `;
 
 const Tabs = styled.div`
@@ -746,4 +900,149 @@ const StatusCard = styled.output<{ $kind: Status["kind"] }>`
   color: ${(props) => (props.$kind === "idle" ? "#111111" : "#ffffff")};
   line-height: 1.5;
   word-break: break-word;
+`;
+
+const OverlayPage = styled.main`
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: #f7f7f0;
+  color: #111111;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+`;
+
+const OverlayPanel = styled.section`
+  width: min(100%, 430px);
+  overflow: hidden;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.38);
+`;
+
+const OverlayHeader = styled.header`
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  min-height: 62px;
+  padding: 0 10px;
+  background: #111111;
+  color: #ffffff;
+`;
+
+const CloseButton = styled.button`
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 34px;
+  line-height: 1;
+`;
+
+const OverlayTitle = styled.h1`
+  margin: 0;
+  text-align: center;
+  font-size: 20px;
+  line-height: 1.2;
+`;
+
+const OverlayBody = styled.div`
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+`;
+
+const OverlaySection = styled.section`
+  display: grid;
+  gap: 12px;
+`;
+
+const OverlaySectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+`;
+
+const OverlayState = styled.div`
+  display: grid;
+  gap: 14px;
+  padding: 12px 0;
+`;
+
+const TargetPicker = styled.div`
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+`;
+
+const TargetChip = styled.label<{ $selected: boolean }>`
+  min-width: 92px;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 12px 10px;
+  border: 2px solid ${(props) => (props.$selected ? "#111111" : "#767676")};
+  border-radius: 18px;
+  background: ${(props) => (props.$selected ? "#eeeeee" : "#ffffff")};
+`;
+
+const TargetCheckbox = styled.input`
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+`;
+
+const TargetAvatar = styled.span`
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid #111111;
+  background: #ffffff;
+  color: #111111;
+  font-weight: 800;
+`;
+
+const TargetName = styled.span`
+  max-width: 76px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 700;
+`;
+
+const PreviewCard = styled.article`
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #deded3;
+  border-radius: 18px;
+  background: #ffffff;
+`;
+
+const PreviewTitle = styled.h3`
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+`;
+
+const PreviewValue = styled.p`
+  margin: 0;
+  max-height: 130px;
+  overflow: hidden;
+  color: #444444;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 `;
