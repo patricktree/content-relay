@@ -16,11 +16,7 @@
     }
   },
   "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "types": "./dist/types/index.d.ts",
-      "default": "./src/index.ts"
-    }
+    "./package.json": "./package.json"
   },
   "scripts": {
     "build": "turbo run turbo:build",

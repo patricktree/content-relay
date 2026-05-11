@@ -80,7 +80,7 @@ export async function completeAndroidShareOverlay(input: AndroidShareCompletion)
   await androidSharePlugin.completeShareOverlay(input);
 }
 
-export function isAndroidShareAvailable(): boolean {
+function isAndroidShareAvailable(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
 }
 

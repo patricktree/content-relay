@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  "workspaces": {
+    ".": {
+      "ignoreDependencies": ["husky", "@emnapi/core", "@emnapi/runtime"]
+    },
+    "apps/macos-app": {
+      "ignoreBinaries": ["swift"],
+      "ignoreDependencies": ["@content-relay/client"]
+    },
+    "apps/mobile-app": {
+      "ignoreDependencies": ["@capacitor/ios", "@content-relay/config-typescript"],
+      "ignoreFiles": ["./android/**", "./ios/**"]
+    },
+    "tooling/pkg-management": {
+      "ignoreDependencies": ["@pnpm/worker"]
+    }
+  }
+}

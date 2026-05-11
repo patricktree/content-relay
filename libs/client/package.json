@@ -39,7 +39,6 @@
     "@content-relay/contracts": "workspace:*",
     "@content-relay/relay-hub": "workspace:*",
     "hono": "catalog:",
-    "temporal-polyfill": "^0.3.2",
     "type-fest": "^5.6.0"
   },
   "devDependencies": {

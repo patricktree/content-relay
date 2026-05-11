@@ -34,7 +34,6 @@
     "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
   "dependencies": {
-    "@content-relay/contracts": "workspace:*",
     "@content-relay/relay-hub": "workspace:*"
   },
   "devDependencies": {
