@@ -1,5 +1,9 @@
 name: Build and publish Docker image - `relay-hub`
 
+concurrency:
+  group: build-and-publish-relay-hub-docker-image-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
   push:
@@ -13,10 +17,6 @@ permissions:
 env:
   CONTENT_RELAY_PROJECT_NAME: "@content-relay/relay-hub"
   DOCKER_IMAGE_NAME: relay-hub
-
-concurrency:
-  group: build-and-publish-relay-hub-docker-image-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   determine-affected:

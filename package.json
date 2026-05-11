@@ -4,6 +4,7 @@
   "files": [
     "./patches/**",
     "./.pnpmfile.cjs",
+    "./.pnpmfile.mjs",
     "./pnpm-lock.yaml",
     "./pnpm-workspace.yaml",
     "./postinstall.sh"
@@ -20,13 +21,13 @@
     "lint:fix": "turbo run turbo:lint:fix",
     "postinstall": "sh ./postinstall.sh",
     "test": "turbo run turbo:test",
-    "verify": "turbo run turbo:build turbo:lint turbo:test"
+    "validate": "turbo run turbo:build turbo:lint turbo:test"
   },
   "devDependencies": {
     "del-cli": "^7.0.0",
     "husky": "^9.1.7",
-    "oxfmt": "^0.46.0",
-    "turbo": "2.9.6"
+    "oxfmt": "^0.48.0",
+    "turbo": "^2.9.12"
   },
   "devEngines": {
     "runtime": {
@@ -35,5 +36,5 @@
       "onFail": "download"
     }
   },
-  "packageManager": "pnpm@11.0.8"
+  "packageManager": "pnpm@11.0.9"
 }

@@ -7,8 +7,6 @@ import type {
   DeviceListResponse,
   DeviceSummary,
   DownloadDeliveryResponse,
-  EmptyResponse,
-  ErrorResponse,
   FileMetadata,
   ItemListEntry,
   ItemListResponse,
@@ -74,7 +72,7 @@ export function presentDeliveryAction(result: LoadedDelivery): DeliveryActionRes
   };
 }
 
-export function presentLoadedDelivery(result: LoadedDelivery): DeliveryResource {
+function presentLoadedDelivery(result: LoadedDelivery): DeliveryResource {
   return presentDelivery(result.delivery, presentItem(result.item, result.files));
 }
 
@@ -126,16 +124,6 @@ export function presentDeviceSummary(device: DeviceRecord): DeviceSummary {
   };
 }
 
-export function presentEmptyResponse(): EmptyResponse {
-  return null;
-}
-
-export function presentErrorResponse(error: unknown): ErrorResponse {
-  return {
-    error: getErrorMessage(error),
-  };
-}
-
 function presentItem(item: ItemRecord, files: FileMetadata[]): ItemResource {
   return {
     itemId: item.id,
@@ -160,12 +148,4 @@ function presentDelivery(delivery: DeliveryRecord, item: ItemResource): Delivery
     viewedAt: delivery.viewedAt,
     item,
   };
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message.trim() !== "") {
-    return error.message;
-  }
-
-  return "Unexpected Relay Hub error.";
 }

@@ -5,5 +5,7 @@ if [ "$CI" = "true" ]; then
     exit 0
 else
     # on developer machines, run some commands
+
+    # install husky git hooks
     husky
 fi

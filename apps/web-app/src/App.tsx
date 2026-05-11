@@ -25,8 +25,6 @@ import {
   type SendItemType,
 } from "#pkg/use-cases/send-item.ts";
 
-export { getUnavailableSelectedTargetDeviceIds } from "#pkg/target-devices.ts";
-
 type StoredDraft = {
   deviceId: string;
   manualTargetDeviceIds: string;

@@ -1,0 +1,26 @@
+{
+  "$schema": "../../node_modules/turbo/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "turbo:build": {
+      "cache": true,
+      "dependsOn": ["^turbo:build"],
+      "outputs": ["dist/**", "*.tsbuildinfo"],
+    },
+    "turbo:lint": {
+      "cache": true,
+      "dependsOn": ["^turbo:build"],
+      "outputs": [],
+    },
+    "turbo:lint:fix": {
+      "cache": true,
+      "dependsOn": ["^turbo:build"],
+      "outputs": ["src/**"],
+    },
+    "turbo:test": {
+      "cache": true,
+      "dependsOn": ["^turbo:build"],
+      "outputs": [],
+    },
+  },
+}

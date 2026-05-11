@@ -39,7 +39,6 @@
     "@commander-js/extra-typings": "^14.0.0",
     "@content-relay/client": "workspace:*",
     "@content-relay/contracts": "workspace:*",
-    "@content-relay/o11y.logs": "workspace:*",
     "@content-relay/o11y.node-sdk": "workspace:*",
     "@content-relay/profile-store-node": "workspace:*",
     "@content-relay/utils-ecma": "workspace:*",

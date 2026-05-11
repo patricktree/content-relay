@@ -11,23 +11,23 @@ allowBuilds:
 
 # handle peer dependencies in a strict way
 autoInstallPeers: false
+resolvePeersFromWorkspaceRoot: false
+strictPeerDependencies: true
+dedupePeerDependents: false
 
 catalog:
-  "@typescript/native-preview": 7.0.0-dev.20260428.1
+  "@typescript/native-preview": 7.0.0-dev.20260511.1
   "@types/node": ^24
-  eslint: ^10.2.1
-  hono: ^4.12.15
+  eslint: ^10.3.0
+  hono: ^4.12.18
   typescript: ^6.0.3
   vitest: ^4.1.5
-dedupePeerDependents: false
 
 # enforce specific Node.js and pnpm version (https://pnpm.io/npmrc#engine-strict)
 engineStrict: true
-resolvePeersFromWorkspaceRoot: false
-strictPeerDependencies: true
 
-# https://pnpm.io/npmrc#update-notifier
+# disable update notifier (https://pnpm.io/npmrc#update-notifier)
 updateNotifier: false
 
-# workspace-concurrency=0 will use amount of cores of the host to run tasks concurrently (see https://pnpm.io/cli/recursive#--workspace-concurrency)
+# workspace-concurrency=0 will use amount of cores of the host to run tasks concurrently (https://pnpm.io/cli/recursive#--workspace-concurrency)
 workspaceConcurrency: 0

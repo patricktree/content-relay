@@ -1,2 +1,2 @@
 pnpm run format:check
-pnpm run verify
+pnpm run validate

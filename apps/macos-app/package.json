@@ -9,7 +9,6 @@
     "test": "turbo run turbo:test",
     "turbo:build": "cp ./node_modules/@content-relay/client/dist/content-relay-hub-openapi.json ./Sources/RelayOpenAPI/openapi.json && ./scripts/build.sh",
     "turbo:lint": "swift build -c debug -Xswiftc -warnings-as-errors",
-    "turbo:lint:fix": "pnpm run turbo:lint",
     "turbo:test": "swift test"
   },
   "devDependencies": {

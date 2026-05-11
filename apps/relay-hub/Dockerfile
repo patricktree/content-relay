@@ -1,35 +1,38 @@
 FROM node:24.15.0-alpine@sha256:693101c77e947e45e001910202dcb37a659c0b1a4c27619848f1b8b7eaee0def AS builder
 WORKDIR /app
 
-# Install corepack@0.31.0 to fix https://github.com/nodejs/corepack/issues/616 and enable corepack so pnpm is available later.
-RUN npm install -g corepack@0.31.0 && corepack enable
+# install pnpm (https://pnpm.io/installation#using-a-standalone-script); the version doesn't matter, pnpm switches to the version specified in package.json#packageManager itself
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+RUN wget -qO- https://get.pnpm.io/install.sh | sh -
 
-# set some env vars to enable caching of pnpm fetch/install (see https://pnpm.io/docker#example-1-build-a-bundle-in-a-docker-container)
+# set some env vars to enable caching of pnpm fetch/install (https://pnpm.io/docker#example-1-build-a-bundle-in-a-docker-container)
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
 # install packages to enable building native dependencies
 RUN apk add --no-cache \
 	# core packages needed for node-gyp and others
-	build-base \
-	g++ \
-	python3
+	build-base=0.5-r3 \
+	g++=15.2.0-r2 \
+	python3=3.12.13-r0
 
-# copy everything
+# copy everything from Docker context into the container
 COPY ./ ./
 
 # install dependencies
 RUN CI=true pnpm install --prod --frozen-lockfile
 
+# start a new stage for the runtime image
 FROM node:24.15.0-alpine@sha256:693101c77e947e45e001910202dcb37a659c0b1a4c27619848f1b8b7eaee0def AS runtime
 WORKDIR /app
 
 # copy everything from "builder" stage
 COPY --from=builder --chown=node:node /app/ ./
 
-# https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md#non-root-user
+# run as non-root user "node" (https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md#non-root-user)
 USER node
 
+# run the application
 WORKDIR /app/apps/relay-hub
 ENTRYPOINT ["node", "./src/bin.ts"]
 CMD []
