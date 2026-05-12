@@ -51,6 +51,19 @@ jobs:
             exit 0
           fi
 
+          if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- \
+            .github/workflows/build-and-publish-docker-image-content-relay-hub.yml \
+            apps/relay-hub/Dockerfile; then
+            :
+          else
+            diff_status=$?
+            if [ "${diff_status}" -eq 1 ]; then
+              echo "affected=true" >> "${GITHUB_OUTPUT}"
+              exit 0
+            fi
+            exit "${diff_status}"
+          fi
+
           affected_json=$(pnpm exec turbo query affected \
             --tasks turbo:build \
             --packages "${CONTENT_RELAY_PROJECT_NAME}" \
