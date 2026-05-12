@@ -117,11 +117,6 @@ jobs:
       - name: Copy Dockerfile to build context
         run: cp ./apps/relay-hub/Dockerfile "${{ steps.create-docker-build-context-dir.outputs.docker-build-context-dir }}/Dockerfile"
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4.0.0
-        with:
-          platforms: arm64
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4.0.0
 
