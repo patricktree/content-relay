@@ -21,7 +21,7 @@ env:
 jobs:
   determine-affected:
     name: Determine if relay-hub is affected
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     outputs:
       affected: ${{ steps.relay-hub-affected.outputs.affected }}
     steps:
