@@ -51,7 +51,16 @@ jobs:
             exit 0
           fi
 
-          if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- \
+          base_sha="${{ github.event.before }}"
+          head_sha="${{ github.sha }}"
+
+          if ! git cat-file -e "${base_sha}^{commit}" 2>/dev/null; then
+            echo "::notice::Base commit ${base_sha} is unavailable; treating relay-hub as affected."
+            echo "affected=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          if git diff --quiet "${base_sha}" "${head_sha}" -- \
             .github/workflows/build-and-publish-docker-image-content-relay-hub.yml \
             apps/relay-hub/Dockerfile; then
             :
@@ -67,8 +76,8 @@ jobs:
           affected_json=$(pnpm exec turbo query affected \
             --tasks turbo:build \
             --packages "${CONTENT_RELAY_PROJECT_NAME}" \
-            --base "${{ github.event.before }}" \
-            --head "${{ github.sha }}")
+            --base "${base_sha}" \
+            --head "${head_sha}")
           affected_count=$(printf '%s\n' "${affected_json}" | jq '.data.affectedTasks.length')
 
           if [ "${affected_count}" -gt 0 ]; then
