@@ -1,7 +1,11 @@
-name: Build and publish Docker image - `relay-hub`
+name: 🏗️ Build and publish Docker image - `relay-hub`
 
+run-name: 🏗️ Build and publish Docker image - `relay-hub` by ${{ format('@{0}', github.actor) }}
+
+# configure concurrency: cancel pending and in-progress workflow runs if a new commit to the same branch is pushed
+# (`github.head_ref` is the source branch of PRs, `github.ref` is the branch for non-PR events, e.g. direct pushes)
 concurrency:
-  group: build-and-publish-relay-hub-docker-image-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 on:

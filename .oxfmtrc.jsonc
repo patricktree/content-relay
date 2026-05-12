@@ -1,0 +1,33 @@
+{
+  "ignorePatterns": [
+    /* pnpm-workspace.yaml is managed by pnpm */
+    "/pnpm-workspace.yaml",
+  ],
+  "sortPackageJson": {
+    "sortScripts": true,
+  },
+  "sortImports": {
+    "customGroups": [
+      /* create a group for content-relay packages to separate them from other external dependencies */
+      {
+        "groupName": "content-relay-packages",
+        "elementNamePattern": ["@content-relay/**"],
+      },
+      /* create a group for subpath imports = internal dependencies */
+      {
+        "groupName": "subpath-imports",
+        "elementNamePattern": ["#pkg/**"],
+      },
+    ],
+    "groups": [
+      ["value-builtin", "value-external"],
+      "value-external",
+      "value-internal",
+      "content-relay-packages",
+      "subpath-imports",
+      ["value-parent", "value-sibling", "value-index"],
+      "unknown",
+    ],
+  },
+  "jsdoc": true,
+}

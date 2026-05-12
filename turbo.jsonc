@@ -5,6 +5,14 @@
   "tasks": {
     "turbo:build": {
       "cache": false,
+      "inputs": [
+        /* default inputs = all git tracked files */
+        "$TURBO_DEFAULT$",
+        /* exclude markdown files */
+        "!*.md",
+        /* exclude license files */
+        "!LICENSE",
+      ],
     },
     "turbo:dev": {
       "cache": false,
@@ -12,12 +20,36 @@
     },
     "turbo:lint": {
       "cache": false,
+      "inputs": [
+        /* default inputs = all git tracked files */
+        "$TURBO_DEFAULT$",
+        /* exclude markdown files */
+        "!*.md",
+        /* exclude license files */
+        "!LICENSE",
+      ],
     },
     "turbo:lint:fix": {
       "cache": false,
+      "inputs": [
+        /* default inputs = all git tracked files */
+        "$TURBO_DEFAULT$",
+        /* exclude markdown files */
+        "!*.md",
+        /* exclude license files */
+        "!LICENSE",
+      ],
     },
     "turbo:test": {
       "cache": false,
+      "inputs": [
+        /* default inputs = all git tracked files */
+        "$TURBO_DEFAULT$",
+        /* exclude markdown files */
+        "!*.md",
+        /* exclude license files */
+        "!LICENSE",
+      ],
     },
   },
 }

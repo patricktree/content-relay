@@ -8,6 +8,6 @@
     "rootDir": "./test",
     "types": ["node"]
   },
-  "include": ["test/**/*"],
+  "include": ["test/**/*", "**/*.test.ts"],
   "references": [{ "path": "./tsconfig.build.json" }]
 }

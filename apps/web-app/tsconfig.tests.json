@@ -12,6 +12,6 @@
     /* Language and Environment */
     "jsx": "react-jsx"
   },
-  "include": ["test/**/*"],
+  "include": ["test/**/*", "**/*.test.ts"],
   "references": [{ "path": "./tsconfig.build.json" }]
 }
