@@ -1,6 +1,6 @@
-name: 🏗️ Build and publish Docker image - `relay-hub`
+name: 🏗️ Build `relay-hub` Docker Image
 
-run-name: 🏗️ Build and publish Docker image - `relay-hub` by ${{ format('@{0}', github.actor) }}
+run-name: 🏗️ Build `relay-hub` Docker Image - by ${{ format('@{0}', github.actor) }}
 
 # configure concurrency: cancel pending and in-progress workflow runs if a new commit to the same branch is pushed
 # (`github.head_ref` is the source branch of PRs, `github.ref` is the branch for non-PR events, e.g. direct pushes)
@@ -19,26 +19,28 @@ permissions:
   packages: write
 
 env:
-  CONTENT_RELAY_PROJECT_NAME: "@content-relay/relay-hub"
+  WORKSPACE_PROJECT_NAME: "@content-relay/relay-hub"
   DOCKER_IMAGE_NAME: relay-hub
 
 jobs:
-  determine-affected:
-    name: Determine if relay-hub is affected
+  build-and-publish-docker-image:
+    name: Build and Publish Docker Image
     runs-on: ubuntu-24.04-arm
-    outputs:
-      affected: ${{ steps.relay-hub-affected.outputs.affected }}
+    timeout-minutes: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@v6.0.2
         with:
-          # `turbo query affected` needs the compared git refs to exist locally.
-          fetch-depth: 0
+          # Affected checks need the compared git refs to exist locally.
+          # We fetch a reasonable number of commits to cover typical PRs, while avoiding excessive fetch time and data usage.
+          # In case of unusually long-running PRs, if the base commit is not found, we treat the workflow as affected, so the workflow will still work correctly.
+          fetch-depth: 100
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6.0.5
         with:
           cache: true
+          # `standalone: true` so that we don't need to care about the installed Node.js version
           standalone: true
 
       - name: Install dependencies and Node.js (via package.json#devEngines.runtime)
@@ -47,26 +49,31 @@ jobs:
           pnpm runtime set node "${node_version}" -g
           pnpm install --frozen-lockfile
 
-      - name: Determine if relay-hub is affected
-        id: relay-hub-affected
+      - name: Determine if run is manual dispatch
+        id: run-is-manual-dispatch
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "affected=true" >> "${GITHUB_OUTPUT}"
-            exit 0
+            echo "manual=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "manual=false" >> "${GITHUB_OUTPUT}"
           fi
 
+      - name: Determine if workflow is affected
+        id: workflow-is-affected
+        if: steps.run-is-manual-dispatch.outputs.manual != 'true'
+        run: |
           base_sha="${{ github.event.before }}"
           head_sha="${{ github.sha }}"
 
           if ! git cat-file -e "${base_sha}^{commit}" 2>/dev/null; then
-            echo "::notice::Base commit ${base_sha} is unavailable; treating relay-hub as affected."
+            echo "::notice::Base commit ${base_sha} is unavailable; treating workflow as affected."
             echo "affected=true" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
 
           if git diff --quiet "${base_sha}" "${head_sha}" -- \
             .github/workflows/build-and-publish-docker-image-content-relay-hub.yml \
-            apps/relay-hub/Dockerfile; then
+            tooling/create-pruned-monorepo-cli; then
             :
           else
             diff_status=$?
@@ -77,9 +84,18 @@ jobs:
             exit "${diff_status}"
           fi
 
+          echo "affected=false" >> "${GITHUB_OUTPUT}"
+
+      - name: Determine if project is affected
+        id: workspace-project-is-affected
+        if: steps.run-is-manual-dispatch.outputs.manual != 'true'
+        run: |
+          base_sha="${{ github.event.before }}"
+          head_sha="${{ github.sha }}"
+
           affected_json=$(pnpm exec turbo query affected \
             --tasks turbo:build \
-            --packages "${CONTENT_RELAY_PROJECT_NAME}" \
+            --packages "${WORKSPACE_PROJECT_NAME}" \
             --base "${base_sha}" \
             --head "${head_sha}")
           affected_count=$(printf '%s\n' "${affected_json}" | jq '.data.affectedTasks.length')
@@ -90,50 +106,43 @@ jobs:
             echo "affected=false" >> "${GITHUB_OUTPUT}"
           fi
 
-  build-and-publish:
-    name: Build and publish Docker image
-    runs-on: ubuntu-latest
-    needs: determine-affected
-    if: needs.determine-affected.outputs.affected == 'true'
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6.0.2
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6.0.5
-        with:
-          cache: true
-          standalone: true
-
-      - name: Install dependencies and Node.js (via package.json#devEngines.runtime)
+      - name: Determine if build is necessary
+        id: build-is-necessary
         run: |
-          node_version=$(jq -r '.devEngines.runtime.version' package.json)
-          pnpm runtime set node "${node_version}" -g
-          pnpm install --frozen-lockfile
+          if [ "${{ steps.run-is-manual-dispatch.outputs.manual }}" = "true" ] || [ "${{ steps.workflow-is-affected.outputs.affected }}" = "true" ] || [ "${{ steps.workspace-project-is-affected.outputs.affected }}" = "true" ]; then
+            echo "necessary=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "necessary=false" >> "${GITHUB_OUTPUT}"
+          fi
 
       - name: Run codebase build
-        run: pnpm --filter '${{ env.CONTENT_RELAY_PROJECT_NAME }}' run build
+        if: steps.build-is-necessary.outputs.necessary == 'true'
+        run: pnpm --filter '${{ env.WORKSPACE_PROJECT_NAME }}' run build
 
       - name: Create temporary directory for Docker build context
         id: create-docker-build-context-dir
+        if: steps.build-is-necessary.outputs.necessary == 'true'
         run: |
-          tmpdir=$(mktemp -d)
+          tmpdir="${RUNNER_TEMP}/docker-build-context"
+          rm -rf "${tmpdir}"
+          mkdir -p "${tmpdir}"
           echo "docker-build-context-dir=${tmpdir}" >> "${GITHUB_OUTPUT}"
 
-      - name: Create pruned monorepo
+      - name: Create pruned monorepo and copy Dockerfile to build context
         id: create-pruned-monorepo
+        if: steps.build-is-necessary.outputs.necessary == 'true'
         run: |
           pnpm exec node ./tooling/create-pruned-monorepo-cli/src/cli.ts \
-            --project-name '${{ env.CONTENT_RELAY_PROJECT_NAME }}' \
+            --project-name '${{ env.WORKSPACE_PROJECT_NAME }}' \
             --target-dir "${{ steps.create-docker-build-context-dir.outputs.docker-build-context-dir }}"
-
-      - name: Copy Dockerfile to build context
-        run: cp ./apps/relay-hub/Dockerfile "${{ steps.create-docker-build-context-dir.outputs.docker-build-context-dir }}/Dockerfile"
+          cp ./apps/relay-hub/Dockerfile "${{ steps.create-docker-build-context-dir.outputs.docker-build-context-dir }}/Dockerfile"
 
       - name: Set up Docker Buildx
+        if: steps.build-is-necessary.outputs.necessary == 'true'
         uses: docker/setup-buildx-action@v4.0.0
 
       - name: Log in to GitHub Container Registry
+        if: steps.build-is-necessary.outputs.necessary == 'true'
         uses: docker/login-action@v4.1.0
         with:
           registry: ghcr.io
@@ -141,6 +150,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Resolve Docker image tags
+        if: steps.build-is-necessary.outputs.necessary == 'true'
         id: docker-image-tags
         run: |
           image_name="ghcr.io/${{ github.repository }}/${{ env.DOCKER_IMAGE_NAME }}"
@@ -154,6 +164,7 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
 
       - name: Run Docker build and push
+        if: steps.build-is-necessary.outputs.necessary == 'true'
         uses: docker/build-push-action@v7.1.0
         with:
           context: "${{ steps.create-docker-build-context-dir.outputs.docker-build-context-dir }}"
