@@ -1,6 +1,6 @@
 import { findWorkspaceDir } from "@pnpm/find-workspace-dir";
 import { findWorkspacePackagesNoCheck } from "@pnpm/workspace.find-packages";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";

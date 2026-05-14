@@ -6,6 +6,7 @@
   ],
   "type": "module",
   "imports": {
+    "#pkg-test/*.ts": "./test/*.ts",
     "#pkg/*.ts": {
       "types": "./dist/types/*.d.ts",
       "default": "./src/*.ts"
@@ -31,7 +32,7 @@
     "test": "turbo run turbo:test",
     "turbo:build": "tsgo --build ./tsconfig.json && node ./scripts/export-openapi-json.ts && oxfmt ./dist/content-relay-hub-openapi.json",
     "turbo:dev": "tsgo --build ./tsconfig.json --watch",
-    "turbo:lint": "eslint --max-warnings 0 .",
+    "turbo:lint": "oxlint --type-aware --max-warnings 0 .",
     "turbo:lint:fix": "pnpm run turbo:lint --fix",
     "turbo:test": "vitest run"
   },
@@ -42,13 +43,14 @@
     "type-fest": "^5.6.0"
   },
   "devDependencies": {
-    "@content-relay/config-eslint": "workspace:*",
+    "@content-relay/config-oxlint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
     "@content-relay/profile-store-node": "workspace:*",
     "@content-relay/relay-hub-test-utils": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
-    "eslint": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

@@ -2,27 +2,39 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { Temporal } from "temporal-polyfill";
+import { z } from "zod";
 
-import type { DevicePlatform, RegisterDeviceResponse } from "@content-relay/contracts";
+import { devicePlatformSchema, type RegisterDeviceResponse } from "@content-relay/contracts";
 
 const PROFILES_FILE_NAME = "profiles.json";
 
-type PersistedProfiles = {
-  activeProfileId: string | null;
-  profiles: LocalDeviceProfile[];
-};
+const localDeviceProfileSchema = z.object({
+  profileId: z.string(),
+  relayHubBaseUrl: z.string(),
+  deviceId: z.string(),
+  nickname: z.string(),
+  platform: devicePlatformSchema,
+  lastUsedTargetDeviceIds: z.array(z.string()),
+  handledDeliveryIds: z.array(z.string()),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
-export type LocalDeviceProfile = {
-  profileId: string;
-  relayHubBaseUrl: string;
-  deviceId: string;
-  nickname: string;
-  platform: DevicePlatform;
-  lastUsedTargetDeviceIds: string[];
-  handledDeliveryIds: string[];
-  createdAt: string;
-  updatedAt: string;
-};
+const persistedProfilesSchema = z.object({
+  activeProfileId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((value) => value ?? null),
+  profiles: z
+    .array(localDeviceProfileSchema)
+    .optional()
+    .transform((value) => value ?? []),
+});
+
+type PersistedProfiles = z.infer<typeof persistedProfilesSchema>;
+
+export type LocalDeviceProfile = z.infer<typeof localDeviceProfileSchema>;
 
 export type CreateLocalProfileInput = RegisterDeviceResponse & {
   profileId?: string;
@@ -259,12 +271,9 @@ export class LocalDeviceProfileStore {
 
     try {
       const content = await fs.promises.readFile(this.#profilesFilePath(), "utf8");
-      const parsed = JSON.parse(content) as PersistedProfiles;
+      const parsed = JSON.parse(content) as unknown;
 
-      return {
-        activeProfileId: parsed.activeProfileId ?? null,
-        profiles: parsed.profiles ?? [],
-      };
+      return persistedProfilesSchema.parse(parsed);
     } catch (error) {
       if (isMissingFileError(error)) {
         return { activeProfileId: null, profiles: [] };

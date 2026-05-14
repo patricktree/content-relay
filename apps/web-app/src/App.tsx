@@ -1,6 +1,7 @@
 import { styled } from "@linaria/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
+import { z } from "zod";
 
 import { isParseResponseError, parseOkResponse, rpcClient } from "@content-relay/client";
 import type { DeviceSummary } from "@content-relay/contracts";
@@ -25,14 +26,16 @@ import {
   type SendItemType,
 } from "#pkg/use-cases/send-item.ts";
 
-type StoredDraft = {
-  deviceId: string;
-  manualTargetDeviceIds: string;
-  selectedTargetDeviceIds: string[];
-  relayHubBaseUrl: string;
-  title: string;
-  value: string;
-};
+const storedDraftSchema = z.object({
+  deviceId: z.string(),
+  manualTargetDeviceIds: z.string(),
+  selectedTargetDeviceIds: z.array(z.string()),
+  relayHubBaseUrl: z.string(),
+  title: z.string(),
+  value: z.string(),
+});
+
+type StoredDraft = z.infer<typeof storedDraftSchema>;
 
 type Status =
   | { kind: "idle" }
@@ -145,7 +148,7 @@ export function App(): React.JSX.Element {
 
   React.useEffect(() => {
     if (shareOverlayDraft === null || typeof document === "undefined") {
-      return;
+      return undefined;
     }
 
     const rootElement = document.getElementById("root");
@@ -595,21 +598,9 @@ function readStoredDraft(): StoredDraft {
     return DEFAULT_DRAFT;
   }
 
-  try {
-    const parsed = JSON.parse(savedDraft) as Partial<StoredDraft>;
+  const parsed = JSON.parse(savedDraft) as unknown;
 
-    return {
-      deviceId: parsed.deviceId ?? DEFAULT_DRAFT.deviceId,
-      manualTargetDeviceIds: parsed.manualTargetDeviceIds ?? DEFAULT_DRAFT.manualTargetDeviceIds,
-      selectedTargetDeviceIds:
-        parsed.selectedTargetDeviceIds ?? DEFAULT_DRAFT.selectedTargetDeviceIds,
-      relayHubBaseUrl: parsed.relayHubBaseUrl ?? DEFAULT_DRAFT.relayHubBaseUrl,
-      title: parsed.title ?? DEFAULT_DRAFT.title,
-      value: parsed.value ?? DEFAULT_DRAFT.value,
-    };
-  } catch {
-    return DEFAULT_DRAFT;
-  }
+  return storedDraftSchema.parse(parsed);
 }
 
 function updateDraft(
@@ -660,7 +651,11 @@ function formatErrorMessage(error: unknown): string {
       return detailData.error;
     }
 
-    return `Request failed with status ${error.statusCode}.`;
+    if (typeof error.statusCode === "number" || typeof error.statusCode === "string") {
+      return `Request failed with status ${error.statusCode}.`;
+    }
+
+    return "Request failed.";
   }
 
   if (error instanceof Error) {

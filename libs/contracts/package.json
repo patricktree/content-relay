@@ -30,17 +30,18 @@
     "lint:fix": "turbo run turbo:lint:fix",
     "turbo:build": "tsgo --build ./tsconfig.json",
     "turbo:dev": "tsgo --build ./tsconfig.json --watch",
-    "turbo:lint": "eslint --max-warnings 0 .",
+    "turbo:lint": "oxlint --type-aware --max-warnings 0 .",
     "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
   "dependencies": {
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@content-relay/config-eslint": "workspace:*",
+    "@content-relay/config-oxlint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
     "@typescript/native-preview": "catalog:",
-    "eslint": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
     "typescript": "catalog:"
   }
 }

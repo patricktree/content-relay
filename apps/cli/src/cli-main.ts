@@ -531,7 +531,11 @@ function formatErrorMessage(error: unknown): string {
       return errorMessage;
     }
 
-    return `Request failed with status ${error.statusCode}.`;
+    if (typeof error.statusCode === "number" || typeof error.statusCode === "string") {
+      return `Request failed with status ${error.statusCode}.`;
+    }
+
+    return "Request failed.";
   }
 
   if (error instanceof InvalidOptionArgumentError) {

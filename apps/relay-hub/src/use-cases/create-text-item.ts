@@ -10,7 +10,7 @@ export async function createTextItem(
     targetDeviceIds: string[];
   },
 ): Promise<CreateItemOutput> {
-  if (input.text.includes("\n") === false && isLikelyUrl(input.text)) {
+  if (!input.text.includes("\n") && isLikelyUrl(input.text)) {
     throw new RelayInvalidInputError(
       "The payload looks like a URL. Use the typed URL send flow instead of the text send flow.",
     );

@@ -164,7 +164,7 @@ export async function createHonoApp() {
   const app = new OpenAPIHono<HonoEnvironment>({
     defaultHook: (result, context) => {
       if (result.success) {
-        return;
+        return undefined;
       }
 
       return context.json(

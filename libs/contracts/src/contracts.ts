@@ -7,6 +7,9 @@ export const deliveryStates = ["pending", "delivered", "viewed"] as const;
 export const deliveryListStates = [...deliveryStates, "all"] as const;
 
 export const devicePlatformSchema = z.enum(devicePlatforms);
+
+export const mobileDevicePlatformSchema = z.enum(mobileDevicePlatforms);
+
 export const pushRegistrationSchema = z.object({
   token: z.string().trim().min(1),
 });
@@ -213,7 +216,7 @@ export type AuthHeaders = {
 };
 
 export function isMobileDevicePlatform(platform: DevicePlatform): platform is MobileDevicePlatform {
-  return mobileDevicePlatforms.includes(platform as MobileDevicePlatform);
+  return mobileDevicePlatformSchema.safeParse(platform).success;
 }
 
 export function isValidAbsoluteUrl(value: string): boolean {

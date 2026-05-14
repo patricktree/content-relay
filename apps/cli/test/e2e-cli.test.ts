@@ -4,20 +4,22 @@ import fs from "node:fs";
 import path from "node:path";
 import url from "node:url";
 import { expect, test } from "vitest";
+import { z } from "zod";
 
-import { createHttpClient, type SimulatedDeliveryResult } from "@content-relay/client";
-import type {
-  CreateInviteResponse,
-  CreateItemResponse,
-  DeliveryActionResponse,
-  DeliveryListResponse,
-  DeliveryResource,
-  DeviceListResponse,
-  DevicePlatform,
-  ItemListEntry,
-  ItemListResponse,
+import { createHttpClient, parseOkResponse } from "@content-relay/client";
+import {
+  createInviteResponseSchema,
+  createItemResponseSchema,
+  deliveryActionResponseSchema,
+  deliveryListResponseSchema,
+  deliveryResourceSchema,
+  deviceListResponseSchema,
+  devicePlatformSchema,
+  itemListEntrySchema,
+  itemListResponseSchema,
+  relayItemTypeSchema,
+  type DevicePlatform,
 } from "@content-relay/contracts";
-import type { LocalDeviceProfile } from "@content-relay/profile-store-node";
 import { withRelayTestEnvironment } from "@content-relay/relay-hub-test-utils";
 
 const cliPackageDirectory = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "..");
@@ -30,35 +32,62 @@ type CliInvocationResult = {
   stderr: string;
 };
 
-type CliSerializedProfile = Pick<
-  LocalDeviceProfile,
-  | "profileId"
-  | "nickname"
-  | "platform"
-  | "deviceId"
-  | "relayHubBaseUrl"
-  | "createdAt"
-  | "updatedAt"
-  | "lastUsedTargetDeviceIds"
-> & {
-  isActive: boolean;
-  handledDeliveryCount: number;
-};
+const cliSerializedProfileSchema = z.object({
+  profileId: z.string(),
+  nickname: z.string(),
+  platform: devicePlatformSchema,
+  deviceId: z.string(),
+  relayHubBaseUrl: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  lastUsedTargetDeviceIds: z.array(z.string()),
+  isActive: z.boolean(),
+  handledDeliveryCount: z.number(),
+});
 
-type CliReceivedDeliveryResult = {
-  delivery: DeliveryResource;
-  wasDuplicate: boolean;
-  simulation: SimulatedDeliveryResult | null;
-};
+const pushTokenResultSchema = z.object({
+  deviceId: z.string(),
+  pushTokenUpdated: z.literal(true),
+});
 
-type CliOpenedDeliveryResponse = DeliveryActionResponse & {
-  action: string;
-};
+const deleteResultSchema = z.object({
+  deviceId: z.string(),
+  profileId: z.string(),
+  deleted: z.literal(true),
+});
 
-type CliDownloadDeliveryResponse = {
-  itemId: string;
-  outputPaths: string[];
-};
+const simulatedDeliveryActionSchema = z.enum([
+  "printed",
+  "notification-created",
+  "auto-opened-browser",
+  "auto-opened-text-window",
+  "file-detail-available",
+]);
+
+const simulatedDeliveryResultSchema = z.object({
+  delivery: deliveryResourceSchema,
+  itemType: relayItemTypeSchema,
+  action: simulatedDeliveryActionSchema,
+  shouldMarkViewed: z.boolean(),
+  summary: z.string(),
+});
+
+const cliReceivedDeliveryResultSchema = z.object({
+  delivery: deliveryResourceSchema,
+  wasDuplicate: z.boolean(),
+  simulation: simulatedDeliveryResultSchema.nullable(),
+});
+
+const cliReceivedDeliveryResultsSchema = z.array(cliReceivedDeliveryResultSchema);
+
+const cliOpenedDeliveryResponseSchema = deliveryActionResponseSchema.extend({
+  action: z.string(),
+});
+
+const cliDownloadDeliveryResponseSchema = z.object({
+  itemId: z.string(),
+  outputPaths: z.array(z.string()),
+});
 
 test("invite create returns a usable invite", async () => {
   await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
@@ -69,7 +98,7 @@ test("invite create returns a usable invite", async () => {
       { configDirectory },
     );
     expect(inviteCreateResult.exitCode).toBe(0);
-    const invite = parseJsonStdout<CreateInviteResponse>(inviteCreateResult);
+    const invite = parseJsonStdout(inviteCreateResult, createInviteResponseSchema);
     expect(invite.inviteCode).toMatch(/\S+/);
     expect(invite.inviteUrl).toContain(invite.inviteCode);
     expect(invite.expiresAt).toMatch(/\d{4}-\d{2}-\d{2}T/);
@@ -100,11 +129,11 @@ test("device management commands cover list, rename, push-token, and delete", as
     const primaryInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
-    const primaryInvite = (await primaryInviteResponse.json()) as CreateInviteResponse;
+    const primaryInvite = await parseOkResponse(primaryInviteResponse);
     const secondaryInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
-    const secondaryInvite = (await secondaryInviteResponse.json()) as CreateInviteResponse;
+    const secondaryInvite = await parseOkResponse(secondaryInviteResponse);
 
     await registerCliProfile({
       configDirectory,
@@ -128,7 +157,7 @@ test("device management commands cover list, rename, push-token, and delete", as
 
     const listResult = await runCli(["--json", "device", "list"], { configDirectory });
     expect(listResult.exitCode).toBe(0);
-    const devices = parseJsonStdout<DeviceListResponse>(listResult);
+    const devices = parseJsonStdout(listResult, deviceListResponseSchema);
     expect(devices).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ nickname: "Developer CLI" }),
@@ -140,13 +169,13 @@ test("device management commands cover list, rename, push-token, and delete", as
       configDirectory,
     });
     expect(renameResult.exitCode).toBe(0);
-    const renamedProfile = parseJsonStdout<CliSerializedProfile>(renameResult);
+    const renamedProfile = parseJsonStdout(renameResult, cliSerializedProfileSchema);
     expect(renamedProfile.nickname).toBe("Renamed CLI");
     expect(renamedProfile.isActive).toBe(true);
 
     const renamedListResult = await runCli(["--json", "device", "list"], { configDirectory });
     expect(renamedListResult.exitCode).toBe(0);
-    const renamedDevices = parseJsonStdout<DeviceListResponse>(renamedListResult);
+    const renamedDevices = parseJsonStdout(renamedListResult, deviceListResponseSchema);
     expect(renamedDevices).toEqual(
       expect.arrayContaining([expect.objectContaining({ nickname: "Renamed CLI" })]),
     );
@@ -158,9 +187,7 @@ test("device management commands cover list, rename, push-token, and delete", as
       },
     );
     expect(pushTokenResult.exitCode).toBe(0);
-    expect(
-      parseJsonStdout<{ deviceId: string; pushTokenUpdated: true }>(pushTokenResult),
-    ).toMatchObject({
+    expect(parseJsonStdout(pushTokenResult, pushTokenResultSchema)).toMatchObject({
       deviceId: renamedProfile.deviceId,
       pushTokenUpdated: true,
     });
@@ -170,15 +197,13 @@ test("device management commands cover list, rename, push-token, and delete", as
       { configDirectory },
     );
     expect(deleteResult.exitCode).toBe(0);
-    expect(
-      parseJsonStdout<{ deviceId: string; profileId: string; deleted: true }>(deleteResult),
-    ).toMatchObject({
+    expect(parseJsonStdout(deleteResult, deleteResultSchema)).toMatchObject({
       deleted: true,
     });
 
     const afterDeleteListResult = await runCli(["--json", "device", "list"], { configDirectory });
     expect(afterDeleteListResult.exitCode).toBe(0);
-    const remainingDevices = parseJsonStdout<DeviceListResponse>(afterDeleteListResult);
+    const remainingDevices = parseJsonStdout(afterDeleteListResult, deviceListResponseSchema);
     expect(remainingDevices).toHaveLength(1);
     expect(remainingDevices[0]?.nickname).toBe("Renamed CLI");
 
@@ -197,7 +222,7 @@ test("device register persists a profile that device current can load", async ()
     const inviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
-    const invite = (await inviteResponse.json()) as CreateInviteResponse;
+    const invite = await parseOkResponse(inviteResponse);
 
     const registerResult = await runCli(
       [
@@ -216,7 +241,7 @@ test("device register persists a profile that device current can load", async ()
       { configDirectory },
     );
     expect(registerResult.exitCode).toBe(0);
-    const registeredProfile = parseJsonStdout<CliSerializedProfile>(registerResult);
+    const registeredProfile = parseJsonStdout(registerResult, cliSerializedProfileSchema);
     expect(registeredProfile.nickname).toBe("Developer CLI");
     expect(registeredProfile.platform).toBe("cli");
     expect(registeredProfile.relayHubBaseUrl).toBe(relayHubBaseUrl);
@@ -226,7 +251,7 @@ test("device register persists a profile that device current can load", async ()
       configDirectory,
     });
     expect(currentResult.exitCode).toBe(0);
-    const currentProfile = parseJsonStdout<typeof registeredProfile>(currentResult);
+    const currentProfile = parseJsonStdout(currentResult, cliSerializedProfileSchema);
     expect(currentProfile.profileId).toBe(registeredProfile.profileId);
     expect(currentProfile.nickname).toBe("Developer CLI");
   });
@@ -238,11 +263,11 @@ test("send text, receive once, and delivery open", async () => {
     const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
-    const senderInvite = (await senderInviteResponse.json()) as CreateInviteResponse;
+    const senderInvite = await parseOkResponse(senderInviteResponse);
     const receiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
-    const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;
+    const receiverInvite = await parseOkResponse(receiverInviteResponse);
 
     await registerCliProfile({
       configDirectory,
@@ -269,7 +294,7 @@ test("send text, receive once, and delivery open", async () => {
       { configDirectory },
     );
     expect(sendResult.exitCode).toBe(0);
-    const sentItem = parseJsonStdout<CreateItemResponse>(sendResult);
+    const sentItem = parseJsonStdout(sendResult, createItemResponseSchema);
     expect(sentItem.item.type).toBe("text");
     expect(sentItem.deliveries).toHaveLength(1);
 
@@ -278,7 +303,7 @@ test("send text, receive once, and delivery open", async () => {
       { configDirectory },
     );
     expect(receiveResult.exitCode).toBe(0);
-    const receivedDeliveries = parseJsonStdout<CliReceivedDeliveryResult[]>(receiveResult);
+    const receivedDeliveries = parseJsonStdout(receiveResult, cliReceivedDeliveryResultsSchema);
     expect(receivedDeliveries).toHaveLength(1);
     const receivedDelivery = receivedDeliveries[0];
     expect(receivedDelivery).toBeDefined();
@@ -296,7 +321,7 @@ test("send text, receive once, and delivery open", async () => {
       { configDirectory },
     );
     expect(openResult.exitCode).toBe(0);
-    const openedDelivery = parseJsonStdout<CliOpenedDeliveryResponse>(openResult);
+    const openedDelivery = parseJsonStdout(openResult, cliOpenedDeliveryResponseSchema);
     expect(openedDelivery.action).toMatch(/opened text/i);
     expect(openedDelivery.delivery.state).toBe("viewed");
 
@@ -304,7 +329,7 @@ test("send text, receive once, and delivery open", async () => {
       configDirectory,
     });
     expect(itemShowResult.exitCode).toBe(0);
-    const itemView = parseJsonStdout<ItemListEntry>(itemShowResult);
+    const itemView = parseJsonStdout(itemShowResult, itemListEntrySchema);
     expect(itemView.item.itemId).toBe(sentItem.item.itemId);
     expect(itemView.deliveries).toEqual(
       expect.arrayContaining([
@@ -320,11 +345,11 @@ test("send url and item list expose sent URL items", async () => {
     const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
-    const senderInvite = (await senderInviteResponse.json()) as CreateInviteResponse;
+    const senderInvite = await parseOkResponse(senderInviteResponse);
     const receiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
-    const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;
+    const receiverInvite = await parseOkResponse(receiverInviteResponse);
 
     await registerCliProfile({
       configDirectory,
@@ -360,7 +385,7 @@ test("send url and item list expose sent URL items", async () => {
       { configDirectory },
     );
     expect(sendUrlResult.exitCode).toBe(0);
-    const sentUrlItem = parseJsonStdout<CreateItemResponse>(sendUrlResult);
+    const sentUrlItem = parseJsonStdout(sendUrlResult, createItemResponseSchema);
     expect(sentUrlItem.item.type).toBe("url");
     expect(sentUrlItem.item.url).toBe("https://example.com/read-later");
 
@@ -368,7 +393,7 @@ test("send url and item list expose sent URL items", async () => {
       configDirectory,
     });
     expect(itemListResult.exitCode).toBe(0);
-    const itemList = parseJsonStdout<ItemListResponse>(itemListResult);
+    const itemList = parseJsonStdout(itemListResult, itemListResponseSchema);
     expect(itemList.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -385,11 +410,11 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
     const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
-    const senderInvite = (await senderInviteResponse.json()) as CreateInviteResponse;
+    const senderInvite = await parseOkResponse(senderInviteResponse);
     const receiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
-    const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;
+    const receiverInvite = await parseOkResponse(receiverInviteResponse);
 
     await registerCliProfile({
       configDirectory,
@@ -416,7 +441,7 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
       { configDirectory },
     );
     expect(sendResult.exitCode).toBe(0);
-    const sentItem = parseJsonStdout<CreateItemResponse>(sendResult);
+    const sentItem = parseJsonStdout(sendResult, createItemResponseSchema);
     const createdDelivery = sentItem.deliveries[0];
     expect(createdDelivery).toBeDefined();
     assert(createdDelivery !== undefined);
@@ -436,7 +461,7 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
       { configDirectory },
     );
     expect(deliveryListResult.exitCode).toBe(0);
-    const pendingDeliveries = parseJsonStdout<DeliveryListResponse>(deliveryListResult);
+    const pendingDeliveries = parseJsonStdout(deliveryListResult, deliveryListResponseSchema);
     expect(pendingDeliveries.deliveries).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ deliveryId: createdDelivery.deliveryId, state: "pending" }),
@@ -455,7 +480,7 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
       { configDirectory },
     );
     expect(deliveryShowResult.exitCode).toBe(0);
-    const shownDelivery = parseJsonStdout<DeliveryResource>(deliveryShowResult);
+    const shownDelivery = parseJsonStdout(deliveryShowResult, deliveryResourceSchema);
     expect(shownDelivery.deliveryId).toBe(createdDelivery.deliveryId);
     expect(shownDelivery.state).toBe("pending");
 
@@ -471,7 +496,7 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
       { configDirectory },
     );
     expect(ackResult.exitCode).toBe(0);
-    const acknowledgedDelivery = parseJsonStdout<DeliveryActionResponse>(ackResult);
+    const acknowledgedDelivery = parseJsonStdout(ackResult, deliveryActionResponseSchema);
     expect(acknowledgedDelivery.delivery.state).toBe("delivered");
 
     const viewedResult = await runCli(
@@ -486,7 +511,7 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
       { configDirectory },
     );
     expect(viewedResult.exitCode).toBe(0);
-    const viewedDelivery = parseJsonStdout<DeliveryActionResponse>(viewedResult);
+    const viewedDelivery = parseJsonStdout(viewedResult, deliveryActionResponseSchema);
     expect(viewedDelivery.delivery.state).toBe("viewed");
 
     const viewedListResult = await runCli(
@@ -494,7 +519,7 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
       { configDirectory },
     );
     expect(viewedListResult.exitCode).toBe(0);
-    const viewedDeliveries = parseJsonStdout<DeliveryListResponse>(viewedListResult);
+    const viewedDeliveries = parseJsonStdout(viewedListResult, deliveryListResponseSchema);
     expect(viewedDeliveries.deliveries).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ deliveryId: createdDelivery.deliveryId, state: "viewed" }),
@@ -513,16 +538,15 @@ test("send file and delivery download write the files", async () => {
     const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
-    const senderInvite = (await senderInviteResponse.json()) as CreateInviteResponse;
+    const senderInvite = await parseOkResponse(senderInviteResponse);
     const receiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
-    const receiverInvite = (await receiverInviteResponse.json()) as CreateInviteResponse;
+    const receiverInvite = await parseOkResponse(receiverInviteResponse);
     const secondReceiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
     });
-    const secondReceiverInvite =
-      (await secondReceiverInviteResponse.json()) as CreateInviteResponse;
+    const secondReceiverInvite = await parseOkResponse(secondReceiverInviteResponse);
 
     await registerCliProfile({
       configDirectory,
@@ -567,7 +591,7 @@ test("send file and delivery download write the files", async () => {
       { configDirectory },
     );
     expect(sendResult.exitCode).toBe(0);
-    const fileItem = parseJsonStdout<CreateItemResponse>(sendResult);
+    const fileItem = parseJsonStdout(sendResult, createItemResponseSchema);
     expect(fileItem.item.type).toBe("file");
 
     const receiveResult = await runCli(
@@ -575,7 +599,7 @@ test("send file and delivery download write the files", async () => {
       { configDirectory },
     );
     expect(receiveResult.exitCode).toBe(0);
-    const receivedDeliveries = parseJsonStdout<CliReceivedDeliveryResult[]>(receiveResult);
+    const receivedDeliveries = parseJsonStdout(receiveResult, cliReceivedDeliveryResultsSchema);
     const fileDelivery = receivedDeliveries.find(
       (result) => result.delivery.item.itemId === fileItem.item.itemId,
     );
@@ -597,7 +621,7 @@ test("send file and delivery download write the files", async () => {
       { configDirectory },
     );
     expect(downloadResult.exitCode).toBe(0);
-    const downloadPayload = parseJsonStdout<CliDownloadDeliveryResponse>(downloadResult);
+    const downloadPayload = parseJsonStdout(downloadResult, cliDownloadDeliveryResponseSchema);
     expect(downloadPayload.itemId).toBe(fileItem.item.itemId);
     expect(downloadPayload.outputPaths).toHaveLength(2);
     const alphaOutputPath = downloadPayload.outputPaths[0];
@@ -637,12 +661,14 @@ async function registerCliProfile(input: {
   expect(registerResult.exitCode).toBe(0);
 }
 
-function parseJsonStdout<T>(result: CliInvocationResult): T {
+function parseJsonStdout<T>(result: CliInvocationResult, schema: z.ZodType<T>): T {
   if (result.stdout.trim().length === 0) {
     throw new Error(`Expected JSON on stdout but the CLI produced none. stderr: ${result.stderr}`);
   }
 
-  return JSON.parse(result.stdout) as T;
+  const parsed = JSON.parse(result.stdout) as unknown;
+
+  return schema.parse(parsed);
 }
 
 async function runCli(

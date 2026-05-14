@@ -18,6 +18,11 @@
         "groupName": "subpath-imports",
         "elementNamePattern": ["#pkg/**"],
       },
+      /* create a group for subpath imports for test modules */
+      {
+        "groupName": "subpath-imports-test-modules",
+        "elementNamePattern": ["#pkg-test/**"],
+      },
     ],
     "groups": [
       ["value-builtin", "value-external"],
@@ -25,6 +30,7 @@
       "value-internal",
       "content-relay-packages",
       "subpath-imports",
+      "subpath-imports-test-modules",
       ["value-parent", "value-sibling", "value-index"],
       "unknown",
     ],

@@ -10,7 +10,7 @@ import path from "node:path";
 import util from "node:util";
 import { expect, test } from "vitest";
 
-import type { DeliveryListState, DeviceSummary } from "@content-relay/contracts";
+import { deviceSummarySchema, type DeliveryListState } from "@content-relay/contracts";
 import {
   createDependencyContainer,
   createHonoApp,
@@ -30,7 +30,7 @@ import {
   registerProfile,
   withRelayTestEnvironment,
   writeDownloadedDelivery,
-} from "./test-helpers.ts";
+} from "#pkg-test/test-helpers.ts";
 
 test("milestone 0 flow covers registration, send, receive, viewed, and file download", async () => {
   await withRelayTestEnvironment(async ({ profileStore, rootDirectory, relayHubBaseUrl }) => {
@@ -452,7 +452,7 @@ test("device routes support rename, listing, and same-device identity guards", a
       json: { nickname: "Renamed iPhone Sim" },
     });
     expect(renameResponse.status).toBe(200);
-    const renamedDevice = (await renameResponse.json()) as DeviceSummary;
+    const renamedDevice = deviceSummarySchema.parse(await renameResponse.json());
     expect(renamedDevice.nickname).toBe("Renamed iPhone Sim");
 
     const devices = await parseOkResponse(rpcClient.listDevices(senderProfile));
@@ -882,7 +882,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       receiverProfile,
     ).deliveries.$get({
       query: {
-        // intentional type cast to allow invalid value
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- intentional type cast to allow invalid value
         state: "invalid" as DeliveryListState,
         limit: "10",
       },
