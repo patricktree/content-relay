@@ -152,18 +152,6 @@ public struct RelayDeviceCredentials: Equatable, Sendable {
   }
 }
 
-public struct ImportedCLIProfile: Equatable, Sendable {
-  public let nickname: String
-  public let relayHubBaseURL: URL
-  public let deviceId: String
-
-  public init(nickname: String, relayHubBaseURL: URL, deviceId: String) {
-    self.nickname = nickname
-    self.relayHubBaseURL = relayHubBaseURL
-    self.deviceId = deviceId
-  }
-}
-
 public struct RelayDeviceSummary: Codable, Equatable, Identifiable, Sendable {
   public let deviceId: String
   public let nickname: String

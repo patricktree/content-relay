@@ -77,9 +77,6 @@ importers:
       '@content-relay/o11y.node-sdk':
         specifier: workspace:*
         version: link:../../libs/o11y.node-sdk
-      '@content-relay/profile-store-node':
-        specifier: workspace:*
-        version: link:../../libs/profile-store-node
       '@content-relay/utils-ecma':
         specifier: workspace:*
         version: link:../../libs/utils-ecma
@@ -316,9 +313,6 @@ importers:
       '@content-relay/config-typescript':
         specifier: workspace:*
         version: link:../../tooling/config-typescript
-      '@content-relay/profile-store-node':
-        specifier: workspace:*
-        version: link:../profile-store-node
       '@content-relay/relay-hub-test-utils':
         specifier: workspace:*
         version: link:../../qa-utils/relay-hub-test-utils
@@ -411,40 +405,6 @@ importers:
       '@patricktree/commons-node':
         specifier: ^3.1.1
         version: 3.1.1
-    devDependencies:
-      '@content-relay/config-oxlint':
-        specifier: workspace:*
-        version: link:../../tooling/config-oxlint
-      '@content-relay/config-typescript':
-        specifier: workspace:*
-        version: link:../../tooling/config-typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.12.2
-      '@typescript/native-preview':
-        specifier: 'catalog:'
-        version: 7.0.0-dev.20260511.1
-      oxlint:
-        specifier: 'catalog:'
-        version: 1.64.0(oxlint-tsgolint@0.22.1)
-      oxlint-tsgolint:
-        specifier: 'catalog:'
-        version: 0.22.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
-  libs/profile-store-node:
-    dependencies:
-      '@content-relay/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      temporal-polyfill:
-        specifier: ^0.3.2
-        version: 0.3.2
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
     devDependencies:
       '@content-relay/config-oxlint':
         specifier: workspace:*

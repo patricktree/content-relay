@@ -5,11 +5,8 @@ import {
   type SimulatedDeliveryResult,
 } from "@content-relay/client";
 import type { DeliveryResource } from "@content-relay/contracts";
-import type {
-  LocalDeviceProfile,
-  LocalDeviceProfileStore,
-} from "@content-relay/profile-store-node";
 
+import type { ActiveDeviceWithPlatform } from "#pkg/use-cases/device-context.ts";
 import { transitionDeliveryToDelivered } from "#pkg/use-cases/transition-delivery-to-delivered.ts";
 
 export type ReceivedDeliveryResult = {
@@ -18,39 +15,24 @@ export type ReceivedDeliveryResult = {
   simulation: SimulatedDeliveryResult | null;
 };
 
-type ReceivePendingDeliveriesProfileStore = Pick<
-  LocalDeviceProfileStore,
-  "hasHandledDelivery" | "recordHandledDelivery"
->;
-
 export async function receivePendingDeliveries(
-  profile: LocalDeviceProfile,
-  profileStore: ReceivePendingDeliveriesProfileStore,
+  deviceContext: ActiveDeviceWithPlatform,
 ): Promise<ReceivedDeliveryResult[]> {
   const pending = await parseOkResponse(
-    new RpcClient(profile.relayHubBaseUrl)
-      .createDeviceRpcClient(profile.deviceId)
+    new RpcClient(deviceContext.relayHubBaseUrl)
+      .createDeviceRpcClient(deviceContext.deviceId)
       .fetchPendingDeliveries(),
   );
   const results: ReceivedDeliveryResult[] = [];
 
   for (const delivery of pending.deliveries) {
-    const wasDuplicate = await profileStore.hasHandledDelivery(
-      profile.profileId,
-      delivery.deliveryId,
-    );
-    const simulation = simulatePlatformDelivery(profile.platform, delivery);
+    const simulation = simulatePlatformDelivery(deviceContext.platform, delivery);
+    let currentDelivery = await transitionDeliveryToDelivered(deviceContext, delivery.deliveryId);
 
-    if (!wasDuplicate) {
-      await profileStore.recordHandledDelivery(profile.profileId, delivery.deliveryId);
-    }
-
-    let currentDelivery = await transitionDeliveryToDelivered(profile, delivery.deliveryId);
-
-    if (simulation.shouldMarkViewed && !wasDuplicate) {
+    if (simulation.shouldMarkViewed) {
       const viewed = await parseOkResponse(
-        new RpcClient(profile.relayHubBaseUrl)
-          .createDeviceRpcClient(profile.deviceId)
+        new RpcClient(deviceContext.relayHubBaseUrl)
+          .createDeviceRpcClient(deviceContext.deviceId)
           .markDeliveryViewed({ deliveryId: delivery.deliveryId }),
       );
       currentDelivery = viewed.delivery;
@@ -58,7 +40,7 @@ export async function receivePendingDeliveries(
 
     results.push({
       delivery: currentDelivery,
-      wasDuplicate,
+      wasDuplicate: false,
       simulation,
     });
   }

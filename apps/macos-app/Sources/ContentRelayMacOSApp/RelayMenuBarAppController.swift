@@ -21,13 +21,6 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
 
       return await self.saveSettings(snapshot)
     },
-    importAction: { [weak self] in
-      guard let self else {
-        return SettingsImportResult(snapshot: .empty, message: "The app controller is no longer available.")
-      }
-
-      return await self.importCLIProfile()
-    },
     testAction: { [weak self] snapshot in
       guard let self else {
         return "The app controller is no longer available."
@@ -214,18 +207,6 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
       return
     }
 
-    let importResult = await importCLIProfile()
-    settingsViewModel.apply(snapshot: importResult.snapshot)
-
-    do {
-      if try configurationStore.loadCredentials() != nil {
-        updateStatusLine("Imported CLI macOS profile")
-        return
-      }
-    } catch {
-      updateLastError(error.localizedDescription)
-    }
-
     settingsWindowController.present()
   }
 
@@ -382,32 +363,6 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
     } catch {
       updateLastError(error.localizedDescription)
       return error.localizedDescription
-    }
-  }
-
-  private func importCLIProfile() async -> SettingsImportResult {
-    do {
-      let importedProfile = try CLIProfileImporter.importPreferredMacOSProfile()
-      let snapshot = SettingsSnapshot(
-        relayHubBaseURL: importedProfile.relayHubBaseURL.absoluteString,
-        deviceId: importedProfile.deviceId,
-        deviceNickname: importedProfile.nickname,
-        pollIntervalSeconds: String((try? configurationStore.currentPollIntervalSeconds()) ?? 15)
-      )
-
-      try configurationStore.save(snapshot: snapshot)
-      await startPollingIfConfigured()
-      updateLastError(nil)
-
-      return SettingsImportResult(
-        snapshot: snapshot,
-        message: "Imported the active macOS CLI profile."
-      )
-    } catch {
-      let fallbackSnapshot = (try? configurationStore.makeSettingsSnapshot()) ?? .empty
-      updateLastError(error.localizedDescription)
-
-      return SettingsImportResult(snapshot: fallbackSnapshot, message: error.localizedDescription)
     }
   }
 

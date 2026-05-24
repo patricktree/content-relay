@@ -54,8 +54,8 @@ Initial send surfaces should include:
 ### Targeting
 
 - A send can target **one or more explicit devices**.
-- Default target selection uses the **last-used target(s)**.
-- Send flows should **preselect** the last-used target(s) but still show a confirmation UI.
+- Native app default target selection uses the **last-used target(s)**.
+- Native app send flows should **preselect** the last-used target(s) but still show a confirmation UI.
 
 ### Device identity
 
@@ -66,11 +66,7 @@ Initial send surfaces should include:
 
 - The CLI is the **primary early development and testing surface**.
 - It must be possible to exercise the real Relay Hub from the terminal without running the macOS app or the Capacitor mobile app.
-- The CLI should support multiple locally stored registered-device profiles so the developer can simulate devices such as:
-  - `cli`
-  - `macos`
-  - `ios`
-  - `android`
+- The CLI should be stateless and require explicit Relay Hub URL, active device ID, and target device IDs for protected operations.
 - The CLI should validate the protocol and product behavior, including send, receive, ack, viewed, multi-target sends, and multi-file bundles.
 - An optional future TUI may be added later, but it must wrap the same headless client core and local state rather than becoming a separate client implementation.
 - The detailed CLI contract lives in [02-CLI-SPEC.md](./02-CLI-SPEC.md).
@@ -307,11 +303,11 @@ Deliverables:
 - delivery creation / status model
 - pending-item fetch, ack, viewed, inspection, and file-download endpoints needed by the CLI
 - reusable headless client core shared by the CLI, automated tests, macOS, and the mobile app
-- local device-profile storage with active-device selection, last-used targets, and handled-delivery tracking
+- stateless CLI operation with explicit Relay Hub URL, active device ID, and target device IDs
 - CLI device registration using nickname and platform
 - CLI send flows for text, URL, and file
 - CLI receive flows for pending fetch, ack, viewed, and file download
-- platform-profile simulation for `cli`, `macos`, `ios`, and `android`
+- platform simulation for `cli`, `macos`, `ios`, and `android`
 - end-to-end test scenarios covering multi-target sends, offline receive, delivery deduplication, and multi-file bundles
 - Relay Hub hardening around the first headless vertical slice
 
@@ -362,7 +358,7 @@ Deliverables:
 Deliverables:
 
 - mobile app send UI for text, URLs, and files
-- target confirmation UI with preselected last-used devices
+- native app target confirmation UI with preselected last-used devices
 - shared handling for text/URL/file sends from within the app
 - foreground in-app delivery handling with no auto-navigation
 

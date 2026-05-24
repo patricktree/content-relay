@@ -14,7 +14,6 @@
 - uploads one or more files as a single logical file item
 - lists available target devices from the Relay Hub
 - remembers last-used target devices locally
-- imports an existing `macos` profile from `~/.content-relay/profiles.json`
 - registers the local sender from the Relay Hub URL and a device nickname, then stores the returned device ID locally
 - stores local app state in Application Support
 
@@ -43,8 +42,6 @@ open "apps/macos-app/dist/Content Relay.app"
    - Relay Hub base URL
    - device nickname
 3. Click **Save & Register**. The app stores the returned device ID locally.
-
-You can also import an active `macos` CLI profile from the settings window.
 
 ## Manual verification checklist
 

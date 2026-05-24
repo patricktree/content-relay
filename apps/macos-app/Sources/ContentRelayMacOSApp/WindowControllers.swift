@@ -4,11 +4,6 @@ import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct SettingsImportResult {
-  let snapshot: SettingsSnapshot
-  let message: String
-}
-
 struct FileDownloadResult {
   let savedPaths: [String]
   let message: String
@@ -50,13 +45,11 @@ final class SettingsViewModel: ObservableObject {
   @Published var isBusy = false
 
   private let saveAction: @MainActor (SettingsSnapshot) async -> String
-  private let importAction: @MainActor () async -> SettingsImportResult
   private let testAction: @MainActor (SettingsSnapshot) async -> String
 
   init(
     initialSnapshot: SettingsSnapshot,
     saveAction: @escaping @MainActor (SettingsSnapshot) async -> String,
-    importAction: @escaping @MainActor () async -> SettingsImportResult,
     testAction: @escaping @MainActor (SettingsSnapshot) async -> String
   ) {
     self.relayHubBaseURL = initialSnapshot.relayHubBaseURL
@@ -64,7 +57,6 @@ final class SettingsViewModel: ObservableObject {
     self.deviceNickname = initialSnapshot.deviceNickname
     self.pollIntervalSeconds = initialSnapshot.pollIntervalSeconds
     self.saveAction = saveAction
-    self.importAction = importAction
     self.testAction = testAction
   }
 
@@ -73,18 +65,6 @@ final class SettingsViewModel: ObservableObject {
     deviceId = snapshot.deviceId
     deviceNickname = snapshot.deviceNickname
     pollIntervalSeconds = snapshot.pollIntervalSeconds
-  }
-
-  func importFromCLI() {
-    isBusy = true
-
-    Task { @MainActor in
-      defer { isBusy = false }
-
-      let result = await importAction()
-      apply(snapshot: result.snapshot)
-      statusMessage = result.message
-    }
   }
 
   func testConnection() {
@@ -380,7 +360,7 @@ private struct SettingsView: View {
       Text("Content Relay")
         .font(.system(size: 24, weight: .semibold))
 
-      Text("Import an active `macos` CLI profile or enter a Relay Hub URL and device nickname.")
+      Text("Enter a Relay Hub URL and device nickname to register this Mac.")
         .font(.system(size: 14))
         .foregroundStyle(.black.opacity(0.7))
         .fixedSize(horizontal: false, vertical: true)
@@ -392,12 +372,6 @@ private struct SettingsView: View {
       }
 
       HStack(spacing: 12) {
-        Button("Import Active CLI macOS Profile") {
-          viewModel.importFromCLI()
-        }
-        .buttonStyle(.bordered)
-        .disabled(viewModel.isBusy)
-
         Button("Test Fetch") {
           viewModel.testConnection()
         }

@@ -17,6 +17,7 @@ import {
   runWithDiContainer,
   startServer,
 } from "@content-relay/relay-hub";
+import { withRelayHubTestEnvironment } from "@content-relay/relay-hub-test-utils";
 
 import { isParseResponseError, parseOkResponse } from "#pkg/hono-client.ts";
 import { RpcClient } from "#pkg/rpc-client.ts";
@@ -26,37 +27,27 @@ import {
   createAuthHeaders,
   listenOnPort,
   receivePendingDeliveries,
-  registerProfile,
-  withRelayHubTestEnvironment,
+  registerTestDevice,
   writeDownloadedDelivery,
 } from "#pkg-test/test-helpers.ts";
 
 test("milestone 0 flow covers registration, send, receive, viewed, and file download", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, rootDirectory, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const iosProfile = await registerProfile({
-      profileStore,
+    const iosProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
-    const androidProfile = await registerProfile({
-      profileStore,
+    const androidProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer Pixel Sim",
       platform: "android",
     });
-
-    await profileStore.rememberTargets(senderProfile.profileId, [
-      iosProfile.deviceId,
-      androidProfile.deviceId,
-    ]);
 
     const textItem = await parseOkResponse(
       new RpcClient(senderProfile.relayHubBaseUrl)
@@ -69,7 +60,9 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
 
     expect(textItem.deliveries).toHaveLength(2);
 
-    const firstIosFetch = await receivePendingDeliveries(iosProfile, profileStore, {
+    const iosHandledDeliveryIds = new Set<string>();
+    const firstIosFetch = await receivePendingDeliveries(iosProfile, {
+      handledDeliveryIds: iosHandledDeliveryIds,
       acknowledge: false,
       simulatePlatform: true,
       deduplicate: true,
@@ -81,7 +74,8 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     expect(firstIosDelivery.wasDuplicate).toBe(false);
     expect(firstIosDelivery.simulation?.action).toBe("notification-created");
 
-    const duplicateIosFetch = await receivePendingDeliveries(iosProfile, profileStore, {
+    const duplicateIosFetch = await receivePendingDeliveries(iosProfile, {
+      handledDeliveryIds: iosHandledDeliveryIds,
       acknowledge: false,
       simulatePlatform: true,
       deduplicate: true,
@@ -92,7 +86,8 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     assert(duplicateIosDelivery !== undefined);
     expect(duplicateIosDelivery.wasDuplicate).toBe(true);
 
-    const acknowledgedIosFetch = await receivePendingDeliveries(iosProfile, profileStore, {
+    const acknowledgedIosFetch = await receivePendingDeliveries(iosProfile, {
+      handledDeliveryIds: iosHandledDeliveryIds,
       acknowledge: true,
       simulatePlatform: true,
       deduplicate: true,
@@ -165,7 +160,7 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     );
     expect(androidPendingBeforeAck.deliveries).toHaveLength(2);
 
-    const androidReceive = await receivePendingDeliveries(androidProfile, profileStore, {
+    const androidReceive = await receivePendingDeliveries(androidProfile, {
       acknowledge: true,
       simulatePlatform: true,
       deduplicate: true,
@@ -209,7 +204,7 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
 
     await expect(fs.promises.stat(fileBlobDirectory)).resolves.toBeDefined();
 
-    const iosFileReceive = await receivePendingDeliveries(iosProfile, profileStore, {
+    const iosFileReceive = await receivePendingDeliveries(iosProfile, {
       acknowledge: true,
       simulatePlatform: true,
       deduplicate: true,
@@ -225,16 +220,13 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
 });
 
 test("text send rejects a single-line URL payload", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
@@ -261,16 +253,13 @@ test("text send rejects a single-line URL payload", async () => {
 });
 
 test("macos simulated receive auto-marks text and url deliveries viewed", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const macosProfile = await registerProfile({
-      profileStore,
+    const macosProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer Mac",
       platform: "macos",
@@ -293,7 +282,7 @@ test("macos simulated receive auto-marks text and url deliveries viewed", async 
         }),
     );
 
-    const deliveries = await receivePendingDeliveries(macosProfile, profileStore, {
+    const deliveries = await receivePendingDeliveries(macosProfile, {
       acknowledge: true,
       simulatePlatform: true,
       deduplicate: true,
@@ -330,16 +319,13 @@ test("macos simulated receive auto-marks text and url deliveries viewed", async 
 });
 
 test("deleting a device invalidates its authentication and hides it from active device listings", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
@@ -375,36 +361,35 @@ test("deleting a device invalidates its authentication and hides it from active 
 });
 
 test("push tokens can be upserted for the authenticated device", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const profile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const device = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
 
-    const upsertResponse1 = await new RpcClient(profile.relayHubBaseUrl)
-      .createDeviceRpcClient(profile.deviceId)
+    const upsertResponse1 = await new RpcClient(device.relayHubBaseUrl)
+      .createDeviceRpcClient(device.deviceId)
       .setPushToken({
         token: "ExponentPushToken[device-token-1]",
       });
     expect(upsertResponse1.status).toBe(204);
 
-    const upsertResponse2 = await new RpcClient(profile.relayHubBaseUrl)
-      .createDeviceRpcClient(profile.deviceId)
+    const upsertResponse2 = await new RpcClient(device.relayHubBaseUrl)
+      .createDeviceRpcClient(device.deviceId)
       .setPushToken({
         token: "ExponentPushToken[device-token-2]",
       });
     expect(upsertResponse2.status).toBe(204);
 
-    const removeResponse = await new RpcClient(profile.relayHubBaseUrl)
-      .createDeviceRpcClient(profile.deviceId)
+    const removeResponse = await new RpcClient(device.relayHubBaseUrl)
+      .createDeviceRpcClient(device.deviceId)
       .deleteDevice();
     expect(removeResponse.status).toBe(204);
 
     const upsertDeletedDevicePushTokenPromise = parseOkResponse(
-      new RpcClient(profile.relayHubBaseUrl)
-        .createDeviceRpcClient(profile.deviceId)
+      new RpcClient(device.relayHubBaseUrl)
+        .createDeviceRpcClient(device.deviceId)
         .setPushToken({ token: "ExponentPushToken[device-token-3]" }),
     );
     await expect(upsertDeletedDevicePushTokenPromise).rejects.toSatisfy(isParseResponseError);
@@ -420,16 +405,13 @@ test("push tokens can be upserted for the authenticated device", async () => {
 });
 
 test("device routes support rename, listing, and same-device identity guards", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
@@ -512,16 +494,13 @@ test("device routes support rename, listing, and same-device identity guards", a
 });
 
 test("item and delivery routes list and fetch the authenticated device resources", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
@@ -618,16 +597,13 @@ test("item and delivery routes list and fetch the authenticated device resources
 });
 
 test("file uploads reject empty payloads and write single-file downloads", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, rootDirectory, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer Android Sim",
       platform: "android",
@@ -692,22 +668,18 @@ test("file uploads reject empty payloads and write single-file downloads", async
 });
 
 test("receivePendingDeliveries respects deduplication, simulation, and acknowledgement options", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const iosProfile = await registerProfile({
-      profileStore,
+    const iosProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
-    const macosProfile = await registerProfile({
-      profileStore,
+    const macosProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer Mac",
       platform: "macos",
@@ -722,7 +694,7 @@ test("receivePendingDeliveries respects deduplication, simulation, and acknowled
         }),
     );
 
-    const firstIosReceive = await receivePendingDeliveries(iosProfile, profileStore, {
+    const firstIosReceive = await receivePendingDeliveries(iosProfile, {
       acknowledge: false,
       simulatePlatform: false,
       deduplicate: false,
@@ -735,7 +707,7 @@ test("receivePendingDeliveries respects deduplication, simulation, and acknowled
     expect(firstIosReceiveDelivery.simulation).toBeNull();
     expect(firstIosReceiveDelivery.delivery.state).toBe("pending");
 
-    const secondIosReceive = await receivePendingDeliveries(iosProfile, profileStore, {
+    const secondIosReceive = await receivePendingDeliveries(iosProfile, {
       acknowledge: false,
       simulatePlatform: false,
       deduplicate: false,
@@ -757,7 +729,9 @@ test("receivePendingDeliveries respects deduplication, simulation, and acknowled
         }),
     );
 
-    const firstMacosReceive = await receivePendingDeliveries(macosProfile, profileStore, {
+    const macosHandledDeliveryIds = new Set<string>();
+    const firstMacosReceive = await receivePendingDeliveries(macosProfile, {
+      handledDeliveryIds: macosHandledDeliveryIds,
       acknowledge: false,
       simulatePlatform: true,
       deduplicate: true,
@@ -781,15 +755,12 @@ test("receivePendingDeliveries respects deduplication, simulation, and acknowled
     );
     expect(pendingMacosDelivery.delivery.state).toBe("pending");
 
-    const duplicateAcknowledgedMacosReceive = await receivePendingDeliveries(
-      macosProfile,
-      profileStore,
-      {
-        acknowledge: true,
-        simulatePlatform: true,
-        deduplicate: true,
-      },
-    );
+    const duplicateAcknowledgedMacosReceive = await receivePendingDeliveries(macosProfile, {
+      handledDeliveryIds: macosHandledDeliveryIds,
+      acknowledge: true,
+      simulatePlatform: true,
+      deduplicate: true,
+    });
     expect(duplicateAcknowledgedMacosReceive).toHaveLength(1);
     const duplicateAcknowledgedMacosDelivery = duplicateAcknowledgedMacosReceive[0];
     expect(duplicateAcknowledgedMacosDelivery).toBeDefined();
@@ -801,16 +772,13 @@ test("receivePendingDeliveries respects deduplication, simulation, and acknowled
 });
 
 test("validation errors are returned for JSON, query, and multipart routes", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
@@ -1011,16 +979,13 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
 });
 
 test("resource lookup routes reject unknown resources and invalid file downloads", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
@@ -1205,50 +1170,35 @@ test("server errors are normalized to JSON 500 responses", async () => {
   }
 });
 
-test("profile store reuses remembered targets when no explicit targets are provided", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+test("explicit target device ids send to every target", async () => {
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const iosProfile = await registerProfile({
-      profileStore,
+    const iosProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
-    const androidProfile = await registerProfile({
-      profileStore,
+    const androidProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer Pixel Sim",
       platform: "android",
     });
-
-    await profileStore.rememberTargets(senderProfile.profileId, [
-      iosProfile.deviceId,
-      androidProfile.deviceId,
-      iosProfile.deviceId,
-    ]);
-
-    const resolvedTargets = await profileStore.resolveTargetDeviceIds(
-      senderProfile.profileId,
-      undefined,
-    );
-    expect(resolvedTargets).toEqual([iosProfile.deviceId, androidProfile.deviceId]);
+    const targetDeviceIds = [iosProfile.deviceId, androidProfile.deviceId];
 
     const textItem = await parseOkResponse(
       new RpcClient(senderProfile.relayHubBaseUrl)
         .createDeviceRpcClient(senderProfile.deviceId)
         .sendText({
-          text: "last used targets still apply",
-          targetDeviceIds: resolvedTargets,
+          text: "explicit targets are required",
+          targetDeviceIds,
         }),
     );
     expect(textItem.deliveries.map((delivery) => delivery.targetDeviceId).sort()).toEqual(
-      [iosProfile.deviceId, androidProfile.deviceId].sort(),
+      targetDeviceIds.sort(),
     );
   });
 });

@@ -10,19 +10,18 @@ import type {
   PushRegistration,
 } from "@content-relay/contracts";
 import { isMobileDevicePlatform } from "@content-relay/contracts";
-import {
-  LocalDeviceProfileStore,
-  type LocalDeviceProfile,
-} from "@content-relay/profile-store-node";
-import {
-  allocatePort,
-  listenOnPort,
-  withRelayHubTestEnvironment as withBaseRelayHubTestEnvironment,
-} from "@content-relay/relay-hub-test-utils";
+import { allocatePort, listenOnPort } from "@content-relay/relay-hub-test-utils";
 
 import { RpcClient } from "#pkg/rpc-client.ts";
 
 export { allocatePort, listenOnPort };
+
+export type RegisteredTestDevice = {
+  relayHubBaseUrl: string;
+  deviceId: string;
+  nickname: string;
+  platform: DevicePlatform;
+};
 
 export type ReceivedDeliveryResult = {
   delivery: DeliveryResource;
@@ -34,34 +33,14 @@ export type ReceivePendingOptions = {
   acknowledge: boolean;
   simulatePlatform: boolean;
   deduplicate: boolean;
+  handledDeliveryIds?: Set<string> | undefined;
 };
 
-export type RelayHubTestEnvironment = {
-  profileStore: LocalDeviceProfileStore;
-  rootDirectory: string;
-  relayHubBaseUrl: string;
-};
-
-export async function withRelayHubTestEnvironment(
-  run: (environment: RelayHubTestEnvironment) => Promise<void>,
-): Promise<void> {
-  await withBaseRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
-    await run({
-      profileStore: new LocalDeviceProfileStore(path.join(rootDirectory, "profiles")),
-      rootDirectory,
-      relayHubBaseUrl,
-    });
-  });
-}
-
-export async function registerProfile(input: {
-  profileStore: LocalDeviceProfileStore;
+export async function registerTestDevice(input: {
   relayHubBaseUrl: string;
   nickname: string;
   platform: DevicePlatform;
-  makeActive?: boolean;
-  profileId?: string;
-}): Promise<LocalDeviceProfile> {
+}): Promise<RegisteredTestDevice> {
   const rpcClient = new RpcClient(input.relayHubBaseUrl);
   const pushRegistration = buildPushRegistration(input.platform, input.nickname);
   const registration = await parseResponse(
@@ -72,40 +51,37 @@ export async function registerProfile(input: {
     }),
   );
 
-  return await input.profileStore.createProfile(
-    {
-      ...registration,
-      ...(input.profileId !== undefined ? { profileId: input.profileId } : {}),
-    },
-    { makeActive: input.makeActive ?? false },
-  );
+  return {
+    relayHubBaseUrl: input.relayHubBaseUrl,
+    deviceId: registration.deviceId,
+    nickname: registration.nickname,
+    platform: registration.platform,
+  };
 }
 
-export function createAuthHeaders(profile: LocalDeviceProfile): HeadersInit {
+export function createAuthHeaders(device: RegisteredTestDevice): HeadersInit {
   return {
-    "x-relay-device-id": profile.deviceId,
+    "x-relay-device-id": device.deviceId,
   };
 }
 
 export async function receivePendingDeliveries(
-  profile: LocalDeviceProfile,
-  profileStore: LocalDeviceProfileStore,
+  device: RegisteredTestDevice,
   options: ReceivePendingOptions,
 ): Promise<ReceivedDeliveryResult[]> {
-  const rpcClient = new RpcClient(profile.relayHubBaseUrl).createDeviceRpcClient(profile.deviceId);
+  const rpcClient = new RpcClient(device.relayHubBaseUrl).createDeviceRpcClient(device.deviceId);
   const pending = await parseResponse(rpcClient.fetchPendingDeliveries());
   const results: ReceivedDeliveryResult[] = [];
+  const handledDeliveryIds = options.handledDeliveryIds ?? new Set<string>();
 
   for (const delivery of pending.deliveries) {
-    const wasDuplicate = options.deduplicate
-      ? await profileStore.hasHandledDelivery(profile.profileId, delivery.deliveryId)
-      : false;
+    const wasDuplicate = options.deduplicate ? handledDeliveryIds.has(delivery.deliveryId) : false;
     const simulation = options.simulatePlatform
-      ? simulatePlatformDelivery(profile.platform, delivery)
+      ? simulatePlatformDelivery(device.platform, delivery)
       : null;
 
     if (!wasDuplicate) {
-      await profileStore.recordHandledDelivery(profile.profileId, delivery.deliveryId);
+      handledDeliveryIds.add(delivery.deliveryId);
     }
 
     let currentDelivery = delivery;
