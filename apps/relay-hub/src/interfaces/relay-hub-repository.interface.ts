@@ -26,6 +26,7 @@ export type IRelayHubRepository = {
   createDevice(device: DeviceRecord): Promise<void>;
   createRegisteredDevice(input: CreateRegisteredDeviceInput): Promise<void>;
   findActiveDeviceById(deviceId: string): Promise<DeviceRecord | null>;
+  findActiveDeviceByNickname(nickname: string): Promise<DeviceRecord | null>;
   listActiveDevices(): Promise<DeviceRecord[]>;
   updateDeviceNickname(
     deviceId: string,

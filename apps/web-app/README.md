@@ -6,6 +6,7 @@
 - keeps the shared web source in `src/`
 - builds the web bundle consumed by `@content-relay/mobile-app`
 - imports shared Android text/URL share intents into the send screen when running inside the Android app
+- registers the local sender from the Relay Hub URL and a device nickname, then stores the returned device ID locally
 
 ## Build
 

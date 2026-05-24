@@ -1,5 +1,5 @@
 import { styled } from "@linaria/react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { z } from "zod";
 
@@ -20,6 +20,10 @@ import {
   toggleId,
 } from "#pkg/target-devices.ts";
 import {
+  registerDeviceProfile,
+  validateRegisterDeviceProfileInput,
+} from "#pkg/use-cases/register-device-profile.ts";
+import {
   formatSendSuccessMessage,
   sendItem,
   type RegisteredDeviceProfile,
@@ -28,6 +32,7 @@ import {
 
 const storedDraftSchema = z.object({
   deviceId: z.string(),
+  deviceNickname: z.string().optional(),
   manualTargetDeviceIds: z.string(),
   selectedTargetDeviceIds: z.array(z.string()),
   relayHubBaseUrl: z.string(),
@@ -48,6 +53,7 @@ const SHARE_SUCCESS_MESSAGE = "Sent successfully";
 
 const DEFAULT_DRAFT: StoredDraft = {
   deviceId: "",
+  deviceNickname: "",
   manualTargetDeviceIds: "",
   selectedTargetDeviceIds: [],
   relayHubBaseUrl: "",
@@ -55,34 +61,21 @@ const DEFAULT_DRAFT: StoredDraft = {
   value: "",
 };
 
-const mobileAppQueryKeys = {
-  availableDevices: (profile: RegisteredDeviceProfile) =>
-    ["devices", "available", profile] as const,
-};
-
 export function App(): React.JSX.Element {
   const [draft, setDraft] = React.useState<StoredDraft>(readStoredDraft);
+  const [devices, setDevices] = React.useState<DeviceSummary[]>([]);
+  const [isLoadingDevices, setIsLoadingDevices] = React.useState(false);
   const [itemType, setItemType] = React.useState<SendItemType>("text");
   const [shareOverlayDraft, setShareOverlayDraft] = React.useState<ShareDraft | null>(null);
   const [status, setStatus] = React.useState<Status>({ kind: "idle" });
+  const lastAutoRefreshSetupKey = React.useRef<string | null>(null);
   const lastHandledShareDraftKey = React.useRef<string | null>(null);
 
   const targetDeviceIds = mergeTargetDeviceIds(
     draft.selectedTargetDeviceIds,
     draft.manualTargetDeviceIds,
   );
-  const profile: RegisteredDeviceProfile = {
-    deviceId: draft.deviceId.trim(),
-    relayHubBaseUrl: trimTrailingSlash(draft.relayHubBaseUrl),
-  };
-
-  const devicesQuery = useQuery({
-    enabled: false,
-    queryFn: async () => fetchAvailableDevices(profile),
-    queryKey: mobileAppQueryKeys.availableDevices(profile),
-  });
   const sendItemMutation = useMutation({ mutationFn: sendItem });
-  const devices = devicesQuery.data ?? [];
 
   React.useEffect(() => {
     let isDisposed = false;
@@ -135,16 +128,25 @@ export function App(): React.JSX.Element {
   }, []);
 
   React.useEffect(() => {
-    if (
-      shareOverlayDraft === null ||
-      !hasCompleteProfile(profile) ||
-      devicesQuery.data !== undefined
-    ) {
+    if (draft.deviceId.trim().length === 0) {
+      setDevices([]);
+    }
+  }, [draft.deviceId]);
+
+  React.useEffect(() => {
+    if (shareOverlayDraft === null || !hasCompleteSetup(draft)) {
       return;
     }
 
+    const setupKey = createSetupKey(draft);
+
+    if (lastAutoRefreshSetupKey.current === setupKey) {
+      return;
+    }
+
+    lastAutoRefreshSetupKey.current = setupKey;
     void handleRefreshDevices();
-  }, [shareOverlayDraft, profile.deviceId, profile.relayHubBaseUrl, devicesQuery.data]);
+  }, [shareOverlayDraft, draft.deviceNickname, draft.relayHubBaseUrl]);
 
   React.useEffect(() => {
     if (shareOverlayDraft === null || typeof document === "undefined") {
@@ -175,19 +177,17 @@ export function App(): React.JSX.Element {
 
   async function handleRefreshDevices(): Promise<void> {
     try {
+      setIsLoadingDevices(true);
       setStatus({ kind: "loading", message: "Loading devices…" });
 
-      const result = await devicesQuery.refetch();
-
-      if (result.error !== null) {
-        throw result.error;
-      }
-
-      const availableDevices = result.data ?? [];
+      const registeredProfile = await ensureRegisteredProfile();
+      const availableDevices = await fetchAvailableDevices(registeredProfile);
       const removedSelectedDeviceIds = getUnavailableSelectedTargetDeviceIds(
         draft.selectedTargetDeviceIds,
         availableDevices,
       );
+
+      setDevices(availableDevices);
 
       if (removedSelectedDeviceIds.length > 0) {
         updateDraft(setDraft, {
@@ -201,7 +201,42 @@ export function App(): React.JSX.Element {
       setStatus({ kind: "success", message: `Loaded ${availableDevices.length} devices.` });
     } catch (error) {
       setStatus({ kind: "error", message: formatErrorMessage(error) });
+    } finally {
+      setIsLoadingDevices(false);
     }
+  }
+
+  async function ensureRegisteredProfile(): Promise<RegisteredDeviceProfile> {
+    const validatedSetup = validateRegisterDeviceProfileInput({
+      deviceNickname: draft.deviceNickname ?? "",
+      relayHubBaseUrl: draft.relayHubBaseUrl,
+    });
+
+    if (draft.deviceId.trim().length > 0) {
+      return {
+        deviceId: draft.deviceId.trim(),
+        relayHubBaseUrl: validatedSetup.relayHubBaseUrl,
+      };
+    }
+
+    setStatus({ kind: "loading", message: "Registering this device…" });
+
+    const registration = await registerDeviceProfile({
+      deviceNickname: validatedSetup.deviceNickname,
+      relayHubBaseUrl: validatedSetup.relayHubBaseUrl,
+    });
+    const registeredProfile = {
+      deviceId: registration.deviceId,
+      relayHubBaseUrl: validatedSetup.relayHubBaseUrl,
+    };
+
+    updateDraft(setDraft, {
+      deviceId: registration.deviceId,
+      deviceNickname: registration.nickname,
+      relayHubBaseUrl: validatedSetup.relayHubBaseUrl,
+    });
+
+    return registeredProfile;
   }
 
   async function handleSend(input: {
@@ -214,9 +249,10 @@ export function App(): React.JSX.Element {
         message: itemType === "text" ? "Sending text…" : "Sending URL…",
       });
 
+      const registeredProfile = await ensureRegisteredProfile();
       const response = await sendItemMutation.mutateAsync({
         itemType,
-        profile,
+        profile: registeredProfile,
         targetDeviceIds: input.targetDeviceIds,
         title: draft.title,
         value: draft.value,
@@ -246,7 +282,7 @@ export function App(): React.JSX.Element {
       <ShareOverlay
         devices={devices}
         draft={draft}
-        isLoadingDevices={devicesQuery.isFetching}
+        isLoadingDevices={isLoadingDevices}
         isSending={sendItemMutation.isPending}
         itemType={itemType}
         onClose={() => void closeAndroidShareOverlay()}
@@ -264,7 +300,6 @@ export function App(): React.JSX.Element {
             ),
           })
         }
-        profile={profile}
         status={status}
       />
     );
@@ -274,7 +309,7 @@ export function App(): React.JSX.Element {
     <SendPage
       devices={devices}
       draft={draft}
-      isLoadingDevices={devicesQuery.isFetching}
+      isLoadingDevices={isLoadingDevices}
       isSending={sendItemMutation.isPending}
       itemType={itemType}
       onRefreshDevices={() => void handleRefreshDevices()}
@@ -307,8 +342,8 @@ function SendPage(props: {
           <Eyebrow>Content Relay</Eyebrow>
           <Title>Send</Title>
           <Subtitle>
-            Configure this device, confirm targets, and send text or URLs from the app or the
-            Android share sheet.
+            Configure this device by nickname, confirm targets, and send text or URLs from the app
+            or the Android share sheet.
           </Subtitle>
         </Header>
 
@@ -321,27 +356,30 @@ function SendPage(props: {
               autoCapitalize="none"
               autoCorrect="off"
               inputMode="url"
-              onChange={(event) => props.onUpdateDraft({ relayHubBaseUrl: event.target.value })}
+              onChange={(event) =>
+                props.onUpdateDraft({ deviceId: "", relayHubBaseUrl: event.target.value })
+              }
               placeholder="https://relay.example.com"
               spellCheck={false}
               value={props.draft.relayHubBaseUrl}
             />
           </Field>
           <Field>
-            <Label htmlFor="device-id">Device ID</Label>
+            <Label htmlFor="device-nickname">Device nickname</Label>
             <Input
-              id="device-id"
-              autoCapitalize="none"
-              autoCorrect="off"
-              onChange={(event) => props.onUpdateDraft({ deviceId: event.target.value })}
-              placeholder="device_123"
-              spellCheck={false}
-              value={props.draft.deviceId}
+              id="device-nickname"
+              autoCapitalize="words"
+              autoCorrect="on"
+              onChange={(event) =>
+                props.onUpdateDraft({ deviceId: "", deviceNickname: event.target.value })
+              }
+              placeholder="Patrick's Android"
+              value={props.draft.deviceNickname ?? ""}
             />
           </Field>
           <Row>
             <SecondaryButton disabled={props.isLoadingDevices} onClick={props.onRefreshDevices}>
-              {props.isLoadingDevices ? "Loading…" : "Load devices"}
+              {props.isLoadingDevices ? "Loading…" : "Register and load devices"}
             </SecondaryButton>
           </Row>
         </Card>
@@ -486,10 +524,9 @@ function ShareOverlay(props: {
   onRefreshDevices: () => void;
   onSend: () => void;
   onToggleDevice: (deviceId: string, shouldInclude: boolean) => void;
-  profile: RegisteredDeviceProfile;
   status: Status;
 }): React.JSX.Element {
-  const hasSetup = hasCompleteProfile(props.profile);
+  const hasSetup = hasCompleteSetup(props.draft);
   const selectedCount = props.draft.selectedTargetDeviceIds.length;
 
   return (
@@ -506,7 +543,7 @@ function ShareOverlay(props: {
           {!hasSetup ? (
             <OverlayState>
               <SectionTitle>Setup needed</SectionTitle>
-              <Hint>Add a Relay Hub URL and Device ID before sending shared content.</Hint>
+              <Hint>Add a Relay Hub URL and device nickname before sending shared content.</Hint>
               <PrimaryButton onClick={props.onOpenSetup}>Open app setup</PrimaryButton>
             </OverlayState>
           ) : (
@@ -602,7 +639,7 @@ function readStoredDraft(): StoredDraft {
 
   const parsed = JSON.parse(savedDraft) as unknown;
 
-  return storedDraftSchema.parse(parsed);
+  return { ...DEFAULT_DRAFT, ...storedDraftSchema.parse(parsed) };
 }
 
 function updateDraft(
@@ -625,8 +662,12 @@ function persistDraft(draft: StoredDraft): void {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
 }
 
-function hasCompleteProfile(profile: RegisteredDeviceProfile): boolean {
-  return profile.deviceId.trim().length > 0 && profile.relayHubBaseUrl.trim().length > 0;
+function hasCompleteSetup(draft: StoredDraft): boolean {
+  return draft.relayHubBaseUrl.trim().length > 0 && (draft.deviceNickname ?? "").trim().length > 0;
+}
+
+function createSetupKey(draft: StoredDraft): string {
+  return `${trimTrailingSlash(draft.relayHubBaseUrl)}\n${(draft.deviceNickname ?? "").trim()}`;
 }
 
 function trimTrailingSlash(value: string): string {

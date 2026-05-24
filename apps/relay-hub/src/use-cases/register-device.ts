@@ -38,6 +38,18 @@ export async function registerDevice(input: RegisterDeviceInput): Promise<Regist
   const platform = devicePlatformSchema.parse(input.platform);
   const pushRegistration = parsePushRegistration(platform, input.pushRegistration);
   const nickname = input.nickname.trim();
+  const existingDevice = await repository.findActiveDeviceByNickname(nickname);
+
+  if (existingDevice !== null) {
+    return {
+      deviceId: existingDevice.id,
+      nickname: existingDevice.nickname,
+      platform: existingDevice.platform,
+      relayHubBaseUrl,
+      createdAt: existingDevice.createdAt,
+    };
+  }
+
   const deviceId = `dev_${randomUUID()}`;
 
   await repository.createRegisteredDevice({

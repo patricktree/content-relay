@@ -816,6 +816,19 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       platform: "ios",
     });
 
+    expect(receiverProfile.nickname).toBe("Developer iPhone Sim");
+
+    const duplicateRegisterResponse = await new RpcClient(relayHubBaseUrl).registerDevice({
+      nickname: "Developer CLI",
+      platform: "cli",
+    });
+    expect(duplicateRegisterResponse.status).toBe(201);
+    await expect(duplicateRegisterResponse.json()).resolves.toMatchObject({
+      deviceId: senderProfile.deviceId,
+      nickname: "Developer CLI",
+      platform: "cli",
+    });
+
     const invalidRegisterResponse = await new RpcClient(relayHubBaseUrl).registerDevice({
       nickname: "   ",
       platform: "ios",

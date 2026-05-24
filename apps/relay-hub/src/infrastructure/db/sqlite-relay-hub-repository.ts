@@ -63,6 +63,16 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
     return (device as DeviceRecord | undefined) ?? null;
   }
 
+  async findActiveDeviceByNickname(nickname: string): Promise<DeviceRecord | null> {
+    const device = this.#db
+      .select()
+      .from(devicesTable)
+      .where(and(eq(devicesTable.nickname, nickname), isNull(devicesTable.deletedAt)))
+      .get();
+
+    return (device as DeviceRecord | undefined) ?? null;
+  }
+
   async listActiveDevices(): Promise<DeviceRecord[]> {
     return this.#db
       .select()
