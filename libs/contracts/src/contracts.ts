@@ -48,11 +48,13 @@ export const registerDeviceRequestSchema = z
     }
   });
 
+export const deviceIdSchema = z.string();
+
 export const registerDeviceResponseSchema = z.object({
-  deviceId: z.string(),
+  deviceId: deviceIdSchema,
   nickname: z.string(),
   platform: devicePlatformSchema,
-  relayHubBaseUrl: z.string().url(),
+  relayHubBaseUrl: z.url(),
   createdAt: z.string(),
 });
 
@@ -78,7 +80,7 @@ export const errorResponseSchema = z.object({
 export const emptyResponseSchema = z.null();
 
 export const deviceSummarySchema = z.object({
-  deviceId: z.string(),
+  deviceId: deviceIdSchema,
   nickname: z.string(),
   platform: devicePlatformSchema,
   createdAt: z.string(),
@@ -90,13 +92,13 @@ export const deviceListResponseSchema = z.array(deviceSummarySchema);
 export const createTextItemRequestSchema = z.object({
   text: z.string().min(1),
   title: z.string().trim().min(1).optional(),
-  targetDeviceIds: z.array(z.string()).min(1),
+  targetDeviceIds: z.array(deviceIdSchema).min(1),
 });
 
 export const createUrlItemRequestSchema = z.object({
   url: z.string().url(),
   title: z.string().trim().min(1).optional(),
-  targetDeviceIds: z.array(z.string()).min(1),
+  targetDeviceIds: z.array(deviceIdSchema).min(1),
 });
 
 export const fileMetadataSchema = z.object({
@@ -113,7 +115,7 @@ export const itemResourceSchema = z.object({
   itemId: z.string(),
   type: relayItemTypeSchema,
   title: z.string().nullable(),
-  sourceDeviceId: z.string(),
+  sourceDeviceId: deviceIdSchema,
   text: z.string().nullable(),
   url: z.string().nullable(),
   files: z.array(fileMetadataSchema),
@@ -123,7 +125,7 @@ export const itemResourceSchema = z.object({
 export const deliveryResourceSchema = z.object({
   deliveryId: z.string(),
   itemId: z.string(),
-  targetDeviceId: z.string(),
+  targetDeviceId: deviceIdSchema,
   state: deliveryStateSchema,
   createdAt: z.string(),
   acknowledgedAt: z.string().nullable(),
@@ -145,7 +147,7 @@ export const itemListEntrySchema = z.object({
   deliveries: z.array(
     z.object({
       deliveryId: z.string(),
-      targetDeviceId: z.string(),
+      targetDeviceId: deviceIdSchema,
       state: deliveryStateSchema,
       createdAt: z.string(),
       acknowledgedAt: z.string().nullable(),

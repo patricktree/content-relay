@@ -1,6 +1,7 @@
 {
   "extends": [
     "@content-relay/config-typescript/tsconfig.defaults.json",
+    "@content-relay/config-typescript/tsconfig.node-direct-ts-execution.json",
     "@content-relay/config-typescript/tsconfig.web.json",
     "@content-relay/config-typescript/tsconfig.vitest.json"
   ],
@@ -12,6 +13,7 @@
     /* Language and Environment */
     "jsx": "react-jsx"
   },
-  "include": ["test/**/*", "**/*.test.ts"],
+  "include": ["test/**/*", "src/**/*.test.ts"],
+  "exclude": ["test-e2e/**/*"],
   "references": [{ "path": "./tsconfig.build.json" }]
 }

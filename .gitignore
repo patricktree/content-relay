@@ -8,3 +8,6 @@
 
 # turborepo
 **/.turbo
+
+# Playwright
+**/playwright-output/

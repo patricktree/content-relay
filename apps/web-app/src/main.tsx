@@ -1,23 +1,13 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import "@fontsource/roboto/latin-400.css";
+import "@fontsource/roboto/latin-700.css";
+import "@fontsource/roboto/latin-800.css";
+import "material-symbols/rounded.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import { App } from "#pkg/App.tsx";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    mutations: {
-      retry: false,
-    },
-    queries: {
-      gcTime: 0,
-      refetchOnWindowFocus: false,
-      retry: false,
-      staleTime: 0,
-      refetchOnReconnect: false,
-    },
-  },
-});
+import { App } from "#pkg/app/app.tsx";
+import { GlobalProviders } from "#pkg/app/global-providers.js";
+import { cssBase, cssReset } from "#pkg/app/global-styles.ts";
 
 const rootElement = document.getElementById("root");
 
@@ -27,8 +17,11 @@ if (rootElement === null) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <GlobalProviders>
+      <style dangerouslySetInnerHTML={{ __html: cssReset }} />
+      <style dangerouslySetInnerHTML={{ __html: cssBase }} />
+
       <App />
-    </QueryClientProvider>
+    </GlobalProviders>
   </React.StrictMode>,
 );

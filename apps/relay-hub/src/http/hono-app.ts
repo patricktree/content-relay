@@ -69,9 +69,6 @@ const API_TAGS = {
 } as const;
 
 const AUTH_SECURITY = [{ RelayDeviceIdHeader: [] }];
-const allowedCorsOrigins = ["https://localhost"];
-const allowedCorsHeaders = ["content-type", "x-relay-device-id"];
-const allowedCorsMethods = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"];
 
 const deliveryIdParamsSchema = z.object({
   deliveryId: z
@@ -187,9 +184,12 @@ export async function createHonoApp() {
   app.use(
     "/*",
     cors({
-      origin: allowedCorsOrigins,
-      allowHeaders: allowedCorsHeaders,
-      allowMethods: allowedCorsMethods,
+      origin: (origin) =>
+        origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")
+          ? origin
+          : undefined,
+      allowHeaders: ["content-type", "x-relay-device-id"],
+      allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     }),
   );
 

@@ -1,0 +1,20 @@
+{
+  "extends": [
+    "@content-relay/config-typescript/tsconfig.defaults.json",
+    "@content-relay/config-typescript/tsconfig.node-direct-ts-execution.json",
+    "@content-relay/config-typescript/tsconfig.vitest.json"
+  ],
+  "compilerOptions": {
+    /* Modules */
+    "rootDir": ".",
+    "types": ["node"],
+
+    /* Emit */
+    "noEmit": true,
+
+    /* Language and Environment */
+    "jsx": "react-jsx"
+  },
+  "include": ["playwright.config.ts", "tests/**/*"],
+  "references": [{ "path": "./tsconfig.build.json" }]
+}

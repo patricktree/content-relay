@@ -28,12 +28,12 @@ import {
   listenOnPort,
   receivePendingDeliveries,
   registerProfile,
-  withRelayTestEnvironment,
+  withRelayHubTestEnvironment,
   writeDownloadedDelivery,
 } from "#pkg-test/test-helpers.ts";
 
 test("milestone 0 flow covers registration, send, receive, viewed, and file download", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, rootDirectory, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ profileStore, rootDirectory, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
       relayHubBaseUrl,
@@ -212,7 +212,7 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
 });
 
 test("invite codes are single-use", async () => {
-  await withRelayTestEnvironment(async ({ relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
     const invite = await parseOkResponse(
       rpcClient.createInvite(relayHubBaseUrl, { expiresInSeconds: 900 }),
     );
@@ -246,7 +246,7 @@ test("invite codes are single-use", async () => {
 });
 
 test("text send rejects a single-line URL payload", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
       relayHubBaseUrl,
@@ -280,7 +280,7 @@ test("text send rejects a single-line URL payload", async () => {
 });
 
 test("macos simulated receive auto-marks text and url deliveries viewed", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
       relayHubBaseUrl,
@@ -341,7 +341,7 @@ test("macos simulated receive auto-marks text and url deliveries viewed", async 
 });
 
 test("deleting a device invalidates its authentication and hides it from active device listings", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
       relayHubBaseUrl,
@@ -382,7 +382,7 @@ test("deleting a device invalidates its authentication and hides it from active 
 });
 
 test("push tokens can be upserted for the authenticated device", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const profile = await registerProfile({
       profileStore,
       relayHubBaseUrl,
@@ -430,7 +430,7 @@ test("push tokens can be upserted for the authenticated device", async () => {
 });
 
 test("device routes support rename, listing, and same-device identity guards", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
       relayHubBaseUrl,
@@ -515,7 +515,7 @@ test("device routes support rename, listing, and same-device identity guards", a
 });
 
 test("item and delivery routes list and fetch the authenticated device resources", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
       relayHubBaseUrl,
@@ -603,7 +603,7 @@ test("item and delivery routes list and fetch the authenticated device resources
 });
 
 test("file uploads reject empty payloads and write single-file downloads", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, rootDirectory, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ profileStore, rootDirectory, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
       relayHubBaseUrl,
@@ -670,7 +670,7 @@ test("file uploads reject empty payloads and write single-file downloads", async
 });
 
 test("receivePendingDeliveries respects deduplication, simulation, and acknowledgement options", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
       relayHubBaseUrl,
@@ -773,7 +773,7 @@ test("receivePendingDeliveries respects deduplication, simulation, and acknowled
 });
 
 test("validation errors are returned for JSON, query, and multipart routes", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
       relayHubBaseUrl,
@@ -987,7 +987,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
 });
 
 test("resource lookup routes reject unknown resources and invalid file downloads", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
       relayHubBaseUrl,
@@ -1055,7 +1055,7 @@ test("resource lookup routes reject unknown resources and invalid file downloads
 });
 
 test("items, deliveries, and devices collection routes reject unauthenticated requests", async () => {
-  await withRelayTestEnvironment(async ({ relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
     const client = createHttpClient({ relayHubBaseUrl });
 
     const listDevicesPromise = parseOkResponse(client.devices.$get());
@@ -1094,7 +1094,7 @@ test("items, deliveries, and devices collection routes reject unauthenticated re
 });
 
 test("http client trims trailing slashes and preserves raw text and malformed JSON responses", async () => {
-  await withRelayTestEnvironment(async ({ relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
     const invite = await parseOkResponse(
       createHttpClient({
         relayHubBaseUrl: `${relayHubBaseUrl}/`,
@@ -1203,7 +1203,7 @@ test("server errors are normalized to JSON 500 responses", async () => {
 });
 
 test("profile store reuses remembered targets when no explicit targets are provided", async () => {
-  await withRelayTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
       profileStore,
       relayHubBaseUrl,

@@ -1,0 +1,29 @@
+import z from "zod";
+
+import { deviceIdSchema } from "@content-relay/contracts";
+
+const settingsSchema = z.object({
+  relayHubUrl: z.url().trim(),
+  deviceId: deviceIdSchema,
+});
+
+export type Settings = z.infer<typeof settingsSchema>;
+
+export const settingsStorage = { load, store };
+
+const LOCAL_STORAGE_KEY = "settings";
+
+function load(): Settings | null {
+  const keyValue = localStorage.getItem(LOCAL_STORAGE_KEY);
+
+  if (!keyValue) {
+    return null;
+  }
+
+  const parsed = settingsSchema.parse(JSON.parse(keyValue));
+  return parsed;
+}
+
+function store(settings: Settings) {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settings));
+}
