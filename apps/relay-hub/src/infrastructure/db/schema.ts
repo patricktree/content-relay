@@ -15,14 +15,6 @@ export const devicesTable = sqliteTable(
   (table) => [uniqueIndex("devices_nickname_idx").on(table.nickname)],
 );
 
-export const invitesTable = sqliteTable("invites", {
-  id: text("id").primaryKey(),
-  code: text("code").notNull(),
-  createdAt: text("created_at").notNull(),
-  expiresAt: text("expires_at").notNull(),
-  usedAt: text("used_at"),
-});
-
 export const itemsTable = sqliteTable("items", {
   id: text("id").primaryKey(),
   type: text("type", { enum: relayItemTypes }).notNull(),
@@ -77,7 +69,6 @@ export const pushTokensTable = sqliteTable(
 );
 
 export const schema = {
-  invitesTable,
   devicesTable,
   itemsTable,
   fileMetadataTable,

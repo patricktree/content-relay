@@ -126,23 +126,27 @@ public struct RelayErrorResponse: Codable, Sendable {
   }
 }
 
+public struct RelayDeviceRegistrationResponse: Codable, Equatable, Sendable {
+  public let deviceId: String
+  public let nickname: String
+  public let platform: String
+  public let relayHubBaseUrl: String
+  public let createdAt: String
+
+  public init(deviceId: String, nickname: String, platform: String, relayHubBaseUrl: String, createdAt: String) {
+    self.deviceId = deviceId
+    self.nickname = nickname
+    self.platform = platform
+    self.relayHubBaseUrl = relayHubBaseUrl
+    self.createdAt = createdAt
+  }
+}
+
 public struct RelayDeviceCredentials: Equatable, Sendable {
   public let relayHubBaseURL: URL
   public let deviceId: String
 
   public init(relayHubBaseURL: URL, deviceId: String) {
-    self.relayHubBaseURL = relayHubBaseURL
-    self.deviceId = deviceId
-  }
-}
-
-public struct ImportedCLIProfile: Equatable, Sendable {
-  public let nickname: String
-  public let relayHubBaseURL: URL
-  public let deviceId: String
-
-  public init(nickname: String, relayHubBaseURL: URL, deviceId: String) {
-    self.nickname = nickname
     self.relayHubBaseURL = relayHubBaseURL
     self.deviceId = deviceId
   }

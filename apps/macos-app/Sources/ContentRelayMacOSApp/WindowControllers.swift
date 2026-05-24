@@ -4,11 +4,6 @@ import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct SettingsImportResult {
-  let snapshot: SettingsSnapshot
-  let message: String
-}
-
 struct FileDownloadResult {
   let savedPaths: [String]
   let message: String
@@ -44,44 +39,32 @@ enum ComposePayloadType: String, CaseIterable, Identifiable {
 final class SettingsViewModel: ObservableObject {
   @Published var relayHubBaseURL: String
   @Published var deviceId: String
+  @Published var deviceNickname: String
   @Published var pollIntervalSeconds: String
   @Published var statusMessage: String = ""
   @Published var isBusy = false
 
   private let saveAction: @MainActor (SettingsSnapshot) async -> String
-  private let importAction: @MainActor () async -> SettingsImportResult
   private let testAction: @MainActor (SettingsSnapshot) async -> String
 
   init(
     initialSnapshot: SettingsSnapshot,
     saveAction: @escaping @MainActor (SettingsSnapshot) async -> String,
-    importAction: @escaping @MainActor () async -> SettingsImportResult,
     testAction: @escaping @MainActor (SettingsSnapshot) async -> String
   ) {
     self.relayHubBaseURL = initialSnapshot.relayHubBaseURL
     self.deviceId = initialSnapshot.deviceId
+    self.deviceNickname = initialSnapshot.deviceNickname
     self.pollIntervalSeconds = initialSnapshot.pollIntervalSeconds
     self.saveAction = saveAction
-    self.importAction = importAction
     self.testAction = testAction
   }
 
   func apply(snapshot: SettingsSnapshot) {
     relayHubBaseURL = snapshot.relayHubBaseURL
     deviceId = snapshot.deviceId
+    deviceNickname = snapshot.deviceNickname
     pollIntervalSeconds = snapshot.pollIntervalSeconds
-  }
-
-  func importFromCLI() {
-    isBusy = true
-
-    Task { @MainActor in
-      defer { isBusy = false }
-
-      let result = await importAction()
-      apply(snapshot: result.snapshot)
-      statusMessage = result.message
-    }
   }
 
   func testConnection() {
@@ -106,6 +89,7 @@ final class SettingsViewModel: ObservableObject {
     SettingsSnapshot(
       relayHubBaseURL: relayHubBaseURL,
       deviceId: deviceId,
+      deviceNickname: deviceNickname,
       pollIntervalSeconds: pollIntervalSeconds
     )
   }
@@ -376,31 +360,25 @@ private struct SettingsView: View {
       Text("Content Relay")
         .font(.system(size: 24, weight: .semibold))
 
-      Text("Import an active `macos` CLI profile or paste the credentials manually.")
+      Text("Enter a Relay Hub URL and device nickname to register this Mac.")
         .font(.system(size: 14))
         .foregroundStyle(.black.opacity(0.7))
         .fixedSize(horizontal: false, vertical: true)
 
       Group {
         labeledField("Relay Hub base URL", text: $viewModel.relayHubBaseURL)
-        labeledField("Device ID", text: $viewModel.deviceId)
+        labeledField("Device nickname", text: $viewModel.deviceNickname)
         labeledField("Poll interval (seconds)", text: $viewModel.pollIntervalSeconds)
       }
 
       HStack(spacing: 12) {
-        Button("Import Active CLI macOS Profile") {
-          viewModel.importFromCLI()
-        }
-        .buttonStyle(.bordered)
-        .disabled(viewModel.isBusy)
-
         Button("Test Fetch") {
           viewModel.testConnection()
         }
         .buttonStyle(.bordered)
         .disabled(viewModel.isBusy)
 
-        Button("Save") {
+        Button("Save & Register") {
           viewModel.save()
         }
         .buttonStyle(.borderedProminent)

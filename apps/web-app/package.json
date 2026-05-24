@@ -39,7 +39,6 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
-    "@capacitor/core": "^8.3.1",
     "@content-relay/client": "workspace:*",
     "@content-relay/contracts": "workspace:*",
     "@fontsource/roboto": "^5.2.10",

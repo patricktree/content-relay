@@ -28,6 +28,11 @@ public struct RelayAPIError: LocalizedError, Equatable, Sendable {
 }
 
 public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable {
+  private struct RegisterDeviceRequest: Encodable {
+    let nickname: String
+    let platform: String
+  }
+
   private let credentials: RelayDeviceCredentials
   private let session: URLSession
   private let jsonDecoder: JSONDecoder
@@ -38,6 +43,24 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
     self.session = session
     self.jsonDecoder = JSONDecoder()
     self.jsonEncoder = JSONEncoder()
+  }
+
+  public static func registerDevice(
+    relayHubBaseURL: URL,
+    nickname: String,
+    platform: String = "macos",
+    session: URLSession = .shared
+  ) async throws -> RelayDeviceRegistrationResponse {
+    let client = URLSessionRelayAPIClient(
+      credentials: RelayDeviceCredentials(relayHubBaseURL: relayHubBaseURL, deviceId: ""),
+      session: session
+    )
+
+    return try await client.sendUnauthenticatedJSONRequest(
+      path: "/devices/register",
+      method: "POST",
+      body: RegisterDeviceRequest(nickname: nickname, platform: platform)
+    )
   }
 
   public func fetchPendingDeliveries() async throws -> [RelayDelivery] {
@@ -130,17 +153,33 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
     )
   }
 
+  private func sendUnauthenticatedJSONRequest<Response: Decodable, Body: Encodable>(
+    path: String,
+    method: String,
+    body: Body
+  ) async throws -> Response {
+    try await sendRequest(
+      path: path,
+      method: method,
+      bodyData: jsonEncoder.encode(body),
+      contentType: "application/json",
+      includesDeviceIdHeader: false
+    )
+  }
+
   private func sendRequest<Response: Decodable>(
     path: String,
     method: String,
     bodyData: Data? = nil,
-    contentType: String? = nil
+    contentType: String? = nil,
+    includesDeviceIdHeader: Bool = true
   ) async throws -> Response {
     let request = try buildRequest(
       path: path,
       method: method,
       bodyData: bodyData,
-      contentType: contentType
+      contentType: contentType,
+      includesDeviceIdHeader: includesDeviceIdHeader
     )
     let (data, response) = try await session.data(for: request)
 
@@ -159,7 +198,8 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
     path: String,
     method: String,
     bodyData: Data?,
-    contentType: String?
+    contentType: String?,
+    includesDeviceIdHeader: Bool
   ) throws -> URLRequest {
     let normalizedPath = path.hasPrefix("/") ? path : "/\(path)"
 
@@ -170,7 +210,10 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
     var request = URLRequest(url: url)
     request.httpMethod = method
     request.setValue("application/json", forHTTPHeaderField: "accept")
-    request.setValue(credentials.deviceId, forHTTPHeaderField: "x-relay-device-id")
+
+    if includesDeviceIdHeader {
+      request.setValue(credentials.deviceId, forHTTPHeaderField: "x-relay-device-id")
+    }
 
     if let bodyData {
       request.httpBody = bodyData

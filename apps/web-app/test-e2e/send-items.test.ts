@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-import { parseOkResponse, rpcClient } from "@content-relay/client";
+import { parseOkResponse, RpcClient } from "@content-relay/client";
 import { withRelayHubTestEnvironment } from "@content-relay/relay-hub-test-utils";
 import { seed } from "@content-relay/seeding-tool";
 
@@ -31,10 +31,9 @@ test("send text item", async ({ page }) => {
     await expectItemSentNotification(page);
 
     const receivedDeliveries = await parseOkResponse(
-      await rpcClient.fetchPendingDeliveries({
-        relayHubBaseUrl,
-        deviceId: receiverDeviceId,
-      }),
+      new RpcClient(relayHubBaseUrl)
+        .createDeviceRpcClient(receiverDeviceId)
+        .fetchPendingDeliveries(),
     );
     expect(receivedDeliveries.deliveries).toHaveLength(1);
     expect(receivedDeliveries.deliveries[0]?.item).toMatchObject({
@@ -71,10 +70,9 @@ test("send URL item", async ({ page }) => {
     await expectItemSentNotification(page);
 
     const receivedDeliveries = await parseOkResponse(
-      await rpcClient.fetchPendingDeliveries({
-        relayHubBaseUrl,
-        deviceId: receiverDeviceId,
-      }),
+      new RpcClient(relayHubBaseUrl)
+        .createDeviceRpcClient(receiverDeviceId)
+        .fetchPendingDeliveries(),
     );
     expect(receivedDeliveries.deliveries).toHaveLength(1);
     expect(receivedDeliveries.deliveries[0]?.item).toMatchObject({
@@ -104,9 +102,9 @@ test("matches send form screenshot", async ({ page }) => {
 
     await gotoWebApp(page);
     const sendItemForm = page.getByRole("form", { name: "Send item" });
-    await expect(sendItemForm.getByRole("radio", { name: "Pixel 9 (android)" })).toBeVisible();
-    await expect(sendItemForm.getByRole("radio", { name: "iPhone (ios)" })).toBeVisible();
-    await expect(sendItemForm.getByRole("radio", { name: "Desk Mac (macos)" })).toBeVisible();
+    await expect(sendItemForm.getByRole("checkbox", { name: "Pixel 9 (android)" })).toBeVisible();
+    await expect(sendItemForm.getByRole("checkbox", { name: "iPhone (ios)" })).toBeVisible();
+    await expect(sendItemForm.getByRole("checkbox", { name: "Desk Mac (macos)" })).toBeVisible();
 
     await expect(page).toHaveScreenshot("send-form.png", { fullPage: true });
   });
@@ -114,13 +112,13 @@ test("matches send form screenshot", async ({ page }) => {
 
 async function chooseTargetDevice(page: Page, targetDevice: string): Promise<Locator> {
   const sendItemForm = page.getByRole("form", { name: "Send item" });
-  const targetDeviceRadio = sendItemForm.getByRole("radio", {
+  const targetDeviceCheckbox = sendItemForm.getByRole("checkbox", {
     name: targetDevice,
   });
-  await expect(targetDeviceRadio).toBeEnabled();
+  await expect(targetDeviceCheckbox).toBeEnabled();
   await expect(sendItemForm.getByText("test-device-browser")).toBeHidden();
-  await targetDeviceRadio.check();
-  await expect(targetDeviceRadio).toBeChecked();
+  await targetDeviceCheckbox.check();
+  await expect(targetDeviceCheckbox).toBeChecked();
 
   return sendItemForm;
 }

@@ -1,5 +1,5 @@
-import { parseOkResponse, rpcClient } from "@content-relay/client";
-import type { DevicePlatform } from "@content-relay/contracts";
+import { parseOkResponse, RpcClient } from "@content-relay/client";
+import type { DevicePlatform, PushRegistration } from "@content-relay/contracts";
 
 export async function registerDevices(
   relayHubBaseUrl: string,
@@ -8,6 +8,7 @@ export async function registerDevices(
   const registerResults = await Promise.all(
     devices.map((device) => registerDevice(relayHubBaseUrl, device)),
   );
+
   return registerResults;
 }
 
@@ -15,19 +16,26 @@ async function registerDevice(
   relayHubBaseUrl: string,
   input: { nickname: string; platform: DevicePlatform },
 ) {
-  const inviteDevice = await parseOkResponse(
-    rpcClient.createInvite(relayHubBaseUrl, { expiresInSeconds: 60 }),
-  );
-  const registerResult = await parseOkResponse(
-    rpcClient.registerDevice(relayHubBaseUrl, {
+  const pushRegistration = buildPushRegistration(input);
+
+  return parseOkResponse(
+    new RpcClient(relayHubBaseUrl).registerDevice({
       nickname: input.nickname,
       platform: input.platform,
-      invite: inviteDevice.inviteCode,
-      ...(input.platform === "ios" || input.platform === "android"
-        ? { pushRegistration: { token: `test-${input.platform}-${input.nickname}` } }
-        : {}),
+      ...(pushRegistration === undefined ? {} : { pushRegistration }),
     }),
   );
+}
 
-  return registerResult;
+function buildPushRegistration(input: {
+  nickname: string;
+  platform: DevicePlatform;
+}): PushRegistration | undefined {
+  if (input.platform !== "ios" && input.platform !== "android") {
+    return undefined;
+  }
+
+  return {
+    token: `test-${input.platform}-${input.nickname}`,
+  };
 }

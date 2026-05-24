@@ -3,7 +3,7 @@ import { styled } from "@linaria/react";
 import React from "react";
 import z from "zod";
 
-import { parseOkResponse, rpcClient } from "@content-relay/client";
+import { parseOkResponse, RpcClient } from "@content-relay/client";
 import { deviceIdSchema, isValidAbsoluteUrl, relayItemTypeSchema } from "@content-relay/contracts";
 
 import { useSettingsContext } from "#pkg/app/components/settings-context.tsx";
@@ -28,7 +28,7 @@ type SendItemFormValues = z.infer<typeof sendItemFormSchema>;
 
 const defaultSendItemFormValues: SendItemFormValues = {
   itemType: "text",
-  targetDeviceIds: new Set([""]),
+  targetDeviceIds: new Set(),
   title: "",
   value: "",
 };
@@ -72,10 +72,7 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({ relayHubUrl, 
       onChange: sendItemFormSchema,
     },
     onSubmit: async function sendItem({ value }) {
-      const profile = {
-        relayHubBaseUrl: relayHubUrl,
-        deviceId: deviceId,
-      };
+      const deviceRpcClient = new RpcClient(relayHubUrl).createDeviceRpcClient(deviceId);
       const title = value.title.trim();
       const itemValue = value.value.trim();
       const commonRequest = {
@@ -85,14 +82,14 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({ relayHubUrl, 
 
       if (value.itemType === "text") {
         await parseOkResponse(
-          await rpcClient.sendText(profile, {
+          deviceRpcClient.sendText({
             ...commonRequest,
             text: itemValue,
           }),
         );
       } else {
         await parseOkResponse(
-          await rpcClient.sendUrl(profile, {
+          deviceRpcClient.sendUrl({
             ...commonRequest,
             url: itemValue,
           }),

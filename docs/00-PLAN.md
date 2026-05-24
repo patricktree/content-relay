@@ -54,8 +54,8 @@ Initial send surfaces should include:
 ### Targeting
 
 - A send can target **one or more explicit devices**.
-- Default target selection uses the **last-used target(s)**.
-- Send flows should **preselect** the last-used target(s) but still show a confirmation UI.
+- Native app default target selection uses the **last-used target(s)**.
+- Native app send flows should **preselect** the last-used target(s) but still show a confirmation UI.
 
 ### Device identity
 
@@ -66,28 +66,19 @@ Initial send surfaces should include:
 
 - The CLI is the **primary early development and testing surface**.
 - It must be possible to exercise the real Relay Hub from the terminal without running the macOS app or the Capacitor mobile app.
-- The CLI should support multiple locally stored registered-device profiles so the developer can simulate devices such as:
-  - `cli`
-  - `macos`
-  - `ios`
-  - `android`
+- The CLI should be stateless and require explicit Relay Hub URL, active device ID, and target device IDs for protected operations.
 - The CLI should validate the protocol and product behavior, including send, receive, ack, viewed, multi-target sends, and multi-file bundles.
 - An optional future TUI may be added later, but it must wrap the same headless client core and local state rather than becoming a separate client implementation.
 - The detailed CLI contract lives in [02-CLI-SPEC.md](./02-CLI-SPEC.md).
 
 ### Registration
 
-- New devices join via an **invite/link flow**.
-- Support both:
-  - **deep link / QR code**
-  - **manual one-time code** fallback
-- Invites are **single-use** and **short-lived**.
+- New devices register directly with the Relay Hub using a **nickname** and **platform**.
 - Mobile registration is **atomic**:
   - notification permission must be granted
   - native push registration must succeed
   - the push token must be uploaded during registration
   - the Relay Hub must not create a partially registered mobile device
-- If mobile registration fails before the final Relay Hub registration step, the invite remains unused.
 
 ### Connectivity and trust model
 
@@ -191,7 +182,6 @@ The macOS app should still get a small early prototype, but it is no longer the 
 Use SQLite for:
 
 - `devices`
-- `invites`
 - `items`
 - `deliveries`
 - `push_tokens`
@@ -307,17 +297,17 @@ Deliverables:
 - Node.js / TypeScript Relay Hub
 - SQLite schema
 - filesystem blob storage
-- invite creation + device registration
+- direct device registration
 - device-ID-based identity over Tailnet
 - item creation API
 - delivery creation / status model
 - pending-item fetch, ack, viewed, inspection, and file-download endpoints needed by the CLI
 - reusable headless client core shared by the CLI, automated tests, macOS, and the mobile app
-- local device-profile storage with active-device selection, last-used targets, and handled-delivery tracking
-- CLI device registration using invite link or manual code
+- stateless CLI operation with explicit Relay Hub URL, active device ID, and target device IDs
+- CLI device registration using nickname and platform
 - CLI send flows for text, URL, and file
 - CLI receive flows for pending fetch, ack, viewed, and file download
-- platform-profile simulation for `cli`, `macos`, `ios`, and `android`
+- platform simulation for `cli`, `macos`, `ios`, and `android`
 - end-to-end test scenarios covering multi-target sends, offline receive, delivery deduplication, and multi-file bundles
 - Relay Hub hardening around the first headless vertical slice
 
@@ -352,7 +342,7 @@ Deliverables:
 - `apps/mobile-app` foundation for the Capacitor shells
 - shared React-based mobile web UI consumed by Capacitor
 - Capacitor `ios` and `android` shells
-- registration via invite link / QR / code
+- registration via Relay Hub URL, nickname, and platform
 - atomic mobile registration with push permission + native push registration + token upload
 - APNs setup for iOS
 - FCM setup for Android
@@ -368,7 +358,7 @@ Deliverables:
 Deliverables:
 
 - mobile app send UI for text, URLs, and files
-- target confirmation UI with preselected last-used devices
+- native app target confirmation UI with preselected last-used devices
 - shared handling for text/URL/file sends from within the app
 - foreground in-app delivery handling with no auto-navigation
 
@@ -389,8 +379,8 @@ This is not final, but it is the shape the implementation should likely converge
 
 ### Registration endpoints
 
-- `POST /invites`
 - `POST /devices/register`
+  - request includes `nickname` and `platform`
   - `pushRegistration` is required for `ios` and `android`
   - `pushRegistration` is absent for `cli`, `macos`, and `generic`
   - for mobile devices, registration stores the device and initial push token atomically

@@ -5,7 +5,7 @@ import UserNotifications
 
 @MainActor
 final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotificationCenterDelegate {
-  private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+  private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
   private let configurationStore = RelayAppConfigurationStore()
   private let handledDeliveryStore: PersistentHandledDeliveryStore
   private let textWindowController = TextDeliveryWindowController()
@@ -20,13 +20,6 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
       }
 
       return await self.saveSettings(snapshot)
-    },
-    importAction: { [weak self] in
-      guard let self else {
-        return SettingsImportResult(snapshot: .empty, message: "The app controller is no longer available.")
-      }
-
-      return await self.importCLIProfile()
     },
     testAction: { [weak self] snapshot in
       guard let self else {
@@ -152,7 +145,11 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
   }
 
   private func configureMenuBar() {
-    statusItem.button?.title = "Relay"
+    if let button = statusItem.button {
+      button.image = NSImage(systemSymbolName: "paperplane", accessibilityDescription: "Content Relay")
+      button.image?.isTemplate = true
+      button.toolTip = "Content Relay"
+    }
 
     statusLineMenuItem.isEnabled = false
     lastErrorMenuItem.isEnabled = false
@@ -214,18 +211,6 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
       return
     }
 
-    let importResult = await importCLIProfile()
-    settingsViewModel.apply(snapshot: importResult.snapshot)
-
-    do {
-      if try configurationStore.loadCredentials() != nil {
-        updateStatusLine("Imported CLI macOS profile")
-        return
-      }
-    } catch {
-      updateLastError(error.localizedDescription)
-    }
-
     settingsWindowController.present()
   }
 
@@ -271,7 +256,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
       throw NSError(
         domain: "ContentRelayMacOS",
         code: 40,
-        userInfo: [NSLocalizedDescriptionKey: "The app is not configured. Open Settings to import or paste the Relay Hub URL and device ID."]
+        userInfo: [NSLocalizedDescriptionKey: "The app is not configured. Open Settings to import or enter the Relay Hub URL and device nickname."]
       )
     }
 
@@ -283,27 +268,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
     )
   }
 
-  private func makeClient(from snapshot: SettingsSnapshot? = nil) throws -> any RelayAPIClient {
-    if let snapshot {
-      let relayHubBaseURL = try normalizedURL(from: snapshot.relayHubBaseURL)
-      let deviceId = snapshot.deviceId.trimmingCharacters(in: .whitespacesAndNewlines)
-
-      guard !deviceId.isEmpty else {
-        throw NSError(
-          domain: "ContentRelayMacOS",
-          code: 41,
-          userInfo: [NSLocalizedDescriptionKey: "Enter a device ID."]
-        )
-      }
-
-      return OpenAPIRelayAPIClient(
-        credentials: RelayDeviceCredentials(
-          relayHubBaseURL: relayHubBaseURL,
-          deviceId: deviceId
-        )
-      )
-    }
-
+  private func makeClient() throws -> any RelayAPIClient {
     guard let credentials = try configurationStore.loadCredentials() else {
       throw NSError(
         domain: "ContentRelayMacOS",
@@ -355,51 +320,66 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
     }
   }
 
+  private func ensureRegisteredSnapshot(_ snapshot: SettingsSnapshot) async throws -> SettingsSnapshot {
+    let relayHubBaseURL = try normalizedURL(from: snapshot.relayHubBaseURL)
+    let deviceNickname = snapshot.deviceNickname.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !deviceNickname.isEmpty else {
+      throw composeError("Enter this device nickname.")
+    }
+
+    let pollIntervalSeconds = try parsePollInterval(snapshot.pollIntervalSeconds)
+
+    if let savedConfiguration = try configurationStore.loadSavedConfiguration(),
+      savedConfiguration.relayHubBaseURL == relayHubBaseURL.absoluteString,
+      savedConfiguration.deviceNickname == deviceNickname,
+      !savedConfiguration.deviceId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    {
+      return SettingsSnapshot(
+        relayHubBaseURL: savedConfiguration.relayHubBaseURL,
+        deviceId: savedConfiguration.deviceId,
+        deviceNickname: savedConfiguration.deviceNickname,
+        pollIntervalSeconds: String(pollIntervalSeconds)
+      )
+    }
+
+    let registration = try await URLSessionRelayAPIClient.registerDevice(
+      relayHubBaseURL: relayHubBaseURL,
+      nickname: deviceNickname
+    )
+
+    return SettingsSnapshot(
+      relayHubBaseURL: relayHubBaseURL.absoluteString,
+      deviceId: registration.deviceId,
+      deviceNickname: registration.nickname,
+      pollIntervalSeconds: String(pollIntervalSeconds)
+    )
+  }
+
   private func saveSettings(_ snapshot: SettingsSnapshot) async -> String {
     do {
-      try configurationStore.save(snapshot: snapshot)
+      let registeredSnapshot = try await ensureRegisteredSnapshot(snapshot)
+      try configurationStore.save(snapshot: registeredSnapshot)
       settingsViewModel.apply(snapshot: try configurationStore.makeSettingsSnapshot())
       updateLastError(nil)
       await startPollingIfConfigured()
-      return "Saved settings. Background fetching restarted."
+      return "Saved settings for \(registeredSnapshot.deviceNickname). Background fetching restarted."
     } catch {
       updateLastError(error.localizedDescription)
       return error.localizedDescription
     }
   }
 
-  private func importCLIProfile() async -> SettingsImportResult {
-    do {
-      let importedProfile = try CLIProfileImporter.importPreferredMacOSProfile()
-      let snapshot = SettingsSnapshot(
-        relayHubBaseURL: importedProfile.relayHubBaseURL.absoluteString,
-        deviceId: importedProfile.deviceId,
-        pollIntervalSeconds: String((try? configurationStore.currentPollIntervalSeconds()) ?? 15)
-      )
-
-      try configurationStore.save(snapshot: snapshot)
-      await startPollingIfConfigured()
-      updateLastError(nil)
-
-      return SettingsImportResult(
-        snapshot: snapshot,
-        message: "Imported the active macOS CLI profile."
-      )
-    } catch {
-      let fallbackSnapshot = (try? configurationStore.makeSettingsSnapshot()) ?? .empty
-      updateLastError(error.localizedDescription)
-
-      return SettingsImportResult(snapshot: fallbackSnapshot, message: error.localizedDescription)
-    }
-  }
-
   private func testSettings(_ snapshot: SettingsSnapshot) async -> String {
     do {
       _ = try parsePollInterval(snapshot.pollIntervalSeconds)
-      let client = try makeClient(from: snapshot)
+      let registeredSnapshot = try await ensureRegisteredSnapshot(snapshot)
+      try configurationStore.save(snapshot: registeredSnapshot)
+      settingsViewModel.apply(snapshot: try configurationStore.makeSettingsSnapshot())
+      let client = try makeClient()
       let deliveries = try await client.fetchPendingDeliveries()
       updateLastError(nil)
-      return "Connection succeeded. Pending deliveries: \(deliveries.count)."
+      return "Connection succeeded for \(registeredSnapshot.deviceNickname). Pending deliveries: \(deliveries.count)."
     } catch {
       updateLastError(error.localizedDescription)
       return error.localizedDescription

@@ -4,8 +4,7 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 
 import {
-  createInviteRequestSchema,
-  createInviteResponseSchema,
+  authHeadersSchema,
   createItemResponseSchema,
   createTextItemRequestSchema,
   createUrlItemRequestSchema,
@@ -28,7 +27,6 @@ import {
   RelayResourceNotFoundError,
 } from "#pkg/errors.ts";
 import {
-  presentCreateInviteOutput,
   presentCreateItemOutput,
   presentDeliveryAction,
   presentDeliveryList,
@@ -43,7 +41,6 @@ import { instrumentationScopeFromModuleURL } from "#pkg/observability/instrument
 import { acknowledgeDelivery } from "#pkg/use-cases/acknowledge-delivery.ts";
 import { authenticateDevice } from "#pkg/use-cases/authenticate-device.ts";
 import { createFileItem } from "#pkg/use-cases/create-file-item.ts";
-import { createInvite } from "#pkg/use-cases/create-invite.ts";
 import { createTextItem } from "#pkg/use-cases/create-text-item.ts";
 import { createUrlItem } from "#pkg/use-cases/create-url-item.ts";
 import { deleteDevice } from "#pkg/use-cases/delete-device.ts";
@@ -64,7 +61,6 @@ const logger = createLogger(instrumentationScopeFromModuleURL(import.meta.url));
 const API_TAGS = {
   deliveries: "Deliveries",
   devices: "Devices",
-  invites: "Invites",
   items: "Items",
 } as const;
 
@@ -219,120 +215,62 @@ export async function createHonoApp() {
     ],
   }));
 
-  const publicRoutes = app
-    .openapi(
-      createRoute({
-        method: "post",
-        path: "/invites",
-        tags: [API_TAGS.invites],
-        request: {
-          body: {
-            content: {
-              "application/json": {
-                schema: createInviteRequestSchema,
-              },
+  const publicRoutes = app.openapi(
+    createRoute({
+      method: "post",
+      path: "/devices/register",
+      tags: [API_TAGS.devices],
+      request: {
+        body: {
+          content: {
+            "application/json": {
+              schema: registerDeviceRequestSchema,
             },
-            required: true,
           },
+          required: true,
         },
-        responses: {
-          201: {
-            content: {
-              "application/json": {
-                schema: createInviteResponseSchema,
-              },
-            },
-            description: "Invite created.",
-          },
-          400: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Invalid request.",
-          },
-          500: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Unexpected Relay Hub error.",
-          },
-        },
-      }),
-      async (context) => {
-        const { expiresInSeconds } = context.req.valid("json");
-        const invite = await createInvite(expiresInSeconds);
-
-        return context.json(presentCreateInviteOutput(invite), 201);
       },
-    )
-    .openapi(
-      createRoute({
-        method: "post",
-        path: "/devices/register",
-        tags: [API_TAGS.devices],
-        request: {
-          body: {
-            content: {
-              "application/json": {
-                schema: registerDeviceRequestSchema,
-              },
+      responses: {
+        201: {
+          content: {
+            "application/json": {
+              schema: registerDeviceResponseSchema,
             },
-            required: true,
           },
+          description: "Device registered.",
         },
-        responses: {
-          201: {
-            content: {
-              "application/json": {
-                schema: registerDeviceResponseSchema,
-              },
+        400: {
+          content: {
+            "application/json": {
+              schema: errorResponseSchema,
             },
-            description: "Device registered.",
           },
-          400: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Invalid request.",
-          },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
-          404: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Invite not found.",
-          },
-          500: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Unexpected Relay Hub error.",
-          },
+          description: "Invalid request.",
         },
-      }),
-      async (context) => {
-        const registration = await registerDevice(context.req.valid("json"));
-
-        return context.json(presentRegisterDeviceOutput(registration), 201);
+        401: {
+          content: {
+            "application/json": {
+              schema: errorResponseSchema,
+            },
+          },
+          description: "Authentication failed.",
+        },
+        500: {
+          content: {
+            "application/json": {
+              schema: errorResponseSchema,
+            },
+          },
+          description: "Unexpected Relay Hub error.",
+        },
       },
-    );
+    }),
+    async (context) => {
+      const registration = await registerDevice(context.req.valid("json"));
+
+      return context.json(presentRegisterDeviceOutput(registration), 201);
+    },
+  );
 
   const routes = $(
     publicRoutes
@@ -350,7 +288,9 @@ export async function createHonoApp() {
         path: "/devices",
         tags: [API_TAGS.devices],
         security: AUTH_SECURITY,
-        request: {},
+        request: {
+          headers: authHeadersSchema,
+        },
         responses: {
           200: {
             content: {
@@ -391,6 +331,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.devices],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deviceIdParamsSchema,
           body: {
             content: {
@@ -474,6 +415,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.devices],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deviceIdParamsSchema,
         },
         responses: {
@@ -536,6 +478,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.devices],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deviceIdParamsSchema,
           body: {
             content: {
@@ -614,6 +557,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.items],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           body: {
             content: {
               "application/json": {
@@ -677,6 +621,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.items],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           body: {
             content: {
               "application/json": {
@@ -740,6 +685,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.items],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           body: {
             content: {
               "multipart/form-data": {
@@ -799,7 +745,9 @@ export async function createHonoApp() {
         path: "/deliveries/pending",
         tags: [API_TAGS.deliveries],
         security: AUTH_SECURITY,
-        request: {},
+        request: {
+          headers: authHeadersSchema,
+        },
         responses: {
           200: {
             content: {
@@ -841,6 +789,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.deliveries],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           query: deliveryListQuerySchema,
         },
         responses: {
@@ -897,6 +846,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.deliveries],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deliveryIdParamsSchema,
         },
         responses: {
@@ -949,6 +899,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.deliveries],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deliveryIdParamsSchema,
         },
         responses: {
@@ -1001,6 +952,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.deliveries],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deliveryIdParamsSchema,
         },
         responses: {
@@ -1053,6 +1005,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.deliveries],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deliveryIdParamsSchema,
         },
         responses: {
@@ -1105,6 +1058,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.items],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           query: itemListQuerySchema,
         },
         responses: {
@@ -1157,6 +1111,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.items],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: itemIdParamsSchema,
         },
         responses: {

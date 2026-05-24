@@ -22,86 +22,6 @@
     "parameters": {}
   },
   "paths": {
-    "/invites": {
-      "post": {
-        "tags": ["Invites"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "expiresInSeconds": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "exclusiveMinimum": true,
-                    "maximum": 86400,
-                    "default": 900
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Invite created.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "inviteCode": {
-                      "type": "string"
-                    },
-                    "inviteUrl": {
-                      "type": "string"
-                    },
-                    "expiresAt": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["inviteCode", "inviteUrl", "expiresAt"]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected Relay Hub error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/devices/register": {
       "post": {
         "tags": ["Devices"],
@@ -120,10 +40,6 @@
                     "type": "string",
                     "enum": ["cli", "macos", "ios", "android", "generic"]
                   },
-                  "invite": {
-                    "type": "string",
-                    "minLength": 1
-                  },
                   "pushRegistration": {
                     "type": "object",
                     "properties": {
@@ -135,7 +51,7 @@
                     "required": ["token"]
                   }
                 },
-                "required": ["nickname", "platform", "invite"]
+                "required": ["nickname", "platform"]
               }
             }
           }
@@ -203,22 +119,6 @@
               }
             }
           },
-          "404": {
-            "description": "Invite not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "500": {
             "description": "Unexpected Relay Hub error.",
             "content": {
@@ -244,6 +144,16 @@
         "security": [
           {
             "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "responses": {
@@ -332,6 +242,14 @@
             "required": true,
             "name": "deviceId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "requestBody": {
@@ -480,6 +398,14 @@
             "required": true,
             "name": "deviceId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "responses": {
@@ -571,6 +497,14 @@
             "required": true,
             "name": "deviceId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "requestBody": {
@@ -683,6 +617,16 @@
         "security": [
           {
             "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "requestBody": {
@@ -988,6 +932,16 @@
             "RelayDeviceIdHeader": []
           }
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1289,6 +1243,16 @@
         "security": [
           {
             "RelayDeviceIdHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "requestBody": {
@@ -1593,6 +1557,16 @@
             "RelayDeviceIdHeader": []
           }
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Pending deliveries listed.",
@@ -1792,6 +1766,14 @@
             "required": false,
             "name": "limit",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "responses": {
@@ -1999,6 +1981,14 @@
             "required": true,
             "name": "deliveryId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2203,6 +2193,14 @@
             "required": true,
             "name": "deliveryId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2407,6 +2405,14 @@
             "required": true,
             "name": "deliveryId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2611,6 +2617,14 @@
             "required": true,
             "name": "deliveryId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2808,6 +2822,14 @@
             "required": false,
             "name": "limit",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "responses": {
@@ -3019,6 +3041,14 @@
             "required": true,
             "name": "itemId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "x-relay-device-id",
+            "in": "header"
           }
         ],
         "responses": {

@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
-import { parseOkResponse, rpcClient } from "@content-relay/client";
+import { parseOkResponse, RpcClient } from "@content-relay/client";
 import { withRelayHubTestEnvironment } from "@content-relay/relay-hub-test-utils";
 
 import type { Settings } from "#pkg/settings-storage.js";
@@ -10,15 +10,9 @@ import { gotoWebApp, prepareWebApp } from "#pkg-test-e2e/helpers.ts";
 
 test("save settings", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const inviteDeviceBrowser = await parseOkResponse(
-      rpcClient.createInvite(relayHubBaseUrl, { expiresInSeconds: 60 }),
-    );
-    const registerResultDeviceBrowser = await parseOkResponse(
-      rpcClient.registerDevice(relayHubBaseUrl, {
-        nickname: "test-device-browser",
-        platform: "generic",
-        invite: inviteDeviceBrowser.inviteCode,
-      }),
+    const registerResultDeviceBrowser = await registerTestDevice(
+      relayHubBaseUrl,
+      "test-device-browser",
     );
 
     await gotoWebApp(page);
@@ -47,15 +41,9 @@ test("save settings", async ({ page }) => {
 
 test("automatically loads saved settings on page load", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const inviteDeviceBrowser = await parseOkResponse(
-      rpcClient.createInvite(relayHubBaseUrl, { expiresInSeconds: 60 }),
-    );
-    const registerResultDeviceBrowser = await parseOkResponse(
-      rpcClient.registerDevice(relayHubBaseUrl, {
-        nickname: "test-device-browser",
-        platform: "generic",
-        invite: inviteDeviceBrowser.inviteCode,
-      }),
+    const registerResultDeviceBrowser = await registerTestDevice(
+      relayHubBaseUrl,
+      "test-device-browser",
     );
 
     await prepareWebApp(page, {
@@ -74,33 +62,21 @@ test("automatically loads saved settings on page load", async ({ page }) => {
     await expect(page.getByRole("textbox", { name: "Device ID:" })).toHaveValue(
       registerResultDeviceBrowser.deviceId,
     );
-    await expect(page.getByRole("form", { name: "Send item" })).toBeVisible();
-    await expect(page.getByText("No available devices")).toBeVisible();
+    const sendItemForm = page.getByRole("form", { name: "Send item" });
+    await expect(sendItemForm).toBeVisible();
+    await expect(sendItemForm.getByRole("checkbox")).toHaveCount(0);
   });
 });
 
 test("change settings", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const inviteOldDeviceBrowser = await parseOkResponse(
-      rpcClient.createInvite(relayHubBaseUrl, { expiresInSeconds: 60 }),
+    const registerResultOldDeviceBrowser = await registerTestDevice(
+      relayHubBaseUrl,
+      "test-old-device-browser",
     );
-    const registerResultOldDeviceBrowser = await parseOkResponse(
-      rpcClient.registerDevice(relayHubBaseUrl, {
-        nickname: "test-old-device-browser",
-        platform: "generic",
-        invite: inviteOldDeviceBrowser.inviteCode,
-      }),
-    );
-
-    const inviteNewDeviceBrowser = await parseOkResponse(
-      rpcClient.createInvite(relayHubBaseUrl, { expiresInSeconds: 60 }),
-    );
-    const registerResultNewDeviceBrowser = await parseOkResponse(
-      rpcClient.registerDevice(relayHubBaseUrl, {
-        nickname: "test-new-device-browser",
-        platform: "generic",
-        invite: inviteNewDeviceBrowser.inviteCode,
-      }),
+    const registerResultNewDeviceBrowser = await registerTestDevice(
+      relayHubBaseUrl,
+      "test-new-device-browser",
     );
 
     await prepareWebApp(page, {
@@ -133,6 +109,15 @@ test("change settings", async ({ page }) => {
     );
   });
 });
+
+async function registerTestDevice(relayHubBaseUrl: string, nickname: string) {
+  return parseOkResponse(
+    new RpcClient(relayHubBaseUrl).registerDevice({
+      nickname,
+      platform: "generic",
+    }),
+  );
+}
 
 async function openSettings(page: Page): Promise<void> {
   await page.getByText("Settings").click();

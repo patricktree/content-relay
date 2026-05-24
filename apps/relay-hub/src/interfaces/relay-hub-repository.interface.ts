@@ -6,7 +6,6 @@ import type { DeliveryState, FileMetadata } from "@content-relay/contracts";
 import {
   deliveriesTable,
   devicesTable,
-  invitesTable,
   itemsTable,
   pushTokensTable,
 } from "#pkg/infrastructure/db/schema.ts";
@@ -14,25 +13,20 @@ import {
 export const relayRepositoryToken = new Token<IRelayHubRepository>("RelayRepository");
 
 export type DeviceRecord = InferSelectModel<typeof devicesTable>;
-export type InviteRecord = InferSelectModel<typeof invitesTable>;
 export type ItemRecord = InferSelectModel<typeof itemsTable>;
 export type DeliveryRecord = InferSelectModel<typeof deliveriesTable>;
 export type PushTokenRecord = InferSelectModel<typeof pushTokensTable>;
 
-export type CreateDeviceRegistrationInput = {
-  inviteId: string;
-  usedAt: string;
+export type CreateRegisteredDeviceInput = {
   device: DeviceRecord;
   pushToken?: PushTokenRecord;
 };
 
 export type IRelayHubRepository = {
-  createInvite(invite: InviteRecord): Promise<void>;
-  getInviteByCode(code: string): Promise<InviteRecord | null>;
-  markInviteUsed(inviteId: string, usedAt: string): Promise<void>;
   createDevice(device: DeviceRecord): Promise<void>;
-  createDeviceRegistration(input: CreateDeviceRegistrationInput): Promise<void>;
+  createRegisteredDevice(input: CreateRegisteredDeviceInput): Promise<void>;
   findActiveDeviceById(deviceId: string): Promise<DeviceRecord | null>;
+  findActiveDeviceByNickname(nickname: string): Promise<DeviceRecord | null>;
   listActiveDevices(): Promise<DeviceRecord[]>;
   updateDeviceNickname(
     deviceId: string,

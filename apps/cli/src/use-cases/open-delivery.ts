@@ -1,12 +1,9 @@
 import { assertIsUnreachable } from "@patricktree/commons-ecma/util/assert";
 
-import { parseOkResponse, rpcClient } from "@content-relay/client";
+import { parseOkResponse, RpcClient } from "@content-relay/client";
 import type { DeliveryResource } from "@content-relay/contracts";
-import type {
-  LocalDeviceProfile,
-  LocalDeviceProfileStore,
-} from "@content-relay/profile-store-node";
 
+import type { ActiveDeviceContext } from "#pkg/use-cases/device-context.ts";
 import { transitionDeliveryToDelivered } from "#pkg/use-cases/transition-delivery-to-delivered.ts";
 
 export type OpenDeliveryResponse = {
@@ -14,24 +11,31 @@ export type OpenDeliveryResponse = {
   action: string;
 };
 
-type OpenDeliveryProfileStore = Pick<LocalDeviceProfileStore, "recordHandledDelivery">;
-
 export async function openDelivery(
-  profile: LocalDeviceProfile,
+  deviceContext: ActiveDeviceContext,
   deliveryId: string,
-  profileStore: OpenDeliveryProfileStore,
 ): Promise<OpenDeliveryResponse> {
-  let delivery = (await parseOkResponse(rpcClient.getDelivery(profile, deliveryId))).delivery;
+  let delivery = (
+    await parseOkResponse(
+      new RpcClient(deviceContext.relayHubBaseUrl)
+        .createDeviceRpcClient(deviceContext.deviceId)
+        .getDelivery({ deliveryId: deliveryId }),
+    )
+  ).delivery;
 
   if (delivery.state === "pending") {
-    delivery = await transitionDeliveryToDelivered(profile, deliveryId);
+    delivery = await transitionDeliveryToDelivered(deviceContext, deliveryId);
   }
 
   if (delivery.state !== "viewed") {
-    delivery = (await parseOkResponse(rpcClient.markDeliveryViewed(profile, deliveryId))).delivery;
+    delivery = (
+      await parseOkResponse(
+        new RpcClient(deviceContext.relayHubBaseUrl)
+          .createDeviceRpcClient(deviceContext.deviceId)
+          .markDeliveryViewed({ deliveryId: deliveryId }),
+      )
+    ).delivery;
   }
-
-  await profileStore.recordHandledDelivery(profile.profileId, deliveryId);
 
   return {
     delivery,

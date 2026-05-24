@@ -10,17 +10,15 @@ import {
   deliveriesTable,
   devicesTable,
   fileMetadataTable,
-  invitesTable,
   itemsTable,
   pushTokensTable,
   schema,
 } from "#pkg/infrastructure/db/schema.ts";
 import type {
   IRelayHubRepository,
-  CreateDeviceRegistrationInput,
+  CreateRegisteredDeviceInput,
   DeliveryRecord,
   DeviceRecord,
-  InviteRecord,
   ItemRecord,
   PushTokenRecord,
 } from "#pkg/interfaces/relay-hub-repository.interface.ts";
@@ -41,37 +39,17 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
     this.#db = drizzle(this.#sqlite, { schema });
   }
 
-  async createInvite(invite: InviteRecord): Promise<void> {
-    this.#db.insert(invitesTable).values(invite).run();
-  }
-
-  async getInviteByCode(code: string): Promise<InviteRecord | null> {
-    const invite = this.#db.select().from(invitesTable).where(eq(invitesTable.code, code)).get();
-
-    return invite ?? null;
-  }
-
-  async markInviteUsed(inviteId: string, usedAt: string): Promise<void> {
-    this.#db.update(invitesTable).set({ usedAt }).where(eq(invitesTable.id, inviteId)).run();
-  }
-
   async createDevice(device: DeviceRecord): Promise<void> {
     this.#db.insert(devicesTable).values(device).run();
   }
 
-  async createDeviceRegistration(input: CreateDeviceRegistrationInput): Promise<void> {
-    this.#sqlite.transaction((registration: CreateDeviceRegistrationInput) => {
+  async createRegisteredDevice(input: CreateRegisteredDeviceInput): Promise<void> {
+    this.#sqlite.transaction((registration: CreateRegisteredDeviceInput) => {
       this.#db.insert(devicesTable).values(registration.device).run();
 
       if (registration.pushToken !== undefined) {
         this.#upsertPushTokenRecord(registration.pushToken);
       }
-
-      this.#db
-        .update(invitesTable)
-        .set({ usedAt: registration.usedAt })
-        .where(eq(invitesTable.id, registration.inviteId))
-        .run();
     })(input);
   }
 
@@ -80,6 +58,16 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
       .select()
       .from(devicesTable)
       .where(and(eq(devicesTable.id, deviceId), isNull(devicesTable.deletedAt)))
+      .get();
+
+    return (device as DeviceRecord | undefined) ?? null;
+  }
+
+  async findActiveDeviceByNickname(nickname: string): Promise<DeviceRecord | null> {
+    const device = this.#db
+      .select()
+      .from(devicesTable)
+      .where(and(eq(devicesTable.nickname, nickname), isNull(devicesTable.deletedAt)))
       .get();
 
     return (device as DeviceRecord | undefined) ?? null;
@@ -347,14 +335,6 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
 
   #initializeSchema(): void {
     this.#sqlite.exec(`
-      CREATE TABLE IF NOT EXISTS invites (
-        id TEXT PRIMARY KEY NOT NULL,
-        code TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        expires_at TEXT NOT NULL,
-        used_at TEXT
-      );
-
       CREATE TABLE IF NOT EXISTS devices (
         id TEXT PRIMARY KEY NOT NULL,
         nickname TEXT NOT NULL,

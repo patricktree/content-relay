@@ -5,7 +5,7 @@ import "material-symbols/rounded.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import { App } from "#pkg/app/app.tsx";
+import { App } from "#pkg/app/App.tsx";
 import { GlobalProviders } from "#pkg/app/global-providers.js";
 import { cssBase, cssReset } from "#pkg/app/global-styles.ts";
 

@@ -1,12 +1,17 @@
-import { parseOkResponse, rpcClient } from "@content-relay/client";
+import { parseOkResponse, RpcClient } from "@content-relay/client";
 import type { DeliveryResource } from "@content-relay/contracts";
-import type { LocalDeviceProfile } from "@content-relay/profile-store-node";
+
+import type { ActiveDeviceContext } from "#pkg/use-cases/device-context.ts";
 
 export async function transitionDeliveryToDelivered(
-  profile: LocalDeviceProfile,
+  deviceContext: ActiveDeviceContext,
   deliveryId: string,
 ): Promise<DeliveryResource> {
-  const acknowledged = await parseOkResponse(rpcClient.acknowledgeDelivery(profile, deliveryId));
+  const acknowledged = await parseOkResponse(
+    new RpcClient(deviceContext.relayHubBaseUrl)
+      .createDeviceRpcClient(deviceContext.deviceId)
+      .acknowledgeDelivery({ deliveryId: deliveryId }),
+  );
 
   return acknowledged.delivery;
 }

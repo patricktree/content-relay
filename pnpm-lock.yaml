@@ -77,9 +77,6 @@ importers:
       '@content-relay/o11y.node-sdk':
         specifier: workspace:*
         version: link:../../libs/o11y.node-sdk
-      '@content-relay/profile-store-node':
-        specifier: workspace:*
-        version: link:../../libs/profile-store-node
       '@content-relay/utils-ecma':
         specifier: workspace:*
         version: link:../../libs/utils-ecma
@@ -232,10 +229,7 @@ importers:
     dependencies:
       '@base-ui/react':
         specifier: ^1.4.1
-        version: 1.4.1(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@capacitor/core':
-        specifier: ^8.3.1
-        version: 8.3.1
+        version: 1.5.0(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@content-relay/client':
         specifier: workspace:*
         version: link:../../libs/client
@@ -253,10 +247,10 @@ importers:
         version: 1.32.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@tanstack/react-query':
         specifier: ^5.100.10
-        version: 5.100.10(react@19.2.6)
+        version: 5.100.13(react@19.2.6)
       material-symbols:
         specifier: ^0.44.8
-        version: 0.44.8
+        version: 0.44.9
       react:
         specifier: ^19.2.6
         version: 19.2.6
@@ -314,7 +308,7 @@ importers:
         version: 8.0.10(@types/node@24.12.2)
       vitest:
         specifier: 'catalog:'
-        version: 4.1.5(@types/node@24.12.2)
+        version: 4.1.5(@types/node@24.12.2)(vite@8.0.10(@types/node@24.12.2))
 
   libs/client:
     dependencies:
@@ -337,9 +331,6 @@ importers:
       '@content-relay/config-typescript':
         specifier: workspace:*
         version: link:../../tooling/config-typescript
-      '@content-relay/profile-store-node':
-        specifier: workspace:*
-        version: link:../profile-store-node
       '@content-relay/relay-hub-test-utils':
         specifier: workspace:*
         version: link:../../qa-utils/relay-hub-test-utils
@@ -432,40 +423,6 @@ importers:
       '@patricktree/commons-node':
         specifier: ^3.1.1
         version: 3.1.1
-    devDependencies:
-      '@content-relay/config-oxlint':
-        specifier: workspace:*
-        version: link:../../tooling/config-oxlint
-      '@content-relay/config-typescript':
-        specifier: workspace:*
-        version: link:../../tooling/config-typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.12.2
-      '@typescript/native-preview':
-        specifier: 'catalog:'
-        version: 7.0.0-dev.20260511.1
-      oxlint:
-        specifier: 'catalog:'
-        version: 1.64.0(oxlint-tsgolint@0.22.1)
-      oxlint-tsgolint:
-        specifier: 'catalog:'
-        version: 0.22.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
-  libs/profile-store-node:
-    dependencies:
-      '@content-relay/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      temporal-polyfill:
-        specifier: ^0.3.2
-        version: 0.3.2
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
     devDependencies:
       '@content-relay/config-oxlint':
         specifier: workspace:*
@@ -782,8 +739,8 @@ packages:
     resolution: {integrity: sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A==}
     engines: {node: '>=6.9.0'}
 
-  '@base-ui/react@1.4.1':
-    resolution: {integrity: sha512-Ab5/LIhcmL8BQcsBUYiOfkSDRdLpvgUBzMK30cu684JPcLclYlztharvCZyNNgzJtbAiREzI9q0pI5erHCMgCw==}
+  '@base-ui/react@1.5.0':
+    resolution: {integrity: sha512-z1gSAlced1yY+iM+mHDEtIkD8UI3Ebs52MuBPxvV6f5hRutk+xvCH/wuB7hDqDzK9JG5FoMz5nhrqtSs1wjt1A==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@date-fns/tz': ^1.2.0
@@ -799,8 +756,8 @@ packages:
       date-fns:
         optional: true
 
-  '@base-ui/utils@0.2.8':
-    resolution: {integrity: sha512-jvOi+c+ftGlGotNcKnzPVg2IhCaDTB6/6R3JeqdjdXktuAJi3wKH9T7+svuaKh1mmfVU11UWzUZVH74JDfi/wQ==}
+  '@base-ui/utils@0.2.9':
+    resolution: {integrity: sha512-x/PDDCYzoqPpjrdyb3VcyylTI2IjUXEtYDGi5foh7KsnmNJIIaVwA2GLgDH1dps1GgXiJbA60hM+AyuTfQzIvw==}
     peerDependencies:
       '@types/react': ^17 || ^18 || ^19
       react: ^17 || ^18 || ^19
@@ -2430,8 +2387,8 @@ packages:
     resolution: {integrity: sha512-y/xtNPNt/YeyoVxE/JCx+T7yjEzpezmbb+toK8DDD1P4m7Kzs5YR956+7OKexG3f8aXgC3rLZl7b1V+yNUSy5w==}
     engines: {node: '>=18'}
 
-  '@tanstack/query-core@5.100.10':
-    resolution: {integrity: sha512-8UR0yJR+GiQ40m3lPhUr0xbfAupe6GSQiksSBSa9SM2NjezFyxXCIA69/lz8cSoNKZLrw1/PktIyQBJcVeMi3w==}
+  '@tanstack/query-core@5.100.13':
+    resolution: {integrity: sha512-mlKVKMTzZWGTKAC1CKOgt7axAjJ921emkEvYIp27I/PdP1yEYL/BteLY8iK35gn8hoYeKB4mgJ/ve3lrDI6/Fw==}
 
   '@tanstack/react-form@1.32.0':
     resolution: {integrity: sha512-6WP5SQTA6/H9crCpvpq3ZppYWqtrdE5NjOy6ebABi6uAQPqhfTzrdjS9t40mCZCFtGI5585OhJV6zBP/KN2zcw==}
@@ -2442,8 +2399,8 @@ packages:
       '@tanstack/react-start':
         optional: true
 
-  '@tanstack/react-query@5.100.10':
-    resolution: {integrity: sha512-FLaZf2RCrA/Zgp4aiu5tG3TyasTRO7aZ99skxQpr3Hg/zXOhu6yq5FZCYQ/tRaJtM9ylnoK8tFK7PolXQadv6Q==}
+  '@tanstack/react-query@5.100.13':
+    resolution: {integrity: sha512-HSBr8CycQEAoXsJR7KNDawBnINJEJ96Eme8oE0hCXjyodE2I97vg3IDzDJBDu18LsbzpVVJcKo80eqLfVCykxw==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -3759,8 +3716,8 @@ packages:
     resolution: {integrity: sha512-hdN1wVrZbb29eBGiGjJbeP8JbKjq1urkHJ/LIP/NY48MZ1QVXUsQBV1G1zvYFHn1XE06cwjBsOI2K3Ulnj1YXQ==}
     engines: {node: '>=8'}
 
-  material-symbols@0.44.8:
-    resolution: {integrity: sha512-drWG88gPlJXmvQrpSc3zKxjzysuvD7ayoGDJecUTr5tt0l4URh3XhDqKjKjCC773oYfTi39ljEzk+CZ6ereikg==}
+  material-symbols@0.44.9:
+    resolution: {integrity: sha512-2niXijHb2Cucb0K98n6a65TG/DJaxFlg06R93T5AU21HQGGUuWr9YQxK9/pnKNaAP8Dwi1YHqMnNoGTgA8C7iQ==}
 
   mem@6.1.1:
     resolution: {integrity: sha512-Ci6bIfq/UgcxPTYa8dQQ5FY3BzKkT894bwXWXxC/zqs0XgMO2cT20CGkOqda7gZNkmK5VP4x89IGZ6K7hfbn3Q==}
@@ -4360,8 +4317,8 @@ packages:
     resolution: {integrity: sha512-QT7FVMXfWOYFbeRBF6nu+I6tr2Tf3u0q8RIEjNob/heKY/nh7drD/k7eeMFmSQgnTtCzLDcCu/XEnpW2wk4xCQ==}
     engines: {node: '>=9.3.0 || >=8.10.0 <9.0.0'}
 
-  reselect@5.1.1:
-    resolution: {integrity: sha512-K/BG6eIky/SBpzfHZv/dd+9JBFiS4SWV7FIujVyJRux6e45+73RaUHXLmIR1f7WOMaQ0U1km6qwklRQxpJJY0w==}
+  reselect@5.2.0:
+    resolution: {integrity: sha512-AgZ3UOZm3YndfrJ4OYjgrT7bmCm/1iqkjvEfH/oYjzh6PD2qw4QuT3jjnXIrpdt4MTpMXclMT3lXbmRY+XRakw==}
 
   resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
@@ -4886,6 +4843,7 @@ packages:
       '@vitest/ui': 4.1.5
       happy-dom: '*'
       jsdom: '*'
+      vite: ^6.0.0 || ^7.0.0 || ^8.0.0
     peerDependenciesMeta:
       '@edge-runtime/vm':
         optional: true
@@ -5148,10 +5106,10 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@base-ui/react@1.4.1(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@base-ui/react@1.5.0(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@babel/runtime': 7.29.2
-      '@base-ui/utils': 0.2.8(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@base-ui/utils': 0.2.9(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@floating-ui/react-dom': 2.1.8(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@floating-ui/utils': 0.2.11
       react: 19.2.6
@@ -5160,13 +5118,13 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
-  '@base-ui/utils@0.2.8(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@base-ui/utils@0.2.9(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@babel/runtime': 7.29.2
       '@floating-ui/utils': 0.2.11
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
-      reselect: 5.1.1
+      reselect: 5.2.0
       use-sync-external-store: 1.6.0(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
@@ -7134,7 +7092,7 @@ snapshots:
 
   '@tanstack/pacer-lite@0.1.1': {}
 
-  '@tanstack/query-core@5.100.10': {}
+  '@tanstack/query-core@5.100.13': {}
 
   '@tanstack/react-form@1.32.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
@@ -7144,9 +7102,9 @@ snapshots:
     transitivePeerDependencies:
       - react-dom
 
-  '@tanstack/react-query@5.100.10(react@19.2.6)':
+  '@tanstack/react-query@5.100.13(react@19.2.6)':
     dependencies:
-      '@tanstack/query-core': 5.100.10
+      '@tanstack/query-core': 5.100.13
       react: 19.2.6
 
   '@tanstack/react-store@0.9.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
@@ -7268,6 +7226,12 @@ snapshots:
       '@vitest/utils': 4.1.5
       chai: 6.2.2
       tinyrainbow: 3.1.0
+
+  '@vitest/mocker@4.1.5':
+    dependencies:
+      '@vitest/spy': 4.1.5
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
 
   '@vitest/mocker@4.1.5(vite@8.0.10(@types/node@24.12.2))':
     dependencies:
@@ -8321,7 +8285,7 @@ snapshots:
 
   map-obj@4.3.0: {}
 
-  material-symbols@0.44.8: {}
+  material-symbols@0.44.9: {}
 
   mem@6.1.1:
     dependencies:
@@ -8907,7 +8871,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  reselect@5.1.1: {}
+  reselect@5.2.0: {}
 
   resolve-from@4.0.0: {}
 
@@ -9353,6 +9317,32 @@ snapshots:
   vitest@4.1.5(@types/node@24.12.2):
     dependencies:
       '@vitest/expect': 4.1.5
+      '@vitest/mocker': 4.1.5
+      '@vitest/pretty-format': 4.1.5
+      '@vitest/runner': 4.1.5
+      '@vitest/snapshot': 4.1.5
+      '@vitest/spy': 4.1.5
+      '@vitest/utils': 4.1.5
+      es-module-lexer: 2.1.0
+      expect-type: 1.3.0
+      magic-string: 0.30.21
+      obug: 2.1.1
+      pathe: 2.0.3
+      picomatch: 4.0.4
+      std-env: 4.1.0
+      tinybench: 2.9.0
+      tinyexec: 1.1.1
+      tinyglobby: 0.2.16
+      tinyrainbow: 3.1.0
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/node': 24.12.2
+    transitivePeerDependencies:
+      - msw
+
+  vitest@4.1.5(@types/node@24.12.2)(vite@8.0.10(@types/node@24.12.2)):
+    dependencies:
+      '@vitest/expect': 4.1.5
       '@vitest/mocker': 4.1.5(vite@8.0.10(@types/node@24.12.2))
       '@vitest/pretty-format': 4.1.5
       '@vitest/runner': 4.1.5
@@ -9375,18 +9365,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.12.2
     transitivePeerDependencies:
-      - '@vitejs/devtools'
-      - esbuild
-      - jiti
-      - less
       - msw
-      - sass
-      - sass-embedded
-      - stylus
-      - sugarss
-      - terser
-      - tsx
-      - yaml
 
   walk-up-path@4.0.0: {}
 

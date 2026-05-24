@@ -17,58 +17,52 @@ import {
   runWithDiContainer,
   startServer,
 } from "@content-relay/relay-hub";
+import { withRelayHubTestEnvironment } from "@content-relay/relay-hub-test-utils";
 
-import { createHttpClient, isParseResponseError, parseOkResponse } from "#pkg/http-client.ts";
-import { rpcClient } from "#pkg/rpc-client.ts";
+import { isParseResponseError, parseOkResponse } from "#pkg/hono-client.ts";
+import { RpcClient } from "#pkg/rpc-client.ts";
 
 import {
   allocatePort,
-  createDeviceHttpClient,
   createAuthHeaders,
   listenOnPort,
   receivePendingDeliveries,
-  registerProfile,
-  withRelayHubTestEnvironment,
+  registerTestDevice,
   writeDownloadedDelivery,
 } from "#pkg-test/test-helpers.ts";
 
 test("milestone 0 flow covers registration, send, receive, viewed, and file download", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, rootDirectory, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const iosProfile = await registerProfile({
-      profileStore,
+    const iosProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
-    const androidProfile = await registerProfile({
-      profileStore,
+    const androidProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer Pixel Sim",
       platform: "android",
     });
 
-    await profileStore.rememberTargets(senderProfile.profileId, [
-      iosProfile.deviceId,
-      androidProfile.deviceId,
-    ]);
-
     const textItem = await parseOkResponse(
-      rpcClient.sendText(senderProfile, {
-        text: "hello from the terminal",
-        targetDeviceIds: [iosProfile.deviceId, androidProfile.deviceId],
-      }),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .sendText({
+          text: "hello from the terminal",
+          targetDeviceIds: [iosProfile.deviceId, androidProfile.deviceId],
+        }),
     );
 
     expect(textItem.deliveries).toHaveLength(2);
 
-    const firstIosFetch = await receivePendingDeliveries(iosProfile, profileStore, {
+    const iosHandledDeliveryIds = new Set<string>();
+    const firstIosFetch = await receivePendingDeliveries(iosProfile, {
+      handledDeliveryIds: iosHandledDeliveryIds,
       acknowledge: false,
       simulatePlatform: true,
       deduplicate: true,
@@ -80,7 +74,8 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     expect(firstIosDelivery.wasDuplicate).toBe(false);
     expect(firstIosDelivery.simulation?.action).toBe("notification-created");
 
-    const duplicateIosFetch = await receivePendingDeliveries(iosProfile, profileStore, {
+    const duplicateIosFetch = await receivePendingDeliveries(iosProfile, {
+      handledDeliveryIds: iosHandledDeliveryIds,
       acknowledge: false,
       simulatePlatform: true,
       deduplicate: true,
@@ -91,7 +86,8 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     assert(duplicateIosDelivery !== undefined);
     expect(duplicateIosDelivery.wasDuplicate).toBe(true);
 
-    const acknowledgedIosFetch = await receivePendingDeliveries(iosProfile, profileStore, {
+    const acknowledgedIosFetch = await receivePendingDeliveries(iosProfile, {
+      handledDeliveryIds: iosHandledDeliveryIds,
       acknowledge: true,
       simulatePlatform: true,
       deduplicate: true,
@@ -106,12 +102,16 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     assert(iosDeliveryId !== undefined);
 
     const viewedDelivery = await parseOkResponse(
-      rpcClient.markDeliveryViewed(iosProfile, iosDeliveryId),
+      new RpcClient(iosProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(iosProfile.deviceId)
+        .markDeliveryViewed({ deliveryId: iosDeliveryId }),
     );
     expect(viewedDelivery.delivery.state).toBe("viewed");
 
     const itemAfterOpen = await parseOkResponse(
-      rpcClient.getItem(senderProfile, textItem.item.itemId),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .getItem({ itemId: textItem.item.itemId }),
     );
     expect(itemAfterOpen.deliveries).toEqual(
       expect.arrayContaining([
@@ -131,14 +131,16 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     const betaFileContent = await fs.promises.readFile(betaFilePath);
 
     const fileItem = await parseOkResponse(
-      rpcClient.sendFiles(senderProfile, {
-        targetDeviceIds: [androidProfile.deviceId, iosProfile.deviceId],
-        title: "Trip docs",
-        files: [
-          { content: alphaFileContent, basename: path.basename(alphaFilePath) },
-          { content: betaFileContent, basename: path.basename(betaFilePath) },
-        ],
-      }),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .sendFiles({
+          targetDeviceIds: [androidProfile.deviceId, iosProfile.deviceId],
+          title: "Trip docs",
+          files: [
+            { content: alphaFileContent, basename: path.basename(alphaFilePath) },
+            { content: betaFileContent, basename: path.basename(betaFilePath) },
+          ],
+        }),
     );
     expect(fileItem.item.type).toBe("file");
     expect(fileItem.item.files).toHaveLength(2);
@@ -152,11 +154,13 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     await expect(fs.promises.stat(fileBlobDirectory)).resolves.toBeDefined();
 
     const androidPendingBeforeAck = await parseOkResponse(
-      rpcClient.fetchPendingDeliveries(androidProfile),
+      new RpcClient(androidProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(androidProfile.deviceId)
+        .fetchPendingDeliveries(),
     );
     expect(androidPendingBeforeAck.deliveries).toHaveLength(2);
 
-    const androidReceive = await receivePendingDeliveries(androidProfile, profileStore, {
+    const androidReceive = await receivePendingDeliveries(androidProfile, {
       acknowledge: true,
       simulatePlatform: true,
       deduplicate: true,
@@ -174,7 +178,11 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     assert(fileDelivery !== undefined);
 
     const download = await parseOkResponse(
-      rpcClient.downloadDelivery(androidProfile, fileDelivery.delivery.deliveryId),
+      new RpcClient(androidProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(androidProfile.deviceId)
+        .downloadDelivery({
+          deliveryId: fileDelivery.delivery.deliveryId,
+        }),
     );
     const outputPaths = await writeDownloadedDelivery(
       download,
@@ -196,7 +204,7 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
 
     await expect(fs.promises.stat(fileBlobDirectory)).resolves.toBeDefined();
 
-    const iosFileReceive = await receivePendingDeliveries(iosProfile, profileStore, {
+    const iosFileReceive = await receivePendingDeliveries(iosProfile, {
       acknowledge: true,
       simulatePlatform: true,
       deduplicate: true,
@@ -211,61 +219,26 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
   });
 });
 
-test("invite codes are single-use", async () => {
-  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const invite = await parseOkResponse(
-      rpcClient.createInvite(relayHubBaseUrl, { expiresInSeconds: 900 }),
-    );
-
-    await parseOkResponse(
-      rpcClient.registerDevice(relayHubBaseUrl, {
-        nickname: "Developer CLI",
-        platform: "cli",
-        invite: invite.inviteCode,
-      }),
-    );
-
-    const registerAgainPromise = parseOkResponse(
-      rpcClient.registerDevice(relayHubBaseUrl, {
-        nickname: "Developer iPhone Sim",
-        platform: "ios",
-        invite: invite.inviteCode,
-        pushRegistration: { token: "simulated-ios-invite-reuse-token" },
-      }),
-    );
-    await expect(registerAgainPromise).rejects.toSatisfy(isParseResponseError);
-    await expect(registerAgainPromise).rejects.toMatchObject({
-      statusCode: 400,
-      detail: {
-        data: {
-          error: expect.stringMatching(/already been used/i),
-        },
-      },
-    });
-  });
-});
-
 test("text send rejects a single-line URL payload", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
 
     const sendTextPromise = parseOkResponse(
-      rpcClient.sendText(senderProfile, {
-        text: "https://example.com/interesting-link",
-        targetDeviceIds: [receiverProfile.deviceId],
-      }),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .sendText({
+          text: "https://example.com/interesting-link",
+          targetDeviceIds: [receiverProfile.deviceId],
+        }),
     );
     await expect(sendTextPromise).rejects.toSatisfy(isParseResponseError);
     await expect(sendTextPromise).rejects.toMatchObject({
@@ -280,35 +253,36 @@ test("text send rejects a single-line URL payload", async () => {
 });
 
 test("macos simulated receive auto-marks text and url deliveries viewed", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const macosProfile = await registerProfile({
-      profileStore,
+    const macosProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer Mac",
       platform: "macos",
     });
 
     await parseOkResponse(
-      rpcClient.sendText(senderProfile, {
-        text: "Open this note immediately",
-        targetDeviceIds: [macosProfile.deviceId],
-      }),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .sendText({
+          text: "Open this note immediately",
+          targetDeviceIds: [macosProfile.deviceId],
+        }),
     );
     await parseOkResponse(
-      rpcClient.sendUrl(senderProfile, {
-        url: "https://example.com/macos-auto-open",
-        targetDeviceIds: [macosProfile.deviceId],
-      }),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .sendUrl({
+          url: "https://example.com/macos-auto-open",
+          targetDeviceIds: [macosProfile.deviceId],
+        }),
     );
 
-    const deliveries = await receivePendingDeliveries(macosProfile, profileStore, {
+    const deliveries = await receivePendingDeliveries(macosProfile, {
       acknowledge: true,
       simulatePlatform: true,
       deduplicate: true,
@@ -329,42 +303,43 @@ test("macos simulated receive auto-marks text and url deliveries viewed", async 
     );
 
     const viewedDeliveries = await parseOkResponse(
-      rpcClient.listDeliveries(macosProfile, { state: "viewed", limit: 10 }),
+      new RpcClient(macosProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(macosProfile.deviceId)
+        .listDeliveries({ state: "viewed", limit: 10 }),
     );
     expect(viewedDeliveries.deliveries).toHaveLength(2);
 
     const pendingDeliveries = await parseOkResponse(
-      rpcClient.listDeliveries(macosProfile, { state: "pending", limit: 10 }),
+      new RpcClient(macosProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(macosProfile.deviceId)
+        .listDeliveries({ state: "pending", limit: 10 }),
     );
     expect(pendingDeliveries.deliveries).toHaveLength(0);
   });
 });
 
 test("deleting a device invalidates its authentication and hides it from active device listings", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
 
-    const removeResponse = await createDeviceHttpClient(receiverProfile).devices[
-      ":deviceId"
-    ].$delete({
-      param: { deviceId: receiverProfile.deviceId },
-    });
+    const removeResponse = await new RpcClient(receiverProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(receiverProfile.deviceId)
+      .deleteDevice();
     expect(removeResponse.status).toBe(204);
 
     const listDeliveriesPromise = parseOkResponse(
-      rpcClient.listDeliveries(receiverProfile, { state: "all", limit: 10 }),
+      new RpcClient(receiverProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(receiverProfile.deviceId)
+        .listDeliveries({ state: "all", limit: 10 }),
     );
     await expect(listDeliveriesPromise).rejects.toSatisfy(isParseResponseError);
     await expect(listDeliveriesPromise).rejects.toMatchObject({
@@ -376,46 +351,46 @@ test("deleting a device invalidates its authentication and hides it from active 
       },
     });
 
-    const devices = await parseOkResponse(rpcClient.listDevices(senderProfile));
+    const devices = await parseOkResponse(
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .listDevices(),
+    );
     expect(devices.map((device) => device.deviceId)).not.toContain(receiverProfile.deviceId);
   });
 });
 
 test("push tokens can be upserted for the authenticated device", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const profile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const device = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
 
-    const upsertResponse1 = await createDeviceHttpClient(profile).devices[":deviceId"][
-      "push-token"
-    ].$post({
-      param: { deviceId: profile.deviceId },
-      json: { token: "ExponentPushToken[device-token-1]" },
-    });
+    const upsertResponse1 = await new RpcClient(device.relayHubBaseUrl)
+      .createDeviceRpcClient(device.deviceId)
+      .setPushToken({
+        token: "ExponentPushToken[device-token-1]",
+      });
     expect(upsertResponse1.status).toBe(204);
 
-    const upsertResponse2 = await createDeviceHttpClient(profile).devices[":deviceId"][
-      "push-token"
-    ].$post({
-      param: { deviceId: profile.deviceId },
-      json: { token: "ExponentPushToken[device-token-2]" },
-    });
+    const upsertResponse2 = await new RpcClient(device.relayHubBaseUrl)
+      .createDeviceRpcClient(device.deviceId)
+      .setPushToken({
+        token: "ExponentPushToken[device-token-2]",
+      });
     expect(upsertResponse2.status).toBe(204);
 
-    const removeResponse = await createDeviceHttpClient(profile).devices[":deviceId"].$delete({
-      param: { deviceId: profile.deviceId },
-    });
+    const removeResponse = await new RpcClient(device.relayHubBaseUrl)
+      .createDeviceRpcClient(device.deviceId)
+      .deleteDevice();
     expect(removeResponse.status).toBe(204);
 
     const upsertDeletedDevicePushTokenPromise = parseOkResponse(
-      createDeviceHttpClient(profile).devices[":deviceId"]["push-token"].$post({
-        param: { deviceId: profile.deviceId },
-        json: { token: "ExponentPushToken[device-token-3]" },
-      }),
+      new RpcClient(device.relayHubBaseUrl)
+        .createDeviceRpcClient(device.deviceId)
+        .setPushToken({ token: "ExponentPushToken[device-token-3]" }),
     );
     await expect(upsertDeletedDevicePushTokenPromise).rejects.toSatisfy(isParseResponseError);
     await expect(upsertDeletedDevicePushTokenPromise).rejects.toMatchObject({
@@ -430,32 +405,32 @@ test("push tokens can be upserted for the authenticated device", async () => {
 });
 
 test("device routes support rename, listing, and same-device identity guards", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
 
-    const renameResponse = await createDeviceHttpClient(receiverProfile).devices[
-      ":deviceId"
-    ].$patch({
-      param: { deviceId: receiverProfile.deviceId },
-      json: { nickname: "Renamed iPhone Sim" },
-    });
+    const renameResponse = await new RpcClient(receiverProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(receiverProfile.deviceId)
+      .renameDevice({
+        nickname: "Renamed iPhone Sim",
+      });
     expect(renameResponse.status).toBe(200);
     const renamedDevice = deviceSummarySchema.parse(await renameResponse.json());
     expect(renamedDevice.nickname).toBe("Renamed iPhone Sim");
 
-    const devices = await parseOkResponse(rpcClient.listDevices(senderProfile));
+    const devices = await parseOkResponse(
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .listDevices(),
+    );
     expect(devices).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -466,10 +441,12 @@ test("device routes support rename, listing, and same-device identity guards", a
     );
 
     const renameAnotherDevicePromise = parseOkResponse(
-      createDeviceHttpClient(receiverProfile).devices[":deviceId"].$patch({
-        param: { deviceId: senderProfile.deviceId },
-        json: { nickname: "Malicious Rename" },
-      }),
+      new RpcClient(receiverProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(receiverProfile.deviceId)
+        .renameDevice({
+          deviceId: senderProfile.deviceId,
+          nickname: "Malicious Rename",
+        }),
     );
     await expect(renameAnotherDevicePromise).rejects.toSatisfy(isParseResponseError);
     await expect(renameAnotherDevicePromise).rejects.toMatchObject({
@@ -482,9 +459,9 @@ test("device routes support rename, listing, and same-device identity guards", a
     });
 
     const deleteAnotherDevicePromise = parseOkResponse(
-      createDeviceHttpClient(receiverProfile).devices[":deviceId"].$delete({
-        param: { deviceId: senderProfile.deviceId },
-      }),
+      new RpcClient(receiverProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(receiverProfile.deviceId)
+        .deleteDevice({ deviceId: senderProfile.deviceId }),
     );
     await expect(deleteAnotherDevicePromise).rejects.toSatisfy(isParseResponseError);
     await expect(deleteAnotherDevicePromise).rejects.toMatchObject({
@@ -497,10 +474,12 @@ test("device routes support rename, listing, and same-device identity guards", a
     });
 
     const updateAnotherDevicePushTokenPromise = parseOkResponse(
-      createDeviceHttpClient(receiverProfile).devices[":deviceId"]["push-token"].$post({
-        param: { deviceId: senderProfile.deviceId },
-        json: { token: "ExponentPushToken[cross-device]" },
-      }),
+      new RpcClient(receiverProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(receiverProfile.deviceId)
+        .setPushToken({
+          deviceId: senderProfile.deviceId,
+          token: "ExponentPushToken[cross-device]",
+        }),
     );
     await expect(updateAnotherDevicePushTokenPromise).rejects.toSatisfy(isParseResponseError);
     await expect(updateAnotherDevicePushTokenPromise).rejects.toMatchObject({
@@ -515,36 +494,39 @@ test("device routes support rename, listing, and same-device identity guards", a
 });
 
 test("item and delivery routes list and fetch the authenticated device resources", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
 
     const firstItem = await parseOkResponse(
-      rpcClient.sendText(senderProfile, {
-        text: "first delivery becomes delivered",
-        targetDeviceIds: [receiverProfile.deviceId],
-      }),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .sendText({
+          text: "first delivery becomes delivered",
+          targetDeviceIds: [receiverProfile.deviceId],
+        }),
     );
     const secondItem = await parseOkResponse(
-      rpcClient.sendText(senderProfile, {
-        text: "second delivery stays pending",
-        targetDeviceIds: [receiverProfile.deviceId],
-      }),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .sendText({
+          text: "second delivery stays pending",
+          targetDeviceIds: [receiverProfile.deviceId],
+        }),
     );
 
     const pendingDeliveries = await parseOkResponse(
-      rpcClient.fetchPendingDeliveries(receiverProfile),
+      new RpcClient(receiverProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(receiverProfile.deviceId)
+        .fetchPendingDeliveries(),
     );
     expect(pendingDeliveries.deliveries).toHaveLength(2);
 
@@ -558,18 +540,24 @@ test("item and delivery routes list and fetch the authenticated device resources
     assert(firstDeliveryId !== undefined);
 
     const loadedDelivery = await parseOkResponse(
-      rpcClient.getDelivery(receiverProfile, firstDeliveryId),
+      new RpcClient(receiverProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(receiverProfile.deviceId)
+        .getDelivery({ deliveryId: firstDeliveryId }),
     );
     expect(loadedDelivery.delivery.deliveryId).toBe(firstDeliveryId);
     expect(loadedDelivery.delivery.item.itemId).toBe(firstItem.item.itemId);
 
     const acknowledgedDelivery = await parseOkResponse(
-      rpcClient.acknowledgeDelivery(receiverProfile, firstDeliveryId),
+      new RpcClient(receiverProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(receiverProfile.deviceId)
+        .acknowledgeDelivery({ deliveryId: firstDeliveryId }),
     );
     expect(acknowledgedDelivery.delivery.state).toBe("delivered");
 
     const deliveredDeliveries = await parseOkResponse(
-      rpcClient.listDeliveries(receiverProfile, { state: "delivered", limit: 10 }),
+      new RpcClient(receiverProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(receiverProfile.deviceId)
+        .listDeliveries({ state: "delivered", limit: 10 }),
     );
     expect(deliveredDeliveries.deliveries).toHaveLength(1);
     const deliveredDelivery = deliveredDeliveries.deliveries[0];
@@ -578,7 +566,9 @@ test("item and delivery routes list and fetch the authenticated device resources
     expect(deliveredDelivery.deliveryId).toBe(firstDeliveryId);
 
     const allDeliveries = await parseOkResponse(
-      rpcClient.listDeliveries(receiverProfile, { state: "all", limit: 10 }),
+      new RpcClient(receiverProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(receiverProfile.deviceId)
+        .listDeliveries({ state: "all", limit: 10 }),
     );
     expect(allDeliveries.deliveries).toHaveLength(2);
     expect(allDeliveries.deliveries).toEqual(
@@ -588,7 +578,11 @@ test("item and delivery routes list and fetch the authenticated device resources
       ]),
     );
 
-    const items = await parseOkResponse(rpcClient.listItems(senderProfile, { limit: 10 }));
+    const items = await parseOkResponse(
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .listItems({ limit: 10 }),
+    );
     expect(items.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -603,25 +597,24 @@ test("item and delivery routes list and fetch the authenticated device resources
 });
 
 test("file uploads reject empty payloads and write single-file downloads", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, rootDirectory, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer Android Sim",
       platform: "android",
     });
 
-    const emptyUploadResponse = await rpcClient.sendFiles(senderProfile, {
-      targetDeviceIds: [receiverProfile.deviceId],
-      files: [],
-    });
+    const emptyUploadResponse = await new RpcClient(senderProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(senderProfile.deviceId)
+      .sendFiles({
+        targetDeviceIds: [receiverProfile.deviceId],
+        files: [],
+      });
     expect(emptyUploadResponse.status).toBe(400);
     expect(await emptyUploadResponse.json()).toMatchObject({
       error: expect.stringMatching(/Expected at least one uploaded file\./i),
@@ -632,10 +625,12 @@ test("file uploads reject empty payloads and write single-file downloads", async
     const gammaFileContent = await fs.promises.readFile(gammaFilePath);
 
     const fileItem = await parseOkResponse(
-      rpcClient.sendFiles(senderProfile, {
-        targetDeviceIds: [receiverProfile.deviceId],
-        files: [{ content: gammaFileContent, basename: path.basename(gammaFilePath) }],
-      }),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .sendFiles({
+          targetDeviceIds: [receiverProfile.deviceId],
+          files: [{ content: gammaFileContent, basename: path.basename(gammaFilePath) }],
+        }),
     );
     const firstFileDelivery = fileItem.deliveries[0];
     expect(firstFileDelivery).toBeDefined();
@@ -645,13 +640,16 @@ test("file uploads reject empty payloads and write single-file downloads", async
     assert(fileDeliveryId !== undefined);
 
     const download = await parseOkResponse(
-      rpcClient.downloadDelivery(receiverProfile, fileDeliveryId),
+      new RpcClient(receiverProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(receiverProfile.deviceId)
+        .downloadDelivery({ deliveryId: fileDeliveryId }),
     );
 
-    const acknowledgeResponse = await rpcClient.acknowledgeDelivery(
-      receiverProfile,
-      fileDeliveryId,
-    );
+    const acknowledgeResponse = await new RpcClient(receiverProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(receiverProfile.deviceId)
+      .acknowledgeDelivery({
+        deliveryId: fileDeliveryId,
+      });
     expect(acknowledgeResponse.status).toBe(200);
 
     const explicitFilePath = path.join(rootDirectory, "single-download.txt");
@@ -670,35 +668,33 @@ test("file uploads reject empty payloads and write single-file downloads", async
 });
 
 test("receivePendingDeliveries respects deduplication, simulation, and acknowledgement options", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const iosProfile = await registerProfile({
-      profileStore,
+    const iosProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
-    const macosProfile = await registerProfile({
-      profileStore,
+    const macosProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer Mac",
       platform: "macos",
     });
 
     await parseOkResponse(
-      rpcClient.sendText(senderProfile, {
-        text: "do not simulate this delivery",
-        targetDeviceIds: [iosProfile.deviceId],
-      }),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .sendText({
+          text: "do not simulate this delivery",
+          targetDeviceIds: [iosProfile.deviceId],
+        }),
     );
 
-    const firstIosReceive = await receivePendingDeliveries(iosProfile, profileStore, {
+    const firstIosReceive = await receivePendingDeliveries(iosProfile, {
       acknowledge: false,
       simulatePlatform: false,
       deduplicate: false,
@@ -711,7 +707,7 @@ test("receivePendingDeliveries respects deduplication, simulation, and acknowled
     expect(firstIosReceiveDelivery.simulation).toBeNull();
     expect(firstIosReceiveDelivery.delivery.state).toBe("pending");
 
-    const secondIosReceive = await receivePendingDeliveries(iosProfile, profileStore, {
+    const secondIosReceive = await receivePendingDeliveries(iosProfile, {
       acknowledge: false,
       simulatePlatform: false,
       deduplicate: false,
@@ -725,13 +721,17 @@ test("receivePendingDeliveries respects deduplication, simulation, and acknowled
     expect(secondIosReceiveDelivery.delivery.state).toBe("pending");
 
     await parseOkResponse(
-      rpcClient.sendText(senderProfile, {
-        text: "macos auto-view requires acknowledgement",
-        targetDeviceIds: [macosProfile.deviceId],
-      }),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .sendText({
+          text: "macos auto-view requires acknowledgement",
+          targetDeviceIds: [macosProfile.deviceId],
+        }),
     );
 
-    const firstMacosReceive = await receivePendingDeliveries(macosProfile, profileStore, {
+    const macosHandledDeliveryIds = new Set<string>();
+    const firstMacosReceive = await receivePendingDeliveries(macosProfile, {
+      handledDeliveryIds: macosHandledDeliveryIds,
       acknowledge: false,
       simulatePlatform: true,
       deduplicate: true,
@@ -749,19 +749,18 @@ test("receivePendingDeliveries respects deduplication, simulation, and acknowled
     assert(macosDeliveryId !== undefined);
 
     const pendingMacosDelivery = await parseOkResponse(
-      rpcClient.getDelivery(macosProfile, macosDeliveryId),
+      new RpcClient(macosProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(macosProfile.deviceId)
+        .getDelivery({ deliveryId: macosDeliveryId }),
     );
     expect(pendingMacosDelivery.delivery.state).toBe("pending");
 
-    const duplicateAcknowledgedMacosReceive = await receivePendingDeliveries(
-      macosProfile,
-      profileStore,
-      {
-        acknowledge: true,
-        simulatePlatform: true,
-        deduplicate: true,
-      },
-    );
+    const duplicateAcknowledgedMacosReceive = await receivePendingDeliveries(macosProfile, {
+      handledDeliveryIds: macosHandledDeliveryIds,
+      acknowledge: true,
+      simulatePlatform: true,
+      deduplicate: true,
+    });
     expect(duplicateAcknowledgedMacosReceive).toHaveLength(1);
     const duplicateAcknowledgedMacosDelivery = duplicateAcknowledgedMacosReceive[0];
     expect(duplicateAcknowledgedMacosDelivery).toBeDefined();
@@ -773,138 +772,131 @@ test("receivePendingDeliveries respects deduplication, simulation, and acknowled
 });
 
 test("validation errors are returned for JSON, query, and multipart routes", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
 
-    const invalidInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 0 },
+    expect(receiverProfile.nickname).toBe("Developer iPhone Sim");
+
+    const duplicateRegisterResponse = await new RpcClient(relayHubBaseUrl).registerDevice({
+      nickname: "Developer CLI",
+      platform: "cli",
     });
-    expect(invalidInviteResponse.status).toBe(400);
-    expect(await invalidInviteResponse.json()).toMatchObject({
-      error: expect.stringMatching(/(greater than 0|>0)/i),
+    expect(duplicateRegisterResponse.status).toBe(201);
+    await expect(duplicateRegisterResponse.json()).resolves.toMatchObject({
+      deviceId: senderProfile.deviceId,
+      nickname: "Developer CLI",
+      platform: "cli",
     });
 
-    const invalidRegisterResponse = await createHttpClient({
-      relayHubBaseUrl,
-    }).devices.register.$post({
-      json: {
-        nickname: "   ",
-        platform: "ios",
-        invite: "invite_code",
-        pushRegistration: { token: "simulated-ios-validation-token" },
-      },
+    const invalidRegisterResponse = await new RpcClient(relayHubBaseUrl).registerDevice({
+      nickname: "   ",
+      platform: "ios",
+      pushRegistration: { token: "simulated-ios-validation-token" },
     });
     expect(invalidRegisterResponse.status).toBe(400);
     expect(await invalidRegisterResponse.json()).toMatchObject({
       error: expect.stringMatching(/(at least 1 character|>=1 characters)/i),
     });
 
-    const missingMobilePushRegistrationResponse = await createHttpClient({
+    const missingMobilePushRegistrationResponse = await new RpcClient(
       relayHubBaseUrl,
-    }).devices.register.$post({
-      json: {
-        nickname: "Developer iPhone Sim",
-        platform: "ios",
-        invite: "invite_code",
-      },
+    ).registerDevice({
+      nickname: "Developer iPhone Sim",
+      platform: "ios",
     });
     expect(missingMobilePushRegistrationResponse.status).toBe(400);
     expect(await missingMobilePushRegistrationResponse.json()).toMatchObject({
       error: expect.stringMatching(/pushRegistration/i),
     });
 
-    const nonMobilePushRegistrationResponse = await createHttpClient({
-      relayHubBaseUrl,
-    }).devices.register.$post({
-      json: {
-        nickname: "Developer CLI",
-        platform: "cli",
-        invite: "invite_code",
-        pushRegistration: { token: "simulated-cli-validation-token" },
-      },
+    const nonMobilePushRegistrationResponse = await new RpcClient(relayHubBaseUrl).registerDevice({
+      nickname: "Developer CLI",
+      platform: "cli",
+      pushRegistration: { token: "simulated-cli-validation-token" },
     });
     expect(nonMobilePushRegistrationResponse.status).toBe(400);
     expect(await nonMobilePushRegistrationResponse.json()).toMatchObject({
       error: expect.stringMatching(/only allowed for ios and android/i),
     });
 
-    const invalidRenameResponse = await createDeviceHttpClient(senderProfile).devices[
-      ":deviceId"
-    ].$patch({
-      param: { deviceId: senderProfile.deviceId },
-      json: { nickname: "   " },
-    });
+    const invalidRenameResponse = await new RpcClient(senderProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(senderProfile.deviceId)
+      .renameDevice({
+        nickname: "   ",
+      });
     expect(invalidRenameResponse.status).toBe(400);
     expect(await invalidRenameResponse.json()).toMatchObject({
       error: expect.stringMatching(/(at least 1 character|>=1 characters)/i),
     });
 
-    const invalidPushTokenResponse = await createDeviceHttpClient(senderProfile).devices[
-      ":deviceId"
-    ]["push-token"].$post({
-      param: { deviceId: senderProfile.deviceId },
-      json: { token: "   " },
-    });
+    const invalidPushTokenResponse = await new RpcClient(senderProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(senderProfile.deviceId)
+      .setPushToken({
+        token: "   ",
+      });
     expect(invalidPushTokenResponse.status).toBe(400);
     expect(await invalidPushTokenResponse.json()).toMatchObject({
       error: expect.stringMatching(/(at least 1 character|>=1 characters)/i),
     });
 
-    const invalidTextItemResponse = await createDeviceHttpClient(senderProfile).items.text.$post({
-      json: { text: "", targetDeviceIds: [receiverProfile.deviceId] },
-    });
+    const invalidTextItemResponse = await new RpcClient(senderProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(senderProfile.deviceId)
+      .sendText({
+        text: "",
+        targetDeviceIds: [receiverProfile.deviceId],
+      });
     expect(invalidTextItemResponse.status).toBe(400);
     expect(await invalidTextItemResponse.json()).toMatchObject({
       error: expect.stringMatching(/(at least 1 character|>=1 characters)/i),
     });
 
-    const invalidUrlItemResponse = await createDeviceHttpClient(senderProfile).items.url.$post({
-      json: { url: "not-a-url", targetDeviceIds: [receiverProfile.deviceId] },
-    });
+    const invalidUrlItemResponse = await new RpcClient(senderProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(senderProfile.deviceId)
+      .sendUrl({
+        url: "not-a-url",
+        targetDeviceIds: [receiverProfile.deviceId],
+      });
     expect(invalidUrlItemResponse.status).toBe(400);
     expect(await invalidUrlItemResponse.json()).toMatchObject({
       error: expect.stringMatching(/valid url/i),
     });
 
-    const invalidDeliveryStateResponse = await createDeviceHttpClient(
-      receiverProfile,
-    ).deliveries.$get({
-      query: {
+    const invalidDeliveryStateResponse = await new RpcClient(receiverProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(receiverProfile.deviceId)
+      .listDeliveries({
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- intentional type cast to allow invalid value
         state: "invalid" as DeliveryListState,
         limit: "10",
-      },
-    });
+      });
     expect(invalidDeliveryStateResponse.status).toBe(400);
     expect(await invalidDeliveryStateResponse.json()).toMatchObject({
       error: expect.stringMatching(/Invalid option/i),
     });
 
-    const invalidDeliveryLimitResponse = await createDeviceHttpClient(
-      receiverProfile,
-    ).deliveries.$get({
-      query: { limit: "0" },
-    });
+    const invalidDeliveryLimitResponse = await new RpcClient(receiverProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(receiverProfile.deviceId)
+      .listDeliveries({
+        limit: "0",
+      });
     expect(invalidDeliveryLimitResponse.status).toBe(400);
     expect(await invalidDeliveryLimitResponse.json()).toMatchObject({
       error: expect.stringMatching(/(greater than 0|>0)/i),
     });
 
-    const invalidItemLimitResponse = await createDeviceHttpClient(senderProfile).items.$get({
-      query: { limit: "0" },
-    });
+    const invalidItemLimitResponse = await new RpcClient(senderProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(senderProfile.deviceId)
+      .listItems({
+        limit: "0",
+      });
     expect(invalidItemLimitResponse.status).toBe(400);
     expect(await invalidItemLimitResponse.json()).toMatchObject({
       error: expect.stringMatching(/(greater than 0|>0)/i),
@@ -987,26 +979,25 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
 });
 
 test("resource lookup routes reject unknown resources and invalid file downloads", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const receiverProfile = await registerProfile({
-      profileStore,
+    const receiverProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
 
     const textItem = await parseOkResponse(
-      rpcClient.sendText(senderProfile, {
-        text: "this delivery is not downloadable as a file",
-        targetDeviceIds: [receiverProfile.deviceId],
-      }),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .sendText({
+          text: "this delivery is not downloadable as a file",
+          targetDeviceIds: [receiverProfile.deviceId],
+        }),
     );
     const firstTextDelivery = textItem.deliveries[0];
     expect(firstTextDelivery).toBeDefined();
@@ -1016,7 +1007,9 @@ test("resource lookup routes reject unknown resources and invalid file downloads
     assert(deliveryId !== undefined);
 
     const missingDeliveryPromise = parseOkResponse(
-      rpcClient.getDelivery(receiverProfile, "delivery_missing"),
+      new RpcClient(receiverProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(receiverProfile.deviceId)
+        .getDelivery({ deliveryId: "delivery_missing" }),
     );
     await expect(missingDeliveryPromise).rejects.toSatisfy(isParseResponseError);
     await expect(missingDeliveryPromise).rejects.toMatchObject({
@@ -1028,7 +1021,11 @@ test("resource lookup routes reject unknown resources and invalid file downloads
       },
     });
 
-    const missingItemPromise = parseOkResponse(rpcClient.getItem(senderProfile, "item_missing"));
+    const missingItemPromise = parseOkResponse(
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .getItem({ itemId: "item_missing" }),
+    );
     await expect(missingItemPromise).rejects.toSatisfy(isParseResponseError);
     await expect(missingItemPromise).rejects.toMatchObject({
       statusCode: 404,
@@ -1040,7 +1037,9 @@ test("resource lookup routes reject unknown resources and invalid file downloads
     });
 
     const invalidDownloadPromise = parseOkResponse(
-      rpcClient.downloadDelivery(receiverProfile, deliveryId),
+      new RpcClient(receiverProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(receiverProfile.deviceId)
+        .downloadDelivery({ deliveryId: deliveryId }),
     );
     await expect(invalidDownloadPromise).rejects.toSatisfy(isParseResponseError);
     await expect(invalidDownloadPromise).rejects.toMatchObject({
@@ -1056,63 +1055,32 @@ test("resource lookup routes reject unknown resources and invalid file downloads
 
 test("items, deliveries, and devices collection routes reject unauthenticated requests", async () => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const client = createHttpClient({ relayHubBaseUrl });
-
-    const listDevicesPromise = parseOkResponse(client.devices.$get());
-    await expect(listDevicesPromise).rejects.toSatisfy(isParseResponseError);
-    await expect(listDevicesPromise).rejects.toMatchObject({
-      statusCode: 401,
-      detail: {
-        data: {
-          error: expect.stringMatching(/Missing x-relay-device-id header\./i),
-        },
-      },
+    const listDevicesResponse = await fetch(`${relayHubBaseUrl}/devices`);
+    expect(listDevicesResponse.status).toBe(401);
+    expect(await listDevicesResponse.json()).toMatchObject({
+      error: expect.stringMatching(/Missing x-relay-device-id header\./i),
     });
 
-    const listItemsPromise = parseOkResponse(client.items.$get({ query: {} }));
-    await expect(listItemsPromise).rejects.toSatisfy(isParseResponseError);
-    await expect(listItemsPromise).rejects.toMatchObject({
-      statusCode: 401,
-      detail: {
-        data: {
-          error: expect.stringMatching(/Missing x-relay-device-id header\./i),
-        },
-      },
+    const listItemsResponse = await fetch(`${relayHubBaseUrl}/items`);
+    expect(listItemsResponse.status).toBe(401);
+    expect(await listItemsResponse.json()).toMatchObject({
+      error: expect.stringMatching(/Missing x-relay-device-id header\./i),
     });
 
-    const listDeliveriesWithoutAuthPromise = parseOkResponse(client.deliveries.$get({ query: {} }));
-    await expect(listDeliveriesWithoutAuthPromise).rejects.toSatisfy(isParseResponseError);
-    await expect(listDeliveriesWithoutAuthPromise).rejects.toMatchObject({
-      statusCode: 401,
-      detail: {
-        data: {
-          error: expect.stringMatching(/Missing x-relay-device-id header\./i),
-        },
-      },
+    const listDeliveriesWithoutAuthResponse = await fetch(`${relayHubBaseUrl}/deliveries`);
+    expect(listDeliveriesWithoutAuthResponse.status).toBe(401);
+    expect(await listDeliveriesWithoutAuthResponse.json()).toMatchObject({
+      error: expect.stringMatching(/Missing x-relay-device-id header\./i),
     });
   });
 });
 
 test("http client trims trailing slashes and preserves raw text and malformed JSON responses", async () => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const invite = await parseOkResponse(
-      createHttpClient({
-        relayHubBaseUrl: `${relayHubBaseUrl}/`,
-      }).invites.$post({
-        json: { expiresInSeconds: 900 },
-      }),
-    );
-    expect(invite.inviteCode).toBeTruthy();
-
     const registration = await parseOkResponse(
-      createHttpClient({
-        relayHubBaseUrl: `${relayHubBaseUrl}/`,
-      }).devices.register.$post({
-        json: {
-          nickname: "Trailing Slash Device",
-          platform: "cli",
-          invite: invite.inviteCode,
-        },
+      new RpcClient(`${relayHubBaseUrl}/`).registerDevice({
+        nickname: "Trailing Slash Device",
+        platform: "cli",
       }),
     );
     expect(registration.relayHubBaseUrl).toBe(relayHubBaseUrl);
@@ -1137,10 +1105,10 @@ test("http client trims trailing slashes and preserves raw text and malformed JS
   await listenOnPort(server, port);
 
   try {
-    const client = createHttpClient({ relayHubBaseUrl: `http://127.0.0.1:${port}/` });
+    const relayHubBaseUrl = `http://127.0.0.1:${port}/`;
 
     const textErrorPromise = parseOkResponse(
-      client.invites.$post({ json: { expiresInSeconds: 900 } }),
+      new RpcClient(relayHubBaseUrl).registerDevice({ nickname: "Text Error", platform: "cli" }),
     );
     await expect(textErrorPromise).rejects.toSatisfy(isParseResponseError);
     await expect(textErrorPromise).rejects.toMatchObject({
@@ -1151,7 +1119,7 @@ test("http client trims trailing slashes and preserves raw text and malformed JS
     });
 
     const malformedJsonPromise = parseOkResponse(
-      client.invites.$post({ json: { expiresInSeconds: 900 } }),
+      new RpcClient(relayHubBaseUrl).registerDevice({ nickname: "JSON Error", platform: "cli" }),
     );
     await expect(malformedJsonPromise).rejects.toSatisfy(isParseResponseError);
     await expect(malformedJsonPromise).rejects.toMatchObject({
@@ -1202,48 +1170,35 @@ test("server errors are normalized to JSON 500 responses", async () => {
   }
 });
 
-test("profile store reuses remembered targets when no explicit targets are provided", async () => {
-  await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
-    const senderProfile = await registerProfile({
-      profileStore,
+test("explicit target device ids send to every target", async () => {
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer CLI",
       platform: "cli",
-      makeActive: true,
     });
-    const iosProfile = await registerProfile({
-      profileStore,
+    const iosProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer iPhone Sim",
       platform: "ios",
     });
-    const androidProfile = await registerProfile({
-      profileStore,
+    const androidProfile = await registerTestDevice({
       relayHubBaseUrl,
       nickname: "Developer Pixel Sim",
       platform: "android",
     });
-
-    await profileStore.rememberTargets(senderProfile.profileId, [
-      iosProfile.deviceId,
-      androidProfile.deviceId,
-      iosProfile.deviceId,
-    ]);
-
-    const resolvedTargets = await profileStore.resolveTargetDeviceIds(
-      senderProfile.profileId,
-      undefined,
-    );
-    expect(resolvedTargets).toEqual([iosProfile.deviceId, androidProfile.deviceId]);
+    const targetDeviceIds = [iosProfile.deviceId, androidProfile.deviceId];
 
     const textItem = await parseOkResponse(
-      rpcClient.sendText(senderProfile, {
-        text: "last used targets still apply",
-        targetDeviceIds: resolvedTargets,
-      }),
+      new RpcClient(senderProfile.relayHubBaseUrl)
+        .createDeviceRpcClient(senderProfile.deviceId)
+        .sendText({
+          text: "explicit targets are required",
+          targetDeviceIds,
+        }),
     );
     expect(textItem.deliveries.map((delivery) => delivery.targetDeviceId).sort()).toEqual(
-      [iosProfile.deviceId, androidProfile.deviceId].sort(),
+      targetDeviceIds.sort(),
     );
   });
 });

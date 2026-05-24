@@ -17,7 +17,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 ### Intended layers
 
 - `domain`
-  - entities and value objects such as devices, invites, items, and deliveries
+  - entities and value objects such as devices, items, and deliveries
 - `application`
   - use cases such as send item, fetch pending deliveries, acknowledge delivery, mark viewed, register device, and refresh push token
 - `ports`
@@ -134,7 +134,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 
 - Refactor `libs/client` into a platform-neutral headless client core.
 - Share that client core across the CLI, automated tests, macOS app integration, and the Capacitor mobile app.
-- Keep local profile storage, preference storage, and delivery-deduplication state behind platform-specific adapters.
+- Keep app-local preference storage and delivery-deduplication state behind platform-specific adapters; the CLI intentionally remains stateless.
 
 ### Mobile registration
 
@@ -143,7 +143,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
   - notification permission is granted
   - native push registration succeeds
   - the push token is uploaded during registration
-- If mobile setup fails before the final registration request, the invite remains unused.
+- If mobile setup fails before the final registration request, no mobile Device row is created.
 - Mobile registration uses the same `POST /devices/register` endpoint as other device types.
 
 ### Mobile push notifications
@@ -221,9 +221,9 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 - Typing support: `@commander-js/extra-typings`
 - HTTP client: built-in `fetch`
 - Build a reusable headless client core that is shared by the CLI, automated end-to-end tests, macOS app integration, and the mobile app.
-- Support multiple locally stored registered-device profiles so the CLI can simulate `cli`, `macos`, `ios`, `android`, and `generic` device behavior at the product-logic level.
-- Persist CLI-local state outside the repo, including device credentials, active-device selection, last-used targets, and handled delivery IDs.
-- A future TUI is optional and must reuse the same headless client core and local profile store rather than implementing a second protocol client.
+- Keep the CLI stateless: protected commands require an explicit Relay Hub URL and active device ID, while send commands require explicit target device IDs.
+- Do not persist CLI-local device credentials, active-device selection, last-used targets, or handled delivery IDs.
+- A future TUI is optional and must reuse the same headless client core rather than implementing a second protocol client.
 
 ## Testing
 
@@ -254,7 +254,6 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 ## Open items not resolved here
 
 - Exact package/workspace layout details beyond the major package boundaries
-- Invite-link implementation details
 - Exact OpenTelemetry exporter and telemetry backend choice
 - Exact iOS share-extension implementation details and limits
 - Exact Android share-intent implementation details and limits
