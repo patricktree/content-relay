@@ -4,17 +4,20 @@ import Foundation
 struct SavedRelayConfiguration: Codable, Equatable {
   let relayHubBaseURL: String
   let deviceId: String
+  let deviceNickname: String
   let pollIntervalSeconds: Int
   let lastUsedTargetDeviceIds: [String]
 
   init(
     relayHubBaseURL: String,
     deviceId: String,
+    deviceNickname: String = "",
     pollIntervalSeconds: Int,
     lastUsedTargetDeviceIds: [String] = []
   ) {
     self.relayHubBaseURL = relayHubBaseURL
     self.deviceId = deviceId
+    self.deviceNickname = deviceNickname
     self.pollIntervalSeconds = pollIntervalSeconds
     self.lastUsedTargetDeviceIds = lastUsedTargetDeviceIds
   }
@@ -23,6 +26,7 @@ struct SavedRelayConfiguration: Codable, Equatable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     self.relayHubBaseURL = try container.decode(String.self, forKey: .relayHubBaseURL)
     self.deviceId = try container.decode(String.self, forKey: .deviceId)
+    self.deviceNickname = try container.decodeIfPresent(String.self, forKey: .deviceNickname) ?? ""
     self.pollIntervalSeconds = try container.decode(Int.self, forKey: .pollIntervalSeconds)
     self.lastUsedTargetDeviceIds = try container.decodeIfPresent([String].self, forKey: .lastUsedTargetDeviceIds) ?? []
   }
@@ -31,11 +35,13 @@ struct SavedRelayConfiguration: Codable, Equatable {
 struct SettingsSnapshot: Equatable {
   var relayHubBaseURL: String
   var deviceId: String
+  var deviceNickname: String
   var pollIntervalSeconds: String
 
   static let empty = SettingsSnapshot(
     relayHubBaseURL: "",
     deviceId: "",
+    deviceNickname: "",
     pollIntervalSeconds: "15"
   )
 }
@@ -84,6 +90,7 @@ final class RelayAppConfigurationStore {
     let configuration = SavedRelayConfiguration(
       relayHubBaseURL: normalizedServerBaseURL.absoluteString,
       deviceId: snapshot.deviceId.trimmingCharacters(in: .whitespacesAndNewlines),
+      deviceNickname: snapshot.deviceNickname.trimmingCharacters(in: .whitespacesAndNewlines),
       pollIntervalSeconds: pollIntervalSeconds,
       lastUsedTargetDeviceIds: currentConfiguration?.lastUsedTargetDeviceIds ?? []
     )
@@ -96,6 +103,7 @@ final class RelayAppConfigurationStore {
     let configuration = SavedRelayConfiguration(
       relayHubBaseURL: currentConfiguration.relayHubBaseURL,
       deviceId: currentConfiguration.deviceId,
+      deviceNickname: currentConfiguration.deviceNickname,
       pollIntervalSeconds: currentConfiguration.pollIntervalSeconds,
       lastUsedTargetDeviceIds: Array(NSOrderedSet(array: deviceIds)) as? [String] ?? []
     )
@@ -120,6 +128,7 @@ final class RelayAppConfigurationStore {
     return SettingsSnapshot(
       relayHubBaseURL: configuration?.relayHubBaseURL ?? "",
       deviceId: configuration?.deviceId ?? "",
+      deviceNickname: configuration?.deviceNickname ?? "",
       pollIntervalSeconds: String(configuration?.pollIntervalSeconds ?? 15)
     )
   }

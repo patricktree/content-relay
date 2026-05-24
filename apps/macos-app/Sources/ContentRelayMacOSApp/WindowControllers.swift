@@ -44,6 +44,7 @@ enum ComposePayloadType: String, CaseIterable, Identifiable {
 final class SettingsViewModel: ObservableObject {
   @Published var relayHubBaseURL: String
   @Published var deviceId: String
+  @Published var deviceNickname: String
   @Published var pollIntervalSeconds: String
   @Published var statusMessage: String = ""
   @Published var isBusy = false
@@ -60,6 +61,7 @@ final class SettingsViewModel: ObservableObject {
   ) {
     self.relayHubBaseURL = initialSnapshot.relayHubBaseURL
     self.deviceId = initialSnapshot.deviceId
+    self.deviceNickname = initialSnapshot.deviceNickname
     self.pollIntervalSeconds = initialSnapshot.pollIntervalSeconds
     self.saveAction = saveAction
     self.importAction = importAction
@@ -69,6 +71,7 @@ final class SettingsViewModel: ObservableObject {
   func apply(snapshot: SettingsSnapshot) {
     relayHubBaseURL = snapshot.relayHubBaseURL
     deviceId = snapshot.deviceId
+    deviceNickname = snapshot.deviceNickname
     pollIntervalSeconds = snapshot.pollIntervalSeconds
   }
 
@@ -106,6 +109,7 @@ final class SettingsViewModel: ObservableObject {
     SettingsSnapshot(
       relayHubBaseURL: relayHubBaseURL,
       deviceId: deviceId,
+      deviceNickname: deviceNickname,
       pollIntervalSeconds: pollIntervalSeconds
     )
   }
@@ -376,14 +380,14 @@ private struct SettingsView: View {
       Text("Content Relay")
         .font(.system(size: 24, weight: .semibold))
 
-      Text("Import an active `macos` CLI profile or paste the credentials manually.")
+      Text("Import an active `macos` CLI profile or enter a Relay Hub URL and device nickname.")
         .font(.system(size: 14))
         .foregroundStyle(.black.opacity(0.7))
         .fixedSize(horizontal: false, vertical: true)
 
       Group {
         labeledField("Relay Hub base URL", text: $viewModel.relayHubBaseURL)
-        labeledField("Device ID", text: $viewModel.deviceId)
+        labeledField("Device nickname", text: $viewModel.deviceNickname)
         labeledField("Poll interval (seconds)", text: $viewModel.pollIntervalSeconds)
       }
 
@@ -400,7 +404,7 @@ private struct SettingsView: View {
         .buttonStyle(.bordered)
         .disabled(viewModel.isBusy)
 
-        Button("Save") {
+        Button("Save & Register") {
           viewModel.save()
         }
         .buttonStyle(.borderedProminent)

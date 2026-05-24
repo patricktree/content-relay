@@ -271,7 +271,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
       throw NSError(
         domain: "ContentRelayMacOS",
         code: 40,
-        userInfo: [NSLocalizedDescriptionKey: "The app is not configured. Open Settings to import or paste the Relay Hub URL and device ID."]
+        userInfo: [NSLocalizedDescriptionKey: "The app is not configured. Open Settings to import or enter the Relay Hub URL and device nickname."]
       )
     }
 
@@ -283,27 +283,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
     )
   }
 
-  private func makeClient(from snapshot: SettingsSnapshot? = nil) throws -> any RelayAPIClient {
-    if let snapshot {
-      let relayHubBaseURL = try normalizedURL(from: snapshot.relayHubBaseURL)
-      let deviceId = snapshot.deviceId.trimmingCharacters(in: .whitespacesAndNewlines)
-
-      guard !deviceId.isEmpty else {
-        throw NSError(
-          domain: "ContentRelayMacOS",
-          code: 41,
-          userInfo: [NSLocalizedDescriptionKey: "Enter a device ID."]
-        )
-      }
-
-      return OpenAPIRelayAPIClient(
-        credentials: RelayDeviceCredentials(
-          relayHubBaseURL: relayHubBaseURL,
-          deviceId: deviceId
-        )
-      )
-    }
-
+  private func makeClient() throws -> any RelayAPIClient {
     guard let credentials = try configurationStore.loadCredentials() else {
       throw NSError(
         domain: "ContentRelayMacOS",
@@ -355,13 +335,50 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
     }
   }
 
+  private func ensureRegisteredSnapshot(_ snapshot: SettingsSnapshot) async throws -> SettingsSnapshot {
+    let relayHubBaseURL = try normalizedURL(from: snapshot.relayHubBaseURL)
+    let deviceNickname = snapshot.deviceNickname.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !deviceNickname.isEmpty else {
+      throw composeError("Enter this device nickname.")
+    }
+
+    let pollIntervalSeconds = try parsePollInterval(snapshot.pollIntervalSeconds)
+
+    if let savedConfiguration = try configurationStore.loadSavedConfiguration(),
+      savedConfiguration.relayHubBaseURL == relayHubBaseURL.absoluteString,
+      savedConfiguration.deviceNickname == deviceNickname,
+      !savedConfiguration.deviceId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    {
+      return SettingsSnapshot(
+        relayHubBaseURL: savedConfiguration.relayHubBaseURL,
+        deviceId: savedConfiguration.deviceId,
+        deviceNickname: savedConfiguration.deviceNickname,
+        pollIntervalSeconds: String(pollIntervalSeconds)
+      )
+    }
+
+    let registration = try await URLSessionRelayAPIClient.registerDevice(
+      relayHubBaseURL: relayHubBaseURL,
+      nickname: deviceNickname
+    )
+
+    return SettingsSnapshot(
+      relayHubBaseURL: relayHubBaseURL.absoluteString,
+      deviceId: registration.deviceId,
+      deviceNickname: registration.nickname,
+      pollIntervalSeconds: String(pollIntervalSeconds)
+    )
+  }
+
   private func saveSettings(_ snapshot: SettingsSnapshot) async -> String {
     do {
-      try configurationStore.save(snapshot: snapshot)
+      let registeredSnapshot = try await ensureRegisteredSnapshot(snapshot)
+      try configurationStore.save(snapshot: registeredSnapshot)
       settingsViewModel.apply(snapshot: try configurationStore.makeSettingsSnapshot())
       updateLastError(nil)
       await startPollingIfConfigured()
-      return "Saved settings. Background fetching restarted."
+      return "Saved settings for \(registeredSnapshot.deviceNickname). Background fetching restarted."
     } catch {
       updateLastError(error.localizedDescription)
       return error.localizedDescription
@@ -374,6 +391,7 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
       let snapshot = SettingsSnapshot(
         relayHubBaseURL: importedProfile.relayHubBaseURL.absoluteString,
         deviceId: importedProfile.deviceId,
+        deviceNickname: importedProfile.nickname,
         pollIntervalSeconds: String((try? configurationStore.currentPollIntervalSeconds()) ?? 15)
       )
 
@@ -396,10 +414,13 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
   private func testSettings(_ snapshot: SettingsSnapshot) async -> String {
     do {
       _ = try parsePollInterval(snapshot.pollIntervalSeconds)
-      let client = try makeClient(from: snapshot)
+      let registeredSnapshot = try await ensureRegisteredSnapshot(snapshot)
+      try configurationStore.save(snapshot: registeredSnapshot)
+      settingsViewModel.apply(snapshot: try configurationStore.makeSettingsSnapshot())
+      let client = try makeClient()
       let deliveries = try await client.fetchPendingDeliveries()
       updateLastError(nil)
-      return "Connection succeeded. Pending deliveries: \(deliveries.count)."
+      return "Connection succeeded for \(registeredSnapshot.deviceNickname). Pending deliveries: \(deliveries.count)."
     } catch {
       updateLastError(error.localizedDescription)
       return error.localizedDescription

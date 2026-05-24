@@ -2,6 +2,23 @@ import ContentRelayMacOSCore
 import Foundation
 import Testing
 
+@Test("URLSession relay API client registers devices without device headers")
+func registersDevicesWithoutDeviceHeaders() async throws {
+  let configuration = URLSessionConfiguration.ephemeral
+  configuration.protocolClasses = [RegisterDeviceStubURLProtocol.self]
+
+  let session = URLSession(configuration: configuration)
+  let registration = try await URLSessionRelayAPIClient.registerDevice(
+    relayHubBaseURL: URL(string: "http://127.0.0.1:8787")!,
+    nickname: "My Mac",
+    session: session
+  )
+
+  #expect(registration.deviceId == "device_macos")
+  #expect(registration.nickname == "My Mac")
+  #expect(registration.platform == "macos")
+}
+
 @Test("URLSession relay API client sends device headers and decodes pending deliveries")
 func sendsDeviceHeadersAndDecodesPendingDeliveries() async throws {
   let configuration = URLSessionConfiguration.ephemeral
@@ -239,6 +256,41 @@ private class StubURLProtocol: URLProtocol, @unchecked Sendable {
   }
 }
 
+private final class RegisterDeviceStubURLProtocol: URLProtocol, @unchecked Sendable {
+  override class func canInit(with request: URLRequest) -> Bool {
+    true
+  }
+
+  override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+    request
+  }
+
+  override func startLoading() {
+    #expect(request.value(forHTTPHeaderField: "x-relay-device-id") == nil)
+    #expect(request.value(forHTTPHeaderField: "content-type") == "application/json")
+    #expect(request.httpMethod == "POST")
+    #expect(request.url?.path() == "/devices/register")
+
+    let body = requestBodyString(from: request)
+    #expect(body.contains("\"nickname\":\"My Mac\""))
+    #expect(body.contains("\"platform\":\"macos\""))
+
+    let response = HTTPURLResponse(
+      url: request.url!,
+      statusCode: 201,
+      httpVersion: nil,
+      headerFields: ["content-type": "application/json"]
+    )!
+    let data = Data(deviceRegistrationJSON.utf8)
+
+    client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+    client?.urlProtocol(self, didLoad: data)
+    client?.urlProtocolDidFinishLoading(self)
+  }
+
+  override func stopLoading() {}
+}
+
 private class InvalidDeviceStubURLProtocol: StubURLProtocol, @unchecked Sendable {
   override class func makeResponse(for request: URLRequest) -> (HTTPURLResponse, Data) {
     #expect(request.value(forHTTPHeaderField: "x-relay-device-id") == "bad_device")
@@ -285,6 +337,16 @@ private func requestBodyString(from request: URLRequest) -> String {
 
   return String(decoding: data, as: UTF8.self)
 }
+
+private let deviceRegistrationJSON = """
+{
+  "deviceId": "device_macos",
+  "nickname": "My Mac",
+  "platform": "macos",
+  "relayHubBaseUrl": "http://127.0.0.1:8787",
+  "createdAt": "2026-04-16T10:00:00Z"
+}
+"""
 
 private let pendingDeliveriesJSON = """
 {

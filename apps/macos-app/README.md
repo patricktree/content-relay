@@ -15,6 +15,7 @@
 - lists available target devices from the Relay Hub
 - remembers last-used target devices locally
 - imports an existing `macos` profile from `~/.content-relay/profiles.json`
+- registers the local sender from the Relay Hub URL and a device nickname, then stores the returned device ID locally
 - stores local app state in Application Support
 
 ## Build
@@ -37,17 +38,13 @@ open "apps/macos-app/dist/Content Relay.app"
 
 ## First-run setup
 
-1. Register a macOS device with the existing CLI:
-
-   ```sh
-   relay --relay-hub-base-url http://YOUR-PI:PORT device register --name "mac" --platform macos
-   ```
-
-2. Make that profile active in the CLI, or ensure it is the only local macOS profile.
-3. Launch the app.
-4. If the app cannot auto-import the profile, open **Settings…** from the menu bar and paste:
+1. Launch the app.
+2. Open **Settings…** from the menu bar and enter:
    - Relay Hub base URL
-   - device ID
+   - device nickname
+3. Click **Save & Register**. The app stores the returned device ID locally.
+
+You can also import an active `macos` CLI profile from the settings window.
 
 ## Manual verification checklist
 
