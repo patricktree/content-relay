@@ -6,7 +6,7 @@ import url from "node:url";
 import { expect, test } from "vitest";
 import { z } from "zod";
 
-import { createHttpClient, parseOkResponse } from "@content-relay/client";
+import { parseOkResponse, RpcClient } from "@content-relay/client";
 import {
   createInviteResponseSchema,
   createItemResponseSchema,
@@ -94,7 +94,15 @@ test("invite create returns a usable invite", async () => {
     const configDirectory = path.join(rootDirectory, "cli-config");
 
     const inviteCreateResult = await runCli(
-      ["--json", "--relay-hub-url", relayHubBaseUrl, "invite", "create", "--expires-in", "1800"],
+      [
+        "--json",
+        "--relay-hub-base-url",
+        relayHubBaseUrl,
+        "invite",
+        "create",
+        "--expires-in",
+        "1800",
+      ],
       { configDirectory },
     );
     expect(inviteCreateResult.exitCode).toBe(0);
@@ -106,7 +114,7 @@ test("invite create returns a usable invite", async () => {
     const registerResult = await runCli(
       [
         "--json",
-        "--relay-hub-url",
+        "--relay-hub-base-url",
         relayHubBaseUrl,
         "device",
         "register",
@@ -126,12 +134,12 @@ test("invite create returns a usable invite", async () => {
 test("device management commands cover list, rename, push-token, and delete", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const primaryInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 900 },
+    const primaryInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
+      expiresInSeconds: 900,
     });
     const primaryInvite = await parseOkResponse(primaryInviteResponse);
-    const secondaryInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 900 },
+    const secondaryInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
+      expiresInSeconds: 900,
     });
     const secondaryInvite = await parseOkResponse(secondaryInviteResponse);
 
@@ -219,15 +227,15 @@ test("device management commands cover list, rename, push-token, and delete", as
 test("device register persists a profile that device current can load", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const inviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 900 },
+    const inviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
+      expiresInSeconds: 900,
     });
     const invite = await parseOkResponse(inviteResponse);
 
     const registerResult = await runCli(
       [
         "--json",
-        "--relay-hub-url",
+        "--relay-hub-base-url",
         relayHubBaseUrl,
         "device",
         "register",
@@ -260,12 +268,12 @@ test("device register persists a profile that device current can load", async ()
 test("send text, receive once, and delivery open", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 900 },
+    const senderInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
+      expiresInSeconds: 900,
     });
     const senderInvite = await parseOkResponse(senderInviteResponse);
-    const receiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 900 },
+    const receiverInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
+      expiresInSeconds: 900,
     });
     const receiverInvite = await parseOkResponse(receiverInviteResponse);
 
@@ -342,12 +350,12 @@ test("send text, receive once, and delivery open", async () => {
 test("send url and item list expose sent URL items", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 900 },
+    const senderInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
+      expiresInSeconds: 900,
     });
     const senderInvite = await parseOkResponse(senderInviteResponse);
-    const receiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 900 },
+    const receiverInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
+      expiresInSeconds: 900,
     });
     const receiverInvite = await parseOkResponse(receiverInviteResponse);
 
@@ -407,12 +415,12 @@ test("send url and item list expose sent URL items", async () => {
 test("delivery list, show, ack, and viewed manage delivery state transitions", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 900 },
+    const senderInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
+      expiresInSeconds: 900,
     });
     const senderInvite = await parseOkResponse(senderInviteResponse);
-    const receiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 900 },
+    const receiverInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
+      expiresInSeconds: 900,
     });
     const receiverInvite = await parseOkResponse(receiverInviteResponse);
 
@@ -535,16 +543,16 @@ test("send file and delivery download write the files", async () => {
     const betaFilePath = path.join(rootDirectory, "beta.txt");
     await fs.promises.writeFile(alphaFilePath, "alpha\n", "utf8");
     await fs.promises.writeFile(betaFilePath, "beta\n", "utf8");
-    const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 900 },
+    const senderInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
+      expiresInSeconds: 900,
     });
     const senderInvite = await parseOkResponse(senderInviteResponse);
-    const receiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 900 },
+    const receiverInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
+      expiresInSeconds: 900,
     });
     const receiverInvite = await parseOkResponse(receiverInviteResponse);
-    const secondReceiverInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
-      json: { expiresInSeconds: 900 },
+    const secondReceiverInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
+      expiresInSeconds: 900,
     });
     const secondReceiverInvite = await parseOkResponse(secondReceiverInviteResponse);
 
@@ -645,7 +653,7 @@ async function registerCliProfile(input: {
   const registerResult = await runCli(
     [
       "--json",
-      "--relay-hub-url",
+      "--relay-hub-base-url",
       input.relayHubBaseUrl,
       "device",
       "register",

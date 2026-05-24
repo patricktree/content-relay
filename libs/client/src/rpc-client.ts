@@ -1,140 +1,170 @@
-import type { DevicePlatform, DeliveryListState, PushRegistration } from "@content-relay/contracts";
+import type {
+  AuthHeaders,
+  DevicePlatform,
+  DeliveryListState,
+  PushRegistration,
+  DeviceId,
+} from "@content-relay/contracts";
 
-import {
-  createDeviceHttpClient,
-  createHttpClient,
-  type CreateDeviceHttpClientOptions,
-} from "#pkg/http-client.ts";
+import { createHonoClient, type HonoClient } from "#pkg/hono-client.ts";
 
-export const rpcClient = {
-  async createInvite(relayHubBaseUrl: string, input: { expiresInSeconds: number }) {
-    return createHttpClient({ relayHubBaseUrl }).invites.$post({ json: input });
-  },
+export class RpcClient {
+  #honoClient: HonoClient;
 
-  async registerDevice(
-    relayHubBaseUrl: string,
-    input: {
-      nickname: string;
-      platform: DevicePlatform;
-      invite: string;
-      pushRegistration?: PushRegistration;
-    },
-  ) {
-    return createHttpClient({ relayHubBaseUrl }).devices.register.$post({ json: input });
-  },
+  constructor(relayHubBaseUrl: string) {
+    this.#honoClient = createHonoClient({ relayHubBaseUrl });
+  }
 
-  async listDevices(opts: CreateDeviceHttpClientOptions) {
-    return createDeviceHttpClient(opts).devices.$get();
-  },
+  async createInvite(params: { expiresInSeconds: number }) {
+    return this.#honoClient.invites.$post({ json: params });
+  }
 
-  async renameDevice(opts: CreateDeviceHttpClientOptions, nickname: string) {
-    return createDeviceHttpClient(opts).devices[":deviceId"].$patch({
-      param: { deviceId: opts.deviceId },
-      json: { nickname },
+  async registerDevice(params: {
+    nickname: string;
+    platform: DevicePlatform;
+    invite: string;
+    pushRegistration?: PushRegistration;
+  }) {
+    return this.#honoClient.devices.register.$post({ json: params });
+  }
+
+  createDeviceRpcClient(deviceId: DeviceId): DeviceRpcClient {
+    return new DeviceRpcClient(this.#honoClient, deviceId);
+  }
+}
+
+class DeviceRpcClient {
+  #honoClient: HonoClient;
+  #deviceId: DeviceId;
+
+  constructor(honoClient: HonoClient, deviceId: DeviceId) {
+    this.#honoClient = honoClient;
+    this.#deviceId = deviceId;
+  }
+
+  async listDevices() {
+    return this.#honoClient.devices.$get({ header: createAuthHeaders(this.#deviceId) });
+  }
+
+  async renameDevice(params: { deviceId?: string; nickname: string }) {
+    return this.#honoClient.devices[":deviceId"].$patch({
+      header: createAuthHeaders(this.#deviceId),
+      param: { deviceId: params.deviceId ?? this.#deviceId },
+      json: { nickname: params.nickname },
     });
-  },
+  }
 
-  async deleteDevice(opts: CreateDeviceHttpClientOptions) {
-    return createDeviceHttpClient(opts).devices[":deviceId"].$delete({
-      param: { deviceId: opts.deviceId },
+  async deleteDevice(params: { deviceId?: string } = {}) {
+    return this.#honoClient.devices[":deviceId"].$delete({
+      header: createAuthHeaders(this.#deviceId),
+      param: { deviceId: params.deviceId ?? this.#deviceId },
     });
-  },
+  }
 
-  async setPushToken(opts: CreateDeviceHttpClientOptions, token: string) {
-    return createDeviceHttpClient(opts).devices[":deviceId"]["push-token"].$post({
-      param: { deviceId: opts.deviceId },
-      json: { token },
+  async setPushToken(params: { deviceId?: string; token: string }) {
+    return this.#honoClient.devices[":deviceId"]["push-token"].$post({
+      header: createAuthHeaders(this.#deviceId),
+      param: { deviceId: params.deviceId ?? this.#deviceId },
+      json: { token: params.token },
     });
-  },
+  }
 
-  async sendText(
-    opts: CreateDeviceHttpClientOptions,
-    input: { text: string; targetDeviceIds: string[]; title?: string },
-  ) {
-    return createDeviceHttpClient(opts).items.text.$post({ json: input });
-  },
+  async sendText(params: { text: string; targetDeviceIds: string[]; title?: string }) {
+    return this.#honoClient.items.text.$post({
+      header: createAuthHeaders(this.#deviceId),
+      json: params,
+    });
+  }
 
-  async sendUrl(
-    opts: CreateDeviceHttpClientOptions,
-    input: { url: string; targetDeviceIds: string[]; title?: string },
-  ) {
-    return createDeviceHttpClient(opts).items.url.$post({ json: input });
-  },
+  async sendUrl(params: { url: string; targetDeviceIds: string[]; title?: string }) {
+    return this.#honoClient.items.url.$post({
+      header: createAuthHeaders(this.#deviceId),
+      json: params,
+    });
+  }
 
-  async sendFiles(
-    opts: CreateDeviceHttpClientOptions,
-    request: {
-      targetDeviceIds: string[];
-      title?: string;
-      files: { content: Uint8Array<ArrayBuffer>; basename: string }[];
-    },
-  ) {
+  async sendFiles(params: {
+    targetDeviceIds: string[];
+    title?: string;
+    files: { content: Uint8Array<ArrayBuffer>; basename: string }[];
+  }) {
     const files = await Promise.all(
-      request.files.map(async (file) => {
+      params.files.map(async (file) => {
         return new File([file.content], file.basename);
       }),
     );
 
-    return createDeviceHttpClient(opts).items.file.$post({
+    return this.#honoClient.items.file.$post({
+      header: createAuthHeaders(this.#deviceId),
       form: {
-        targetDeviceIds: JSON.stringify(request.targetDeviceIds),
-        ...(request.title !== undefined ? { title: request.title } : {}),
+        targetDeviceIds: JSON.stringify(params.targetDeviceIds),
+        ...(params.title !== undefined ? { title: params.title } : {}),
         files,
       },
     });
-  },
+  }
 
-  async fetchPendingDeliveries(opts: CreateDeviceHttpClientOptions) {
-    return createDeviceHttpClient(opts).deliveries.pending.$get();
-  },
+  async fetchPendingDeliveries() {
+    return this.#honoClient.deliveries.pending.$get({ header: createAuthHeaders(this.#deviceId) });
+  }
 
-  async acknowledgeDelivery(opts: CreateDeviceHttpClientOptions, deliveryId: string) {
-    return createDeviceHttpClient(opts).deliveries[":deliveryId"].ack.$post({
-      param: { deliveryId },
+  async acknowledgeDelivery(params: { deliveryId: string }) {
+    return this.#honoClient.deliveries[":deliveryId"].ack.$post({
+      header: createAuthHeaders(this.#deviceId),
+      param: { deliveryId: params.deliveryId },
     });
-  },
+  }
 
-  async markDeliveryViewed(opts: CreateDeviceHttpClientOptions, deliveryId: string) {
-    return createDeviceHttpClient(opts).deliveries[":deliveryId"].viewed.$post({
-      param: { deliveryId },
+  async markDeliveryViewed(params: { deliveryId: string }) {
+    return this.#honoClient.deliveries[":deliveryId"].viewed.$post({
+      header: createAuthHeaders(this.#deviceId),
+      param: { deliveryId: params.deliveryId },
     });
-  },
+  }
 
-  async listDeliveries(
-    opts: CreateDeviceHttpClientOptions,
-    input: { state?: DeliveryListState; limit?: number | string } = {},
-  ) {
-    return createDeviceHttpClient(opts).deliveries.$get({
+  async listDeliveries(params: { state?: DeliveryListState; limit?: number | string } = {}) {
+    return this.#honoClient.deliveries.$get({
+      header: createAuthHeaders(this.#deviceId),
       query: {
-        ...(input.state !== undefined ? { state: input.state } : {}),
-        ...(input.limit !== undefined ? { limit: String(input.limit) } : {}),
+        ...(params.state !== undefined ? { state: params.state } : {}),
+        ...(params.limit !== undefined ? { limit: String(params.limit) } : {}),
       },
     });
-  },
+  }
 
-  async getDelivery(opts: CreateDeviceHttpClientOptions, deliveryId: string) {
-    return createDeviceHttpClient(opts).deliveries[":deliveryId"].$get({
-      param: { deliveryId },
+  async getDelivery(params: { deliveryId: string }) {
+    return this.#honoClient.deliveries[":deliveryId"].$get({
+      header: createAuthHeaders(this.#deviceId),
+      param: { deliveryId: params.deliveryId },
     });
-  },
+  }
 
-  async listItems(opts: CreateDeviceHttpClientOptions, input: { limit?: number | string } = {}) {
-    return createDeviceHttpClient(opts).items.$get({
+  async listItems(params: { limit?: number | string } = {}) {
+    return this.#honoClient.items.$get({
+      header: createAuthHeaders(this.#deviceId),
       query: {
-        ...(input.limit !== undefined ? { limit: String(input.limit) } : {}),
+        ...(params.limit !== undefined ? { limit: String(params.limit) } : {}),
       },
     });
-  },
+  }
 
-  async getItem(opts: CreateDeviceHttpClientOptions, itemId: string) {
-    return createDeviceHttpClient(opts).items[":itemId"].$get({
-      param: { itemId },
+  async getItem(params: { itemId: string }) {
+    return this.#honoClient.items[":itemId"].$get({
+      header: createAuthHeaders(this.#deviceId),
+      param: { itemId: params.itemId },
     });
-  },
+  }
 
-  async downloadDelivery(opts: CreateDeviceHttpClientOptions, deliveryId: string) {
-    return createDeviceHttpClient(opts).deliveries[":deliveryId"].download.$get({
-      param: { deliveryId },
+  async downloadDelivery(params: { deliveryId: string }) {
+    return this.#honoClient.deliveries[":deliveryId"].download.$get({
+      header: createAuthHeaders(this.#deviceId),
+      param: { deliveryId: params.deliveryId },
     });
-  },
-};
+  }
+}
+
+function createAuthHeaders(deviceId: DeviceId): AuthHeaders {
+  return {
+    "x-relay-device-id": deviceId,
+  } as const satisfies AuthHeaders;
+}

@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 
 import {
+  authHeadersSchema,
   createInviteRequestSchema,
   createInviteResponseSchema,
   createItemResponseSchema,
@@ -350,7 +351,9 @@ export async function createHonoApp() {
         path: "/devices",
         tags: [API_TAGS.devices],
         security: AUTH_SECURITY,
-        request: {},
+        request: {
+          headers: authHeadersSchema,
+        },
         responses: {
           200: {
             content: {
@@ -391,6 +394,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.devices],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deviceIdParamsSchema,
           body: {
             content: {
@@ -474,6 +478,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.devices],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deviceIdParamsSchema,
         },
         responses: {
@@ -536,6 +541,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.devices],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deviceIdParamsSchema,
           body: {
             content: {
@@ -614,6 +620,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.items],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           body: {
             content: {
               "application/json": {
@@ -677,6 +684,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.items],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           body: {
             content: {
               "application/json": {
@@ -740,6 +748,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.items],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           body: {
             content: {
               "multipart/form-data": {
@@ -799,7 +808,9 @@ export async function createHonoApp() {
         path: "/deliveries/pending",
         tags: [API_TAGS.deliveries],
         security: AUTH_SECURITY,
-        request: {},
+        request: {
+          headers: authHeadersSchema,
+        },
         responses: {
           200: {
             content: {
@@ -841,6 +852,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.deliveries],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           query: deliveryListQuerySchema,
         },
         responses: {
@@ -897,6 +909,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.deliveries],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deliveryIdParamsSchema,
         },
         responses: {
@@ -949,6 +962,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.deliveries],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deliveryIdParamsSchema,
         },
         responses: {
@@ -1001,6 +1015,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.deliveries],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deliveryIdParamsSchema,
         },
         responses: {
@@ -1053,6 +1068,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.deliveries],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: deliveryIdParamsSchema,
         },
         responses: {
@@ -1105,6 +1121,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.items],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           query: itemListQuerySchema,
         },
         responses: {
@@ -1157,6 +1174,7 @@ export async function createHonoApp() {
         tags: [API_TAGS.items],
         security: AUTH_SECURITY,
         request: {
+          headers: authHeadersSchema,
           params: itemIdParamsSchema,
         },
         responses: {

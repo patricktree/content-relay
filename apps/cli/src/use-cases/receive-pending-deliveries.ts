@@ -1,6 +1,6 @@
 import {
   parseOkResponse,
-  rpcClient,
+  RpcClient,
   simulatePlatformDelivery,
   type SimulatedDeliveryResult,
 } from "@content-relay/client";
@@ -27,7 +27,11 @@ export async function receivePendingDeliveries(
   profile: LocalDeviceProfile,
   profileStore: ReceivePendingDeliveriesProfileStore,
 ): Promise<ReceivedDeliveryResult[]> {
-  const pending = await parseOkResponse(rpcClient.fetchPendingDeliveries(profile));
+  const pending = await parseOkResponse(
+    new RpcClient(profile.relayHubBaseUrl)
+      .createDeviceRpcClient(profile.deviceId)
+      .fetchPendingDeliveries(),
+  );
   const results: ReceivedDeliveryResult[] = [];
 
   for (const delivery of pending.deliveries) {
@@ -45,7 +49,9 @@ export async function receivePendingDeliveries(
 
     if (simulation.shouldMarkViewed && !wasDuplicate) {
       const viewed = await parseOkResponse(
-        rpcClient.markDeliveryViewed(profile, delivery.deliveryId),
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .markDeliveryViewed({ deliveryId: delivery.deliveryId }),
       );
       currentDelivery = viewed.delivery;
     }

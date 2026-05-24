@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import { z } from "zod";
 
-import { isParseResponseError, parseOkResponse, rpcClient } from "@content-relay/client";
+import { isParseResponseError, parseOkResponse, RpcClient } from "@content-relay/client";
 import type { DeviceSummary } from "@content-relay/contracts";
 
 import {
@@ -582,7 +582,9 @@ function ShareOverlay(props: {
 }
 
 async function fetchAvailableDevices(profile: RegisteredDeviceProfile): Promise<DeviceSummary[]> {
-  const devices = await parseOkResponse(rpcClient.listDevices(profile));
+  const devices = await parseOkResponse(
+    new RpcClient(profile.relayHubBaseUrl).createDeviceRpcClient(profile.deviceId).listDevices(),
+  );
 
   return devices.filter((device) => device.deviceId !== profile.deviceId);
 }

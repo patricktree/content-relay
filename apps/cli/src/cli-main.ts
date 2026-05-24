@@ -8,7 +8,7 @@ import {
   extractErrorMessageFromParseResponseError,
   isParseResponseError,
   parseOkResponse,
-  rpcClient,
+  RpcClient,
 } from "@content-relay/client";
 import {
   assertValidAbsoluteUrl,
@@ -37,7 +37,7 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .showHelpAfterError()
     .addOption(new Option("--json", "emit JSON responses"))
     .addOption(
-      new Option("--relay-hub-url <url>", "Relay Hub base URL for registration").argParser(
+      new Option("--relay-hub-base-url <url>", "Relay Hub base URL for registration").argParser(
         (value) => assertValidAbsoluteUrl(value),
       ),
     )
@@ -62,14 +62,14 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
       numberUtils.parsePositiveInteger,
     )
     .action(async (options) => {
-      const relayHubBaseUrl = program.opts().relayHubUrl;
+      const relayHubBaseUrl = program.opts().relayHubBaseUrl;
 
       if (relayHubBaseUrl === undefined) {
-        throw new Error("Missing required --relay-hub-url <url> option.");
+        throw new Error("Missing required --relay-hub-base-url <url> option.");
       }
 
       const invite = await parseOkResponse(
-        rpcClient.createInvite(relayHubBaseUrl, { expiresInSeconds: options.expiresIn ?? 900 }),
+        new RpcClient(relayHubBaseUrl).createInvite({ expiresInSeconds: options.expiresIn ?? 900 }),
       );
 
       await writeSuccess(invite, Boolean(program.opts().json));
@@ -87,10 +87,10 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .option("--push-token <token>", "push token override for simulated mobile registration")
     .requiredOption("--invite <inviteCode>", "invite code")
     .action(async (options) => {
-      const relayHubBaseUrl = program.opts().relayHubUrl;
+      const relayHubBaseUrl = program.opts().relayHubBaseUrl;
 
       if (relayHubBaseUrl === undefined) {
-        throw new Error("Missing required --relay-hub-url <url> option.");
+        throw new Error("Missing required --relay-hub-base-url <url> option.");
       }
 
       const pushRegistration = buildCliPushRegistration({
@@ -99,7 +99,7 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
         pushTokenOverride: options.pushToken,
       });
       const registration = await parseOkResponse(
-        rpcClient.registerDevice(relayHubBaseUrl, {
+        new RpcClient(relayHubBaseUrl).registerDevice({
           nickname: options.name,
           platform: options.platform,
           invite: options.invite,
@@ -146,7 +146,11 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .description("List registered devices from the Relay Hub")
     .action(async () => {
       const profile = await resolveSelectedProfile(program.opts().device);
-      const devices = await parseOkResponse(rpcClient.listDevices(profile));
+      const devices = await parseOkResponse(
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .listDevices(),
+      );
 
       await writeSuccess(devices, Boolean(program.opts().json));
     });
@@ -157,7 +161,11 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .argument("<nickname>", "new device nickname")
     .action(async (nickname: string) => {
       const profile = await resolveSelectedProfile(program.opts().device);
-      await parseOkResponse(rpcClient.renameDevice(profile, nickname));
+      await parseOkResponse(
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .renameDevice({ nickname }),
+      );
       const renamedProfile = await profileStore.renameProfile(profile.profileId, nickname);
       const activeProfileId = await loadActiveProfileId();
 
@@ -173,7 +181,11 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .requiredOption("--yes", "confirm device deletion")
     .action(async () => {
       const profile = await resolveSelectedProfile(program.opts().device);
-      await parseOkResponse(rpcClient.deleteDevice(profile));
+      await parseOkResponse(
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .deleteDevice(),
+      );
       await profileStore.removeProfile(profile.profileId);
 
       await writeSuccess(
@@ -192,7 +204,11 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .argument("<token>", "push token")
     .action(async (token: string) => {
       const profile = await resolveSelectedProfile(program.opts().device);
-      await parseOkResponse(rpcClient.setPushToken(profile, token));
+      await parseOkResponse(
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .setPushToken({ token }),
+      );
 
       await writeSuccess(
         {
@@ -213,7 +229,7 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
       const profile = await resolveSelectedProfile(program.opts().device);
       const targetDeviceIds = await resolveTargetDeviceIds(options.to);
       const response = await parseOkResponse(
-        rpcClient.sendText(profile, {
+        new RpcClient(profile.relayHubBaseUrl).createDeviceRpcClient(profile.deviceId).sendText({
           text,
           targetDeviceIds,
           ...(options.title !== undefined ? { title: options.title } : {}),
@@ -234,7 +250,7 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
       const profile = await resolveSelectedProfile(program.opts().device);
       const targetDeviceIds = await resolveTargetDeviceIds(options.to);
       const response = await parseOkResponse(
-        rpcClient.sendUrl(profile, {
+        new RpcClient(profile.relayHubBaseUrl).createDeviceRpcClient(profile.deviceId).sendUrl({
           url,
           targetDeviceIds,
           ...(options.title !== undefined ? { title: options.title } : {}),
@@ -265,7 +281,7 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
         }),
       );
       const response = await parseOkResponse(
-        rpcClient.sendFiles(profile, {
+        new RpcClient(profile.relayHubBaseUrl).createDeviceRpcClient(profile.deviceId).sendFiles({
           files,
           targetDeviceIds,
           ...(options.title !== undefined ? { title: options.title } : {}),
@@ -302,7 +318,12 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .action(async (options) => {
       const profile = await resolveSelectedProfile(program.opts().device);
       const deliveries = await parseOkResponse(
-        rpcClient.listDeliveries(profile, { state: options.state, limit: options.limit ?? 50 }),
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .listDeliveries({
+            state: options.state,
+            limit: options.limit ?? 50,
+          }),
       );
 
       await writeSuccess(deliveries, Boolean(program.opts().json));
@@ -314,7 +335,11 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .argument("<deliveryId>", "delivery id")
     .action(async (deliveryId: string) => {
       const profile = await resolveSelectedProfile(program.opts().device);
-      const delivery = await parseOkResponse(rpcClient.getDelivery(profile, deliveryId));
+      const delivery = await parseOkResponse(
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .getDelivery({ deliveryId: deliveryId }),
+      );
 
       await writeSuccess(delivery.delivery, Boolean(program.opts().json));
     });
@@ -325,7 +350,11 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .argument("<deliveryId>", "delivery id")
     .action(async (deliveryId: string) => {
       const profile = await resolveSelectedProfile(program.opts().device);
-      const response = await parseOkResponse(rpcClient.acknowledgeDelivery(profile, deliveryId));
+      const response = await parseOkResponse(
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .acknowledgeDelivery({ deliveryId: deliveryId }),
+      );
 
       await writeSuccess(response, Boolean(program.opts().json));
     });
@@ -336,7 +365,11 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .argument("<deliveryId>", "delivery id")
     .action(async (deliveryId: string) => {
       const profile = await resolveSelectedProfile(program.opts().device);
-      const response = await parseOkResponse(rpcClient.markDeliveryViewed(profile, deliveryId));
+      const response = await parseOkResponse(
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .markDeliveryViewed({ deliveryId: deliveryId }),
+      );
 
       await writeSuccess(response, Boolean(program.opts().json));
     });
@@ -359,7 +392,11 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .option("--out <path>", "output file or directory")
     .action(async (deliveryId: string, options) => {
       const profile = await resolveSelectedProfile(program.opts().device);
-      const download = await parseOkResponse(rpcClient.downloadDelivery(profile, deliveryId));
+      const download = await parseOkResponse(
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .downloadDelivery({ deliveryId: deliveryId }),
+      );
       const outputPaths = await writeDownloadedDelivery(download, options.out);
 
       await writeSuccess(
@@ -382,7 +419,9 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .action(async (options) => {
       const profile = await resolveSelectedProfile(program.opts().device);
       const items = await parseOkResponse(
-        rpcClient.listItems(profile, { limit: options.limit ?? 50 }),
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .listItems({ limit: options.limit ?? 50 }),
       );
 
       await writeSuccess(items, Boolean(program.opts().json));
@@ -394,7 +433,11 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     .argument("<itemId>", "item id")
     .action(async (itemId: string) => {
       const profile = await resolveSelectedProfile(program.opts().device);
-      const item = await parseOkResponse(rpcClient.getItem(profile, itemId));
+      const item = await parseOkResponse(
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .getItem({ itemId: itemId }),
+      );
 
       await writeSuccess(item, Boolean(program.opts().json));
     });

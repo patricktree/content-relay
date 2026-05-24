@@ -70,7 +70,7 @@ Use a Relay Hub URL that every participating device can reach. On a Tailnet, tha
 
    ```bash
    pnpm --filter '@content-relay/cli' exec node ./src/cli.ts \
-     --relay-hub-url http://YOUR-PI:4000 \
+     --relay-hub-base-url http://YOUR-PI:4000 \
      invite create
    ```
 
@@ -80,7 +80,7 @@ Use a Relay Hub URL that every participating device can reach. On a Tailnet, tha
 
    ```bash
    pnpm --filter '@content-relay/cli' exec node ./src/cli.ts \
-     --relay-hub-url http://YOUR-PI:4000 \
+     --relay-hub-base-url http://YOUR-PI:4000 \
      device register \
      --name "mac" \
      --platform macos \

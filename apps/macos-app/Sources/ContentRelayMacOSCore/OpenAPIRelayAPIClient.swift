@@ -27,10 +27,12 @@ private struct RelayDeviceIdMiddleware: ClientMiddleware {
 
 public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   private let underlyingClient: any APIProtocol
+  private let deviceId: String
   private let jsonDecoder: JSONDecoder
   private let jsonEncoder: JSONEncoder
 
   public init(credentials: RelayDeviceCredentials, session: URLSession = .shared) {
+    self.deviceId = credentials.deviceId
     self.underlyingClient = Client(
       serverURL: credentials.relayHubBaseURL,
       transport: URLSessionTransport(configuration: .init(
@@ -44,7 +46,9 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   }
 
   public func fetchPendingDeliveries() async throws -> [RelayDelivery] {
-    let response = try await underlyingClient.getDeliveriesPending()
+    let response = try await underlyingClient.getDeliveriesPending(
+      .init(headers: .init(xRelayDeviceId: deviceId))
+    )
 
     switch response {
     case let .ok(ok):
@@ -60,7 +64,10 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   }
 
   public func acknowledgeDelivery(deliveryId: String) async throws -> RelayDelivery {
-    let response = try await underlyingClient.postDeliveriesDeliveryIdAck(path: .init(deliveryId: deliveryId))
+    let response = try await underlyingClient.postDeliveriesDeliveryIdAck(
+      path: .init(deliveryId: deliveryId),
+      headers: .init(xRelayDeviceId: deviceId)
+    )
 
     switch response {
     case let .ok(ok):
@@ -78,7 +85,10 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   }
 
   public func markDeliveryViewed(deliveryId: String) async throws -> RelayDelivery {
-    let response = try await underlyingClient.postDeliveriesDeliveryIdViewed(path: .init(deliveryId: deliveryId))
+    let response = try await underlyingClient.postDeliveriesDeliveryIdViewed(
+      path: .init(deliveryId: deliveryId),
+      headers: .init(xRelayDeviceId: deviceId)
+    )
 
     switch response {
     case let .ok(ok):
@@ -96,7 +106,10 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   }
 
   public func getDelivery(deliveryId: String) async throws -> RelayDelivery {
-    let response = try await underlyingClient.getDeliveriesDeliveryId(path: .init(deliveryId: deliveryId))
+    let response = try await underlyingClient.getDeliveriesDeliveryId(
+      path: .init(deliveryId: deliveryId),
+      headers: .init(xRelayDeviceId: deviceId)
+    )
 
     switch response {
     case let .ok(ok):
@@ -114,7 +127,9 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   }
 
   public func listDevices() async throws -> [RelayDeviceSummary] {
-    let response = try await underlyingClient.getDevices()
+    let response = try await underlyingClient.getDevices(
+      .init(headers: .init(xRelayDeviceId: deviceId))
+    )
 
     switch response {
     case let .ok(ok):
@@ -130,6 +145,7 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
 
   public func sendText(_ request: RelaySendTextRequest) async throws -> RelayCreateItemResponse {
     let response = try await underlyingClient.postItemsText(
+      headers: .init(xRelayDeviceId: deviceId),
       body: .json(
         .init(
           text: request.text,
@@ -155,6 +171,7 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
 
   public func sendURL(_ request: RelaySendURLRequest) async throws -> RelayCreateItemResponse {
     let response = try await underlyingClient.postItemsUrl(
+      headers: .init(xRelayDeviceId: deviceId),
       body: .json(
         .init(
           url: request.url,
@@ -192,7 +209,10 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
       title: title,
       targetDeviceIds: targetDeviceIds
     )
-    let response = try await underlyingClient.postItemsFile(body: .multipartForm(multipartBody))
+    let response = try await underlyingClient.postItemsFile(
+      headers: .init(xRelayDeviceId: deviceId),
+      body: .multipartForm(multipartBody)
+    )
 
     switch response {
     case let .created(created):
@@ -209,7 +229,10 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   }
 
   public func downloadDelivery(deliveryId: String) async throws -> RelayDownloadDeliveryResponse {
-    let response = try await underlyingClient.getDeliveriesDeliveryIdDownload(path: .init(deliveryId: deliveryId))
+    let response = try await underlyingClient.getDeliveriesDeliveryIdDownload(
+      path: .init(deliveryId: deliveryId),
+      headers: .init(xRelayDeviceId: deviceId)
+    )
 
     switch response {
     case let .ok(ok):

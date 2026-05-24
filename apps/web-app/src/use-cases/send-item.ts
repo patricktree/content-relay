@@ -1,4 +1,4 @@
-import { parseOkResponse, rpcClient } from "@content-relay/client";
+import { parseOkResponse, RpcClient } from "@content-relay/client";
 import type { CreateItemResponse } from "@content-relay/contracts";
 import { isValidAbsoluteUrl } from "@content-relay/contracts";
 
@@ -78,20 +78,24 @@ export async function sendItem(input: SendItemInput): Promise<CreateItemResponse
 
   if (validatedInput.itemType === "text") {
     return parseOkResponse(
-      rpcClient.sendText(validatedInput.profile, {
-        text: validatedInput.value,
-        targetDeviceIds: validatedInput.targetDeviceIds,
-        ...(validatedInput.title !== undefined ? { title: validatedInput.title } : {}),
-      }),
+      new RpcClient(validatedInput.profile.relayHubBaseUrl)
+        .createDeviceRpcClient(validatedInput.profile.deviceId)
+        .sendText({
+          text: validatedInput.value,
+          targetDeviceIds: validatedInput.targetDeviceIds,
+          ...(validatedInput.title !== undefined ? { title: validatedInput.title } : {}),
+        }),
     );
   }
 
   return parseOkResponse(
-    rpcClient.sendUrl(validatedInput.profile, {
-      url: validatedInput.value,
-      targetDeviceIds: validatedInput.targetDeviceIds,
-      ...(validatedInput.title !== undefined ? { title: validatedInput.title } : {}),
-    }),
+    new RpcClient(validatedInput.profile.relayHubBaseUrl)
+      .createDeviceRpcClient(validatedInput.profile.deviceId)
+      .sendUrl({
+        url: validatedInput.value,
+        targetDeviceIds: validatedInput.targetDeviceIds,
+        ...(validatedInput.title !== undefined ? { title: validatedInput.title } : {}),
+      }),
   );
 }
 

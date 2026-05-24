@@ -1,4 +1,4 @@
-import { parseOkResponse, rpcClient } from "@content-relay/client";
+import { parseOkResponse, RpcClient } from "@content-relay/client";
 import type { DevicePlatform } from "@content-relay/contracts";
 
 export async function registerDevices(
@@ -16,10 +16,10 @@ async function registerDevice(
   input: { nickname: string; platform: DevicePlatform },
 ) {
   const inviteDevice = await parseOkResponse(
-    rpcClient.createInvite(relayHubBaseUrl, { expiresInSeconds: 60 }),
+    new RpcClient(relayHubBaseUrl).createInvite({ expiresInSeconds: 60 }),
   );
   const registerResult = await parseOkResponse(
-    rpcClient.registerDevice(relayHubBaseUrl, {
+    new RpcClient(relayHubBaseUrl).registerDevice({
       nickname: input.nickname,
       platform: input.platform,
       invite: inviteDevice.inviteCode,

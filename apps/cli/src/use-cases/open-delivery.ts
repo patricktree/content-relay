@@ -1,6 +1,6 @@
 import { assertIsUnreachable } from "@patricktree/commons-ecma/util/assert";
 
-import { parseOkResponse, rpcClient } from "@content-relay/client";
+import { parseOkResponse, RpcClient } from "@content-relay/client";
 import type { DeliveryResource } from "@content-relay/contracts";
 import type {
   LocalDeviceProfile,
@@ -21,14 +21,26 @@ export async function openDelivery(
   deliveryId: string,
   profileStore: OpenDeliveryProfileStore,
 ): Promise<OpenDeliveryResponse> {
-  let delivery = (await parseOkResponse(rpcClient.getDelivery(profile, deliveryId))).delivery;
+  let delivery = (
+    await parseOkResponse(
+      new RpcClient(profile.relayHubBaseUrl)
+        .createDeviceRpcClient(profile.deviceId)
+        .getDelivery({ deliveryId: deliveryId }),
+    )
+  ).delivery;
 
   if (delivery.state === "pending") {
     delivery = await transitionDeliveryToDelivered(profile, deliveryId);
   }
 
   if (delivery.state !== "viewed") {
-    delivery = (await parseOkResponse(rpcClient.markDeliveryViewed(profile, deliveryId))).delivery;
+    delivery = (
+      await parseOkResponse(
+        new RpcClient(profile.relayHubBaseUrl)
+          .createDeviceRpcClient(profile.deviceId)
+          .markDeliveryViewed({ deliveryId: deliveryId }),
+      )
+    ).delivery;
   }
 
   await profileStore.recordHandledDelivery(profile.profileId, deliveryId);

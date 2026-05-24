@@ -2,11 +2,7 @@ import { parseResponse } from "hono/client";
 import fs from "node:fs";
 import path from "node:path";
 
-import {
-  createDeviceHttpClient,
-  simulatePlatformDelivery,
-  type SimulatedDeliveryResult,
-} from "@content-relay/client";
+import { simulatePlatformDelivery, type SimulatedDeliveryResult } from "@content-relay/client";
 import type {
   DeliveryResource,
   DevicePlatform,
@@ -24,10 +20,9 @@ import {
   withRelayHubTestEnvironment as withBaseRelayHubTestEnvironment,
 } from "@content-relay/relay-hub-test-utils";
 
-import { rpcClient } from "#pkg/rpc-client.ts";
+import { RpcClient } from "#pkg/rpc-client.ts";
 
 export { allocatePort, listenOnPort };
-export { createDeviceHttpClient };
 
 export type ReceivedDeliveryResult = {
   delivery: DeliveryResource;
@@ -67,12 +62,11 @@ export async function registerProfile(input: {
   makeActive?: boolean;
   profileId?: string;
 }): Promise<LocalDeviceProfile> {
-  const invite = await parseResponse(
-    rpcClient.createInvite(input.relayHubBaseUrl, { expiresInSeconds: 900 }),
-  );
+  const rpcClient = new RpcClient(input.relayHubBaseUrl);
+  const invite = await parseResponse(rpcClient.createInvite({ expiresInSeconds: 900 }));
   const pushRegistration = buildPushRegistration(input.platform, input.nickname);
   const registration = await parseResponse(
-    rpcClient.registerDevice(input.relayHubBaseUrl, {
+    rpcClient.registerDevice({
       nickname: input.nickname,
       platform: input.platform,
       invite: invite.inviteCode,
@@ -100,7 +94,8 @@ export async function receivePendingDeliveries(
   profileStore: LocalDeviceProfileStore,
   options: ReceivePendingOptions,
 ): Promise<ReceivedDeliveryResult[]> {
-  const pending = await parseResponse(rpcClient.fetchPendingDeliveries(profile));
+  const rpcClient = new RpcClient(profile.relayHubBaseUrl).createDeviceRpcClient(profile.deviceId);
+  const pending = await parseResponse(rpcClient.fetchPendingDeliveries());
   const results: ReceivedDeliveryResult[] = [];
 
   for (const delivery of pending.deliveries) {
@@ -118,7 +113,7 @@ export async function receivePendingDeliveries(
     let currentDelivery = delivery;
     if (options.acknowledge) {
       const acknowledged = await parseResponse(
-        rpcClient.acknowledgeDelivery(profile, delivery.deliveryId),
+        rpcClient.acknowledgeDelivery({ deliveryId: delivery.deliveryId }),
       );
       currentDelivery = acknowledged.delivery;
     }
@@ -130,7 +125,7 @@ export async function receivePendingDeliveries(
       !wasDuplicate
     ) {
       const viewed = await parseResponse(
-        rpcClient.markDeliveryViewed(profile, delivery.deliveryId),
+        rpcClient.markDeliveryViewed({ deliveryId: delivery.deliveryId }),
       );
       currentDelivery = viewed.delivery;
     }
