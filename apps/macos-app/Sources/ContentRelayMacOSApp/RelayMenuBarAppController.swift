@@ -5,7 +5,7 @@ import UserNotifications
 
 @MainActor
 final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotificationCenterDelegate {
-  private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+  private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
   private let configurationStore = RelayAppConfigurationStore()
   private let handledDeliveryStore: PersistentHandledDeliveryStore
   private let textWindowController = TextDeliveryWindowController()
@@ -145,7 +145,11 @@ final class RelayMenuBarAppController: NSObject, NSApplicationDelegate, @preconc
   }
 
   private func configureMenuBar() {
-    statusItem.button?.title = "Relay"
+    if let button = statusItem.button {
+      button.image = NSImage(systemSymbolName: "paperplane", accessibilityDescription: "Content Relay")
+      button.image?.isTemplate = true
+      button.toolTip = "Content Relay"
+    }
 
     statusLineMenuItem.isEnabled = false
     lastErrorMenuItem.isEnabled = false
