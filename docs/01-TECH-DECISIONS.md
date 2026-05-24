@@ -17,7 +17,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 ### Intended layers
 
 - `domain`
-  - entities and value objects such as devices, invites, items, and deliveries
+  - entities and value objects such as devices, items, and deliveries
 - `application`
   - use cases such as send item, fetch pending deliveries, acknowledge delivery, mark viewed, register device, and refresh push token
 - `ports`
@@ -143,7 +143,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
   - notification permission is granted
   - native push registration succeeds
   - the push token is uploaded during registration
-- If mobile setup fails before the final registration request, the invite remains unused.
+- If mobile setup fails before the final registration request, no mobile Device row is created.
 - Mobile registration uses the same `POST /devices/register` endpoint as other device types.
 
 ### Mobile push notifications
@@ -254,7 +254,6 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 ## Open items not resolved here
 
 - Exact package/workspace layout details beyond the major package boundaries
-- Invite-link implementation details
 - Exact OpenTelemetry exporter and telemetry backend choice
 - Exact iOS share-extension implementation details and limits
 - Exact Android share-intent implementation details and limits

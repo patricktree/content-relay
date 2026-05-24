@@ -6,9 +6,7 @@ import url from "node:url";
 import { expect, test } from "vitest";
 import { z } from "zod";
 
-import { parseOkResponse, RpcClient } from "@content-relay/client";
 import {
-  createInviteResponseSchema,
   createItemResponseSchema,
   deliveryActionResponseSchema,
   deliveryListResponseSchema,
@@ -89,27 +87,9 @@ const cliDownloadDeliveryResponseSchema = z.object({
   outputPaths: z.array(z.string()),
 });
 
-test("invite create returns a usable invite", async () => {
+test("device register creates a local profile", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-
-    const inviteCreateResult = await runCli(
-      [
-        "--json",
-        "--relay-hub-base-url",
-        relayHubBaseUrl,
-        "invite",
-        "create",
-        "--expires-in",
-        "1800",
-      ],
-      { configDirectory },
-    );
-    expect(inviteCreateResult.exitCode).toBe(0);
-    const invite = parseJsonStdout(inviteCreateResult, createInviteResponseSchema);
-    expect(invite.inviteCode).toMatch(/\S+/);
-    expect(invite.inviteUrl).toContain(invite.inviteCode);
-    expect(invite.expiresAt).toMatch(/\d{4}-\d{2}-\d{2}T/);
 
     const registerResult = await runCli(
       [
@@ -122,37 +102,28 @@ test("invite create returns a usable invite", async () => {
         "Developer CLI",
         "--platform",
         "cli",
-        "--invite",
-        invite.inviteCode,
       ],
       { configDirectory },
     );
     expect(registerResult.exitCode).toBe(0);
+    const profile = parseJsonStdout(registerResult, cliSerializedProfileSchema);
+    expect(profile.nickname).toBe("Developer CLI");
+    expect(profile.deviceId).toMatch(/^dev_/);
   });
 });
 
 test("device management commands cover list, rename, push-token, and delete", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const primaryInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 900,
-    });
-    const primaryInvite = await parseOkResponse(primaryInviteResponse);
-    const secondaryInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 900,
-    });
-    const secondaryInvite = await parseOkResponse(secondaryInviteResponse);
 
     await registerCliProfile({
       configDirectory,
-      inviteCode: primaryInvite.inviteCode,
       nickname: "Developer CLI",
       platform: "cli",
       relayHubBaseUrl,
     });
     await registerCliProfile({
       configDirectory,
-      inviteCode: secondaryInvite.inviteCode,
       nickname: "Developer iPhone Sim",
       platform: "ios",
       relayHubBaseUrl,
@@ -227,10 +198,6 @@ test("device management commands cover list, rename, push-token, and delete", as
 test("device register persists a profile that device current can load", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const inviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 900,
-    });
-    const invite = await parseOkResponse(inviteResponse);
 
     const registerResult = await runCli(
       [
@@ -243,8 +210,6 @@ test("device register persists a profile that device current can load", async ()
         "Developer CLI",
         "--platform",
         "cli",
-        "--invite",
-        invite.inviteCode,
       ],
       { configDirectory },
     );
@@ -268,25 +233,15 @@ test("device register persists a profile that device current can load", async ()
 test("send text, receive once, and delivery open", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const senderInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 900,
-    });
-    const senderInvite = await parseOkResponse(senderInviteResponse);
-    const receiverInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 900,
-    });
-    const receiverInvite = await parseOkResponse(receiverInviteResponse);
 
     await registerCliProfile({
       configDirectory,
-      inviteCode: senderInvite.inviteCode,
       nickname: "Developer CLI",
       platform: "cli",
       relayHubBaseUrl,
     });
     await registerCliProfile({
       configDirectory,
-      inviteCode: receiverInvite.inviteCode,
       nickname: "Developer iPhone Sim",
       platform: "ios",
       relayHubBaseUrl,
@@ -350,25 +305,15 @@ test("send text, receive once, and delivery open", async () => {
 test("send url and item list expose sent URL items", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const senderInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 900,
-    });
-    const senderInvite = await parseOkResponse(senderInviteResponse);
-    const receiverInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 900,
-    });
-    const receiverInvite = await parseOkResponse(receiverInviteResponse);
 
     await registerCliProfile({
       configDirectory,
-      inviteCode: senderInvite.inviteCode,
       nickname: "Developer CLI",
       platform: "cli",
       relayHubBaseUrl,
     });
     await registerCliProfile({
       configDirectory,
-      inviteCode: receiverInvite.inviteCode,
       nickname: "Developer iPad Sim",
       platform: "ios",
       relayHubBaseUrl,
@@ -415,25 +360,15 @@ test("send url and item list expose sent URL items", async () => {
 test("delivery list, show, ack, and viewed manage delivery state transitions", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
-    const senderInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 900,
-    });
-    const senderInvite = await parseOkResponse(senderInviteResponse);
-    const receiverInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 900,
-    });
-    const receiverInvite = await parseOkResponse(receiverInviteResponse);
 
     await registerCliProfile({
       configDirectory,
-      inviteCode: senderInvite.inviteCode,
       nickname: "Developer CLI",
       platform: "cli",
       relayHubBaseUrl,
     });
     await registerCliProfile({
       configDirectory,
-      inviteCode: receiverInvite.inviteCode,
       nickname: "Developer Android Sim",
       platform: "android",
       relayHubBaseUrl,
@@ -543,36 +478,21 @@ test("send file and delivery download write the files", async () => {
     const betaFilePath = path.join(rootDirectory, "beta.txt");
     await fs.promises.writeFile(alphaFilePath, "alpha\n", "utf8");
     await fs.promises.writeFile(betaFilePath, "beta\n", "utf8");
-    const senderInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 900,
-    });
-    const senderInvite = await parseOkResponse(senderInviteResponse);
-    const receiverInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 900,
-    });
-    const receiverInvite = await parseOkResponse(receiverInviteResponse);
-    const secondReceiverInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 900,
-    });
-    const secondReceiverInvite = await parseOkResponse(secondReceiverInviteResponse);
 
     await registerCliProfile({
       configDirectory,
-      inviteCode: senderInvite.inviteCode,
       nickname: "Developer CLI",
       platform: "cli",
       relayHubBaseUrl,
     });
     await registerCliProfile({
       configDirectory,
-      inviteCode: receiverInvite.inviteCode,
       nickname: "Developer Pixel Sim",
       platform: "android",
       relayHubBaseUrl,
     });
     await registerCliProfile({
       configDirectory,
-      inviteCode: secondReceiverInvite.inviteCode,
       nickname: "Developer iPhone Sim",
       platform: "ios",
       relayHubBaseUrl,
@@ -645,7 +565,6 @@ test("send file and delivery download write the files", async () => {
 
 async function registerCliProfile(input: {
   configDirectory: string;
-  inviteCode: string;
   nickname: string;
   platform: DevicePlatform;
   relayHubBaseUrl: string;
@@ -661,8 +580,6 @@ async function registerCliProfile(input: {
       input.nickname,
       "--platform",
       input.platform,
-      "--invite",
-      input.inviteCode,
     ],
     { configDirectory: input.configDirectory },
   );

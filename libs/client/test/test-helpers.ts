@@ -63,13 +63,11 @@ export async function registerProfile(input: {
   profileId?: string;
 }): Promise<LocalDeviceProfile> {
   const rpcClient = new RpcClient(input.relayHubBaseUrl);
-  const invite = await parseResponse(rpcClient.createInvite({ expiresInSeconds: 900 }));
   const pushRegistration = buildPushRegistration(input.platform, input.nickname);
   const registration = await parseResponse(
     rpcClient.registerDevice({
       nickname: input.nickname,
       platform: input.platform,
-      invite: invite.inviteCode,
       ...(pushRegistration === undefined ? {} : { pushRegistration }),
     }),
   );

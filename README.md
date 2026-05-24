@@ -66,43 +66,32 @@ Use a Relay Hub URL that every participating device can reach. On a Tailnet, tha
      --data-dir="${HOME}/.content-relay"
    ```
 
-2. Create an invite on your Relay Hub:
-
-   ```bash
-   pnpm --filter '@content-relay/cli' exec node ./src/cli.ts \
-     --relay-hub-base-url http://YOUR-PI:4000 \
-     invite create
-   ```
-
-3. Copy the `inviteCode` from the output.
-
-4. Register this Mac as a `macos` device:
+2. Register this Mac as a `macos` device:
 
    ```bash
    pnpm --filter '@content-relay/cli' exec node ./src/cli.ts \
      --relay-hub-base-url http://YOUR-PI:4000 \
      device register \
      --name "mac" \
-     --platform macos \
-     --invite INVITE_CODE
+     --platform macos
    ```
 
-5. Make that profile active:
+3. Make that profile active:
 
    ```bash
    pnpm --filter '@content-relay/cli' exec node ./src/cli.ts device use "mac"
    ```
 
-6. Build and launch the macOS app:
+4. Build and launch the macOS app:
 
    ```bash
    pnpm --filter '@content-relay/macos-app' build
    open "apps/macos-app/dist/Content Relay.app"
    ```
 
-7. In the menu bar app, open **Settings…** if needed and click **Import Active CLI macOS Profile**.
-8. Click **Test Fetch** to verify connectivity.
-9. Send something to `mac` from another registered device.
+5. In the menu bar app, open **Settings…** if needed and click **Import Active CLI macOS Profile**.
+6. Click **Test Fetch** to verify connectivity.
+7. Send something to `mac` from another registered device.
 
 Example from another CLI profile:
 

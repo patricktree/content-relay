@@ -25,10 +25,6 @@ _Avoid_: File message, attachment list, per-file item
 A per-target-Device record that tracks a recipient Device's handling of an Item.
 _Avoid_: Push, notification, message copy
 
-**Invite**:
-A short-lived, single-use token or link that authorizes registration of a new Device.
-_Avoid_: Pairing code, auth token, login code
-
 **Push Token**:
 The native mobile push-provider token stored for a mobile Device so the Relay Hub can wake or notify it.
 _Avoid_: Device credential, auth token
@@ -55,14 +51,14 @@ _Avoid_: Partial registration, device-first registration
 
 ## Relationships
 
-- The **Relay Hub** stores **Items**, tracks **Deliveries**, manages **Invites**, and stores mobile **Push Tokens**.
+- The **Relay Hub** stores **Items**, tracks **Deliveries**, registers **Devices**, and stores mobile **Push Tokens**.
 - A **Device** can create an **Item** and target it to one or more other **Devices**.
 - Each target **Device** gets its own **Delivery** for an **Item**.
 - A **File Item** may contain multiple files, but still creates one logical **Item** and one **Delivery** per target **Device**.
 - A **Mobile App** runs on a **Device**.
 - The **Android App** and **iOS App** are the two mobile variants of the **Mobile App**.
 - A **Registered Mobile Device** is a **Device** reached through a **Mobile App** with working push setup.
-- A **Mobile Registration** consumes an **Invite** and creates one **Registered Mobile Device**.
+- A **Mobile Registration** creates one **Registered Mobile Device** by registering a nickname, platform, and push token with the Relay Hub.
 
 ## Example dialogue
 
@@ -72,7 +68,7 @@ _Avoid_: Partial registration, device-first registration
 > **Dev:** "If I share three files at once, is that three **Items**?"
 > **Domain expert:** "No — that is one **File Item** containing three files. Each target Device gets one **Delivery** for that Item."
 >
-> **Dev:** "If the phone accepted the invite but push setup failed, is it still a **Registered Mobile Device**?"
+> **Dev:** "If the phone chose a nickname but push setup failed, is it still a **Registered Mobile Device**?"
 > **Domain expert:** "No — **Mobile Registration** only completes when push setup succeeds. The Relay Hub must not create a partial mobile Device."
 >
 > **Dev:** "The CLI has a profile. Is that the same as a **Device**?"
@@ -81,7 +77,7 @@ _Avoid_: Partial registration, device-first registration
 ## Flagged ambiguities
 
 - "Android PWA" was used to mean the Android mobile recipient surface — resolved: the canonical term is **Android App**.
-- "registered mobile device" could have meant "invite accepted" only — resolved: it means a mobile device with completed push setup, not a partial onboarding state.
+- "registered mobile device" could have meant "device row created" only — resolved: it means a mobile device with completed push setup, not a partial onboarding state.
 - "registration" could have meant "device row created" only — resolved: for mobile, **Mobile Registration** is atomic and completes only after push setup succeeds.
 - "profile" can mean local CLI/client configuration — resolved: use **profile** only for local stored configuration, not as a synonym for domain **Device**.
 - "push" could mean delivery itself — resolved: push is only wake/notification; **Delivery** state remains authoritative in the Relay Hub.

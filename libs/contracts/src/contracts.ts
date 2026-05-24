@@ -23,7 +23,6 @@ export const registerDeviceRequestSchema = z
   .object({
     nickname: z.string().trim().min(1),
     platform: devicePlatformSchema,
-    invite: z.string().trim().min(1),
     pushRegistration: pushRegistrationSchema.optional(),
   })
   .superRefine((value, context) => {
@@ -60,21 +59,6 @@ export const registerDeviceResponseSchema = z.object({
   platform: devicePlatformSchema,
   relayHubBaseUrl: z.url(),
   createdAt: z.string(),
-});
-
-export const createInviteRequestSchema = z.object({
-  expiresInSeconds: z
-    .number()
-    .int()
-    .positive()
-    .max(60 * 60 * 24)
-    .default(900),
-});
-
-export const createInviteResponseSchema = z.object({
-  inviteCode: z.string(),
-  inviteUrl: z.string(),
-  expiresAt: z.string(),
 });
 
 export const errorResponseSchema = z.object({
@@ -196,8 +180,6 @@ export type DeliveryState = z.infer<typeof deliveryStateSchema>;
 export type DeliveryListState = z.infer<typeof deliveryListStateSchema>;
 export type RegisterDeviceRequest = z.infer<typeof registerDeviceRequestSchema>;
 export type RegisterDeviceResponse = z.infer<typeof registerDeviceResponseSchema>;
-export type CreateInviteRequest = z.infer<typeof createInviteRequestSchema>;
-export type CreateInviteResponse = z.infer<typeof createInviteResponseSchema>;
 export type ErrorResponse = z.infer<typeof errorResponseSchema>;
 export type EmptyResponse = z.infer<typeof emptyResponseSchema>;
 export type DeviceSummary = z.infer<typeof deviceSummarySchema>;

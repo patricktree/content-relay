@@ -1,5 +1,4 @@
 import type {
-  CreateInviteResponse,
   CreateItemResponse,
   DeliveryActionResponse,
   DeliveryListResponse,
@@ -20,20 +19,11 @@ import type {
   ItemRecord,
 } from "#pkg/interfaces/relay-hub-repository.interface.ts";
 import type { CreateFileItemOutput } from "#pkg/use-cases/create-file-item.ts";
-import type { CreateInviteOutput } from "#pkg/use-cases/create-invite.ts";
 import type { CreateItemOutput } from "#pkg/use-cases/create-item.ts";
 import type { DownloadDeliveryOutput } from "#pkg/use-cases/download-delivery.ts";
 import type { LoadedDelivery } from "#pkg/use-cases/load-delivery.ts";
 import type { LoadedItem } from "#pkg/use-cases/load-item.ts";
 import type { RegisterDeviceOutput } from "#pkg/use-cases/register-device.ts";
-
-export function presentCreateInviteOutput(result: CreateInviteOutput): CreateInviteResponse {
-  return {
-    inviteCode: result.inviteCode,
-    inviteUrl: result.inviteUrl,
-    expiresAt: result.expiresAt,
-  };
-}
 
 export function presentRegisterDeviceOutput(result: RegisterDeviceOutput): RegisterDeviceResponse {
   return {

@@ -40,7 +40,7 @@ open "apps/macos-app/dist/Content Relay.app"
 1. Register a macOS device with the existing CLI:
 
    ```sh
-   relay --relay-hub-base-url http://YOUR-PI:PORT device register --name "mac" --platform macos --invite INVITE_CODE
+   relay --relay-hub-base-url http://YOUR-PI:PORT device register --name "mac" --platform macos
    ```
 
 2. Make that profile active in the CLI, or ensure it is the only local macOS profile.

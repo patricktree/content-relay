@@ -15,14 +15,9 @@ export class RpcClient {
     this.#honoClient = createHonoClient({ relayHubBaseUrl });
   }
 
-  async createInvite(params: { expiresInSeconds: number }) {
-    return this.#honoClient.invites.$post({ json: params });
-  }
-
   async registerDevice(params: {
     nickname: string;
     platform: DevicePlatform;
-    invite: string;
     pushRegistration?: PushRegistration;
   }) {
     return this.#honoClient.devices.register.$post({ json: params });

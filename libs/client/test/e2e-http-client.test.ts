@@ -224,40 +224,6 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
   });
 });
 
-test("invite codes are single-use", async () => {
-  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const invite = await parseOkResponse(
-      new RpcClient(relayHubBaseUrl).createInvite({ expiresInSeconds: 900 }),
-    );
-
-    await parseOkResponse(
-      new RpcClient(relayHubBaseUrl).registerDevice({
-        nickname: "Developer CLI",
-        platform: "cli",
-        invite: invite.inviteCode,
-      }),
-    );
-
-    const registerAgainPromise = parseOkResponse(
-      new RpcClient(relayHubBaseUrl).registerDevice({
-        nickname: "Developer iPhone Sim",
-        platform: "ios",
-        invite: invite.inviteCode,
-        pushRegistration: { token: "simulated-ios-invite-reuse-token" },
-      }),
-    );
-    await expect(registerAgainPromise).rejects.toSatisfy(isParseResponseError);
-    await expect(registerAgainPromise).rejects.toMatchObject({
-      statusCode: 400,
-      detail: {
-        data: {
-          error: expect.stringMatching(/already been used/i),
-        },
-      },
-    });
-  });
-});
-
 test("text send rejects a single-line URL payload", async () => {
   await withRelayHubTestEnvironment(async ({ profileStore, relayHubBaseUrl }) => {
     const senderProfile = await registerProfile({
@@ -850,18 +816,9 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       platform: "ios",
     });
 
-    const invalidInviteResponse = await new RpcClient(relayHubBaseUrl).createInvite({
-      expiresInSeconds: 0,
-    });
-    expect(invalidInviteResponse.status).toBe(400);
-    expect(await invalidInviteResponse.json()).toMatchObject({
-      error: expect.stringMatching(/(greater than 0|>0)/i),
-    });
-
     const invalidRegisterResponse = await new RpcClient(relayHubBaseUrl).registerDevice({
       nickname: "   ",
       platform: "ios",
-      invite: "invite_code",
       pushRegistration: { token: "simulated-ios-validation-token" },
     });
     expect(invalidRegisterResponse.status).toBe(400);
@@ -874,7 +831,6 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
     ).registerDevice({
       nickname: "Developer iPhone Sim",
       platform: "ios",
-      invite: "invite_code",
     });
     expect(missingMobilePushRegistrationResponse.status).toBe(400);
     expect(await missingMobilePushRegistrationResponse.json()).toMatchObject({
@@ -884,7 +840,6 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
     const nonMobilePushRegistrationResponse = await new RpcClient(relayHubBaseUrl).registerDevice({
       nickname: "Developer CLI",
       platform: "cli",
-      invite: "invite_code",
       pushRegistration: { token: "simulated-cli-validation-token" },
     });
     expect(nonMobilePushRegistrationResponse.status).toBe(400);
@@ -1144,16 +1099,10 @@ test("items, deliveries, and devices collection routes reject unauthenticated re
 
 test("http client trims trailing slashes and preserves raw text and malformed JSON responses", async () => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const invite = await parseOkResponse(
-      new RpcClient(`${relayHubBaseUrl}/`).createInvite({ expiresInSeconds: 900 }),
-    );
-    expect(invite.inviteCode).toBeTruthy();
-
     const registration = await parseOkResponse(
       new RpcClient(`${relayHubBaseUrl}/`).registerDevice({
         nickname: "Trailing Slash Device",
         platform: "cli",
-        invite: invite.inviteCode,
       }),
     );
     expect(registration.relayHubBaseUrl).toBe(relayHubBaseUrl);
@@ -1181,7 +1130,7 @@ test("http client trims trailing slashes and preserves raw text and malformed JS
     const relayHubBaseUrl = `http://127.0.0.1:${port}/`;
 
     const textErrorPromise = parseOkResponse(
-      new RpcClient(relayHubBaseUrl).createInvite({ expiresInSeconds: 900 }),
+      new RpcClient(relayHubBaseUrl).registerDevice({ nickname: "Text Error", platform: "cli" }),
     );
     await expect(textErrorPromise).rejects.toSatisfy(isParseResponseError);
     await expect(textErrorPromise).rejects.toMatchObject({
@@ -1192,7 +1141,7 @@ test("http client trims trailing slashes and preserves raw text and malformed JS
     });
 
     const malformedJsonPromise = parseOkResponse(
-      new RpcClient(relayHubBaseUrl).createInvite({ expiresInSeconds: 900 }),
+      new RpcClient(relayHubBaseUrl).registerDevice({ nickname: "JSON Error", platform: "cli" }),
     );
     await expect(malformedJsonPromise).rejects.toSatisfy(isParseResponseError);
     await expect(malformedJsonPromise).rejects.toMatchObject({

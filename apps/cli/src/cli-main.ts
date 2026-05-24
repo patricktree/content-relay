@@ -43,7 +43,6 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
     )
     .addOption(new Option("--device <profile>", "profile id, device id, or nickname to use"));
 
-  const inviteCommand = program.command("invite").description("Manage invites");
   const deviceCommand = program.command("device").description("Manage local device profiles");
   const devicePushTokenCommand = deviceCommand
     .command("push-token")
@@ -52,28 +51,6 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
   const receiveCommand = program.command("receive").description("Receive deliveries");
   const deliveryCommand = program.command("delivery").description("Inspect and manage deliveries");
   const itemCommand = program.command("item").description("Inspect sent items");
-
-  inviteCommand
-    .command("create")
-    .description("Create an invite")
-    .option(
-      "--expires-in <seconds>",
-      "invite expiration in seconds",
-      numberUtils.parsePositiveInteger,
-    )
-    .action(async (options) => {
-      const relayHubBaseUrl = program.opts().relayHubBaseUrl;
-
-      if (relayHubBaseUrl === undefined) {
-        throw new Error("Missing required --relay-hub-base-url <url> option.");
-      }
-
-      const invite = await parseOkResponse(
-        new RpcClient(relayHubBaseUrl).createInvite({ expiresInSeconds: options.expiresIn ?? 900 }),
-      );
-
-      await writeSuccess(invite, Boolean(program.opts().json));
-    });
 
   deviceCommand
     .command("register")
@@ -85,7 +62,6 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
         .makeOptionMandatory(true),
     )
     .option("--push-token <token>", "push token override for simulated mobile registration")
-    .requiredOption("--invite <inviteCode>", "invite code")
     .action(async (options) => {
       const relayHubBaseUrl = program.opts().relayHubBaseUrl;
 
@@ -102,7 +78,6 @@ const profileStore = new LocalDeviceProfileStore(process.env["RELAY_CONFIG_DIR"]
         new RpcClient(relayHubBaseUrl).registerDevice({
           nickname: options.name,
           platform: options.platform,
-          invite: options.invite,
           ...(pushRegistration === undefined ? {} : { pushRegistration }),
         }),
       );
