@@ -1,6 +1,7 @@
 {
   "extends": [
     "@content-relay/config-typescript/tsconfig.defaults.json",
+    "@content-relay/config-typescript/tsconfig.node-direct-ts-execution.json",
     "@content-relay/config-typescript/tsconfig.composite-emit-declaration-only.json"
   ],
   "compilerOptions": {

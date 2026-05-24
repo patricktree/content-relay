@@ -20,7 +20,7 @@ import {
   relayItemTypeSchema,
   type DevicePlatform,
 } from "@content-relay/contracts";
-import { withRelayTestEnvironment } from "@content-relay/relay-hub-test-utils";
+import { withRelayHubTestEnvironment } from "@content-relay/relay-hub-test-utils";
 
 const cliPackageDirectory = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "..");
 const workspaceRootDirectory = path.resolve(cliPackageDirectory, "../..");
@@ -90,7 +90,7 @@ const cliDownloadDeliveryResponseSchema = z.object({
 });
 
 test("invite create returns a usable invite", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
 
     const inviteCreateResult = await runCli(
@@ -124,7 +124,7 @@ test("invite create returns a usable invite", async () => {
 });
 
 test("device management commands cover list, rename, push-token, and delete", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
     const primaryInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
@@ -217,7 +217,7 @@ test("device management commands cover list, rename, push-token, and delete", as
 });
 
 test("device register persists a profile that device current can load", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
     const inviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
@@ -258,7 +258,7 @@ test("device register persists a profile that device current can load", async ()
 });
 
 test("send text, receive once, and delivery open", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
     const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
@@ -340,7 +340,7 @@ test("send text, receive once, and delivery open", async () => {
 });
 
 test("send url and item list expose sent URL items", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
     const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
@@ -405,7 +405,7 @@ test("send url and item list expose sent URL items", async () => {
 });
 
 test("delivery list, show, ack, and viewed manage delivery state transitions", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
     const senderInviteResponse = await createHttpClient({ relayHubBaseUrl }).invites.$post({
       json: { expiresInSeconds: 900 },
@@ -529,7 +529,7 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
 });
 
 test("send file and delivery download write the files", async () => {
-  await withRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
+  await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const configDirectory = path.join(rootDirectory, "cli-config");
     const alphaFilePath = path.join(rootDirectory, "alpha.txt");
     const betaFilePath = path.join(rootDirectory, "beta.txt");

@@ -11,13 +11,13 @@ import {
 
 import { allocatePort } from "#pkg/network.ts";
 
-export type RelayTestEnvironment = {
+export type RelayHubTestEnvironment = {
   rootDirectory: string;
   relayHubBaseUrl: string;
 };
 
-export async function withRelayTestEnvironment(
-  run: (environment: RelayTestEnvironment) => Promise<void>,
+export async function withRelayHubTestEnvironment(
+  run: (environment: RelayHubTestEnvironment) => Promise<void>,
 ): Promise<void> {
   const rootDirectory = await fs.promises.mkdtemp(path.join(os.tmpdir(), "content-relay-test-"));
   const port = await allocatePort();

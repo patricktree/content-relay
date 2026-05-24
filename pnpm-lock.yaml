@@ -98,7 +98,7 @@ importers:
         version: link:../../tooling/config-typescript
       '@content-relay/relay-hub-test-utils':
         specifier: workspace:*
-        version: link:../../libs/relay-hub-test-utils
+        version: link:../../qa-utils/relay-hub-test-utils
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.2
@@ -321,7 +321,7 @@ importers:
         version: link:../profile-store-node
       '@content-relay/relay-hub-test-utils':
         specifier: workspace:*
-        version: link:../relay-hub-test-utils
+        version: link:../../qa-utils/relay-hub-test-utils
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.2
@@ -468,7 +468,52 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
-  libs/relay-hub-test-utils:
+  libs/utils-ecma:
+    devDependencies:
+      '@content-relay/config-oxlint':
+        specifier: workspace:*
+        version: link:../../tooling/config-oxlint
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260511.1
+      oxlint:
+        specifier: 'catalog:'
+        version: 1.64.0(oxlint-tsgolint@0.22.1)
+      oxlint-tsgolint:
+        specifier: 'catalog:'
+        version: 0.22.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  libs/utils-node:
+    devDependencies:
+      '@content-relay/config-oxlint':
+        specifier: workspace:*
+        version: link:../../tooling/config-oxlint
+      '@content-relay/config-typescript':
+        specifier: workspace:*
+        version: link:../../tooling/config-typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260511.1
+      oxlint:
+        specifier: 'catalog:'
+        version: 1.64.0(oxlint-tsgolint@0.22.1)
+      oxlint-tsgolint:
+        specifier: 'catalog:'
+        version: 0.22.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  qa-utils/relay-hub-test-utils:
     dependencies:
       '@content-relay/relay-hub':
         specifier: workspace:*
@@ -496,28 +541,14 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
-  libs/utils-ecma:
-    devDependencies:
-      '@content-relay/config-oxlint':
+  qa-utils/seeding-tool:
+    dependencies:
+      '@content-relay/client':
         specifier: workspace:*
-        version: link:../../tooling/config-oxlint
-      '@content-relay/config-typescript':
+        version: link:../../libs/client
+      '@content-relay/contracts':
         specifier: workspace:*
-        version: link:../../tooling/config-typescript
-      '@typescript/native-preview':
-        specifier: 'catalog:'
-        version: 7.0.0-dev.20260511.1
-      oxlint:
-        specifier: 'catalog:'
-        version: 1.64.0(oxlint-tsgolint@0.22.1)
-      oxlint-tsgolint:
-        specifier: 'catalog:'
-        version: 0.22.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
-  libs/utils-node:
+        version: link:../../libs/contracts
     devDependencies:
       '@content-relay/config-oxlint':
         specifier: workspace:*

@@ -21,7 +21,7 @@ import {
 import {
   allocatePort,
   listenOnPort,
-  withRelayTestEnvironment as withBaseRelayTestEnvironment,
+  withRelayHubTestEnvironment as withBaseRelayHubTestEnvironment,
 } from "@content-relay/relay-hub-test-utils";
 
 import { rpcClient } from "#pkg/rpc-client.ts";
@@ -41,16 +41,16 @@ export type ReceivePendingOptions = {
   deduplicate: boolean;
 };
 
-export type RelayTestEnvironment = {
+export type RelayHubTestEnvironment = {
   profileStore: LocalDeviceProfileStore;
   rootDirectory: string;
   relayHubBaseUrl: string;
 };
 
-export async function withRelayTestEnvironment(
-  run: (environment: RelayTestEnvironment) => Promise<void>,
+export async function withRelayHubTestEnvironment(
+  run: (environment: RelayHubTestEnvironment) => Promise<void>,
 ): Promise<void> {
-  await withBaseRelayTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
+  await withBaseRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     await run({
       profileStore: new LocalDeviceProfileStore(path.join(rootDirectory, "profiles")),
       rootDirectory,

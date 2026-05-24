@@ -2,12 +2,12 @@
   "extends": [
     "@content-relay/config-typescript/tsconfig.defaults.json",
     "@content-relay/config-typescript/tsconfig.node-direct-ts-execution.json",
-    "@content-relay/config-typescript/tsconfig.composite-emit-declaration-only.json"
+    "@content-relay/config-typescript/tsconfig.vitest.json"
   ],
   "compilerOptions": {
-    /* Modules */
-    "rootDir": "./scripts",
+    "rootDir": "./test",
     "types": ["node"]
   },
-  "include": ["scripts/**/*"]
+  "include": ["test/**/*", "**/*.test.ts"],
+  "references": [{ "path": "./tsconfig.build.json" }]
 }

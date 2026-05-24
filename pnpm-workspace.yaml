@@ -1,6 +1,7 @@
 packages:
   - apps/*
   - libs/*
+  - qa-utils/*
   - tooling/*
 
 allowBuilds:
