@@ -11,13 +11,6 @@
     }
   ],
   "components": {
-    "securitySchemes": {
-      "RelayDeviceIdHeader": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "x-relay-device-id"
-      }
-    },
     "schemas": {},
     "parameters": {}
   },
@@ -103,22 +96,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "500": {
             "description": "Unexpected Relay Hub error.",
             "content": {
@@ -141,21 +118,6 @@
     "/devices": {
       "get": {
         "tags": ["Devices"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Devices listed.",
@@ -189,22 +151,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "500": {
             "description": "Unexpected Relay Hub error.",
             "content": {
@@ -227,11 +173,6 @@
     "/devices/{deviceId}": {
       "patch": {
         "tags": ["Devices"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
         "parameters": [
           {
             "schema": {
@@ -242,14 +183,6 @@
             "required": true,
             "name": "deviceId",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
           }
         ],
         "requestBody": {
@@ -315,38 +248,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "404": {
             "description": "Device not found.",
             "content": {
@@ -383,11 +284,6 @@
       },
       "delete": {
         "tags": ["Devices"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
         "parameters": [
           {
             "schema": {
@@ -398,51 +294,11 @@
             "required": true,
             "name": "deviceId",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
           }
         ],
         "responses": {
           "204": {
             "description": "Device deleted."
-          },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
           },
           "404": {
             "description": "Device not found.",
@@ -482,11 +338,6 @@
     "/devices/{deviceId}/push-token": {
       "post": {
         "tags": ["Devices"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
         "parameters": [
           {
             "schema": {
@@ -497,14 +348,6 @@
             "required": true,
             "name": "deviceId",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
           }
         ],
         "requestBody": {
@@ -530,38 +373,6 @@
           },
           "400": {
             "description": "Invalid request.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden.",
             "content": {
               "application/json": {
                 "schema": {
@@ -614,21 +425,6 @@
     "/items/text": {
       "post": {
         "tags": ["Items"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -636,6 +432,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "sourceDeviceId": {
+                    "type": "string"
+                  },
                   "text": {
                     "type": "string",
                     "minLength": 1
@@ -652,7 +451,7 @@
                     "minItems": 1
                   }
                 },
-                "required": ["text", "targetDeviceIds"]
+                "required": ["sourceDeviceId", "text", "targetDeviceIds"]
               }
             }
           }
@@ -889,22 +688,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "500": {
             "description": "Unexpected Relay Hub error.",
             "content": {
@@ -927,21 +710,6 @@
     "/items/url": {
       "post": {
         "tags": ["Items"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -949,6 +717,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "sourceDeviceId": {
+                    "type": "string"
+                  },
                   "url": {
                     "type": "string",
                     "format": "uri"
@@ -965,7 +736,7 @@
                     "minItems": 1
                   }
                 },
-                "required": ["url", "targetDeviceIds"]
+                "required": ["sourceDeviceId", "url", "targetDeviceIds"]
               }
             }
           }
@@ -1202,22 +973,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "500": {
             "description": "Unexpected Relay Hub error.",
             "content": {
@@ -1240,21 +995,6 @@
     "/items/file": {
       "post": {
         "tags": ["Items"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1262,6 +1002,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "sourceDeviceId": {
+                    "type": "string",
+                    "description": "Device ID that creates the item."
+                  },
                   "targetDeviceIds": {
                     "type": "string",
                     "description": "JSON-encoded array of target device IDs."
@@ -1514,22 +1258,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "500": {
             "description": "Unexpected Relay Hub error.",
             "content": {
@@ -1552,19 +1280,15 @@
     "/deliveries/pending": {
       "get": {
         "tags": ["Deliveries"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
+            "name": "targetDeviceId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -1703,22 +1427,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "500": {
             "description": "Unexpected Relay Hub error.",
             "content": {
@@ -1741,12 +1449,16 @@
     "/deliveries": {
       "get": {
         "tags": ["Deliveries"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
         "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "targetDeviceId",
+            "in": "query"
+          },
           {
             "schema": {
               "type": "string",
@@ -1766,14 +1478,6 @@
             "required": false,
             "name": "limit",
             "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
           }
         ],
         "responses": {
@@ -1928,22 +1632,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "500": {
             "description": "Unexpected Relay Hub error.",
             "content": {
@@ -1966,11 +1654,6 @@
     "/deliveries/{deliveryId}": {
       "get": {
         "tags": ["Deliveries"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
         "parameters": [
           {
             "schema": {
@@ -1984,11 +1667,12 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
+            "name": "targetDeviceId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2124,22 +1808,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "404": {
             "description": "Delivery not found.",
             "content": {
@@ -2178,11 +1846,6 @@
     "/deliveries/{deliveryId}/ack": {
       "post": {
         "tags": ["Deliveries"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
         "parameters": [
           {
             "schema": {
@@ -2196,11 +1859,12 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
+            "name": "targetDeviceId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2336,22 +2000,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "404": {
             "description": "Delivery not found.",
             "content": {
@@ -2390,11 +2038,6 @@
     "/deliveries/{deliveryId}/viewed": {
       "post": {
         "tags": ["Deliveries"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
         "parameters": [
           {
             "schema": {
@@ -2408,11 +2051,12 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
+            "name": "targetDeviceId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2548,22 +2192,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "404": {
             "description": "Delivery not found.",
             "content": {
@@ -2602,11 +2230,6 @@
     "/deliveries/{deliveryId}/download": {
       "get": {
         "tags": ["Deliveries"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
         "parameters": [
           {
             "schema": {
@@ -2620,11 +2243,12 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
+            "name": "targetDeviceId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2752,22 +2376,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "404": {
             "description": "Delivery not found.",
             "content": {
@@ -2806,12 +2414,16 @@
     "/items": {
       "get": {
         "tags": ["Items"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
         "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "sourceDeviceId",
+            "in": "query"
+          },
           {
             "schema": {
               "type": "integer",
@@ -2822,14 +2434,6 @@
             "required": false,
             "name": "limit",
             "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
           }
         ],
         "responses": {
@@ -2988,22 +2592,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          },
           "500": {
             "description": "Unexpected Relay Hub error.",
             "content": {
@@ -3026,11 +2614,6 @@
     "/items/{itemId}": {
       "get": {
         "tags": ["Items"],
-        "security": [
-          {
-            "RelayDeviceIdHeader": []
-          }
-        ],
         "parameters": [
           {
             "schema": {
@@ -3044,11 +2627,12 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "required": true,
-            "name": "x-relay-device-id",
-            "in": "header"
+            "name": "sourceDeviceId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -3178,22 +2762,6 @@
                     }
                   },
                   "required": ["item", "deliveries"]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
                 }
               }
             }

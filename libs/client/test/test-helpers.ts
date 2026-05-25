@@ -59,12 +59,6 @@ export async function registerTestDevice(input: {
   };
 }
 
-export function createAuthHeaders(device: RegisteredTestDevice): HeadersInit {
-  return {
-    "x-relay-device-id": device.deviceId,
-  };
-}
-
 export async function receivePendingDeliveries(
   device: RegisteredTestDevice,
   options: ReceivePendingOptions,

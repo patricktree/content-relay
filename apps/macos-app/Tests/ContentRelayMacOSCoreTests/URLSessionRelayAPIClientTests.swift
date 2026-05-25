@@ -19,8 +19,8 @@ func registersDevicesWithoutDeviceHeaders() async throws {
   #expect(registration.platform == "macos")
 }
 
-@Test("URLSession relay API client sends device headers and decodes pending deliveries")
-func sendsDeviceHeadersAndDecodesPendingDeliveries() async throws {
+@Test("URLSession relay API client sends device parameters and decodes pending deliveries")
+func sendsDeviceParametersAndDecodesPendingDeliveries() async throws {
   let configuration = URLSessionConfiguration.ephemeral
   configuration.protocolClasses = [StubURLProtocol.self]
 
@@ -161,7 +161,7 @@ func surfacesBackendErrorPayloads() async throws {
     _ = try await client.fetchPendingDeliveries()
     Issue.record("Expected the client to throw a RelayAPIError for a 401 response.")
   } catch let error as RelayAPIError {
-    #expect(error == RelayAPIError(statusCode: 401, message: "Authentication failed."))
+    #expect(error == RelayAPIError(statusCode: 400, message: "Invalid device."))
   }
 }
 
@@ -184,13 +184,13 @@ private class StubURLProtocol: URLProtocol, @unchecked Sendable {
   override func stopLoading() {}
 
   fileprivate class func makeResponse(for request: URLRequest) -> (HTTPURLResponse, Data) {
-    #expect(request.value(forHTTPHeaderField: "x-relay-device-id") == "device_macos")
     #expect(request.value(forHTTPHeaderField: "authorization") == nil)
     #expect(request.url?.host() == "127.0.0.1")
     #expect(request.url?.port == 8787)
 
     switch (request.httpMethod, request.url?.path()) {
     case ("GET", "/deliveries/pending"):
+      #expect(request.url?.query()?.contains("targetDeviceId=device_macos") == true)
       return jsonResponse(
         request: request,
         statusCode: 200,
@@ -205,6 +205,7 @@ private class StubURLProtocol: URLProtocol, @unchecked Sendable {
     case ("POST", "/items/text"):
       #expect(request.value(forHTTPHeaderField: "content-type") == "application/json")
       let body = requestBodyString(from: request)
+      #expect(body.contains("\"sourceDeviceId\":\"device_macos\""))
       #expect(body.contains("\"text\":\"hello from macOS\""))
       #expect(body.contains("\"title\":\"Inbox\""))
       #expect(body.contains("\"targetDeviceIds\":[\"device_ios\"]"))
@@ -217,6 +218,8 @@ private class StubURLProtocol: URLProtocol, @unchecked Sendable {
       let contentType = request.value(forHTTPHeaderField: "content-type") ?? ""
       #expect(contentType.contains("multipart/form-data; boundary="))
       let body = requestBodyString(from: request)
+      #expect(body.contains("name=\"sourceDeviceId\""))
+      #expect(body.contains("device_macos"))
       #expect(body.contains("name=\"targetDeviceIds\""))
       #expect(body.contains("[\"device_ios\",\"device_android\"]"))
       #expect(body.contains("name=\"title\""))
@@ -229,6 +232,7 @@ private class StubURLProtocol: URLProtocol, @unchecked Sendable {
         body: createdFileItemJSON
       )
     case ("GET", "/deliveries/delivery_download/download"):
+      #expect(request.url?.query()?.contains("targetDeviceId=device_macos") == true)
       return jsonResponse(
         request: request,
         statusCode: 200,
@@ -266,7 +270,6 @@ private final class RegisterDeviceStubURLProtocol: URLProtocol, @unchecked Senda
   }
 
   override func startLoading() {
-    #expect(request.value(forHTTPHeaderField: "x-relay-device-id") == nil)
     #expect(request.value(forHTTPHeaderField: "content-type") == "application/json")
     #expect(request.httpMethod == "POST")
     #expect(request.url?.path() == "/devices/register")
@@ -293,13 +296,12 @@ private final class RegisterDeviceStubURLProtocol: URLProtocol, @unchecked Senda
 
 private class InvalidDeviceStubURLProtocol: StubURLProtocol, @unchecked Sendable {
   override class func makeResponse(for request: URLRequest) -> (HTTPURLResponse, Data) {
-    #expect(request.value(forHTTPHeaderField: "x-relay-device-id") == "bad_device")
     #expect(request.value(forHTTPHeaderField: "authorization") == nil)
 
     return jsonResponse(
       request: request,
-      statusCode: 401,
-      body: "{\"error\":\"Authentication failed.\"}"
+      statusCode: 400,
+      body: "{\"error\":\"Invalid device.\"}"
     )
   }
 }

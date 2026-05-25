@@ -413,7 +413,7 @@ This is not final, but it is the shape the implementation should likely converge
 ## Non-goals for v1
 
 - Public internet access to the Pi Relay Hub
-- Complex auth beyond Tailnet-only device identity
+- Complex application-layer auth beyond Tailnet-only access
 - URL metadata scraping
 - Local recipient archive/cache
 - Archive browsing UI

@@ -23,7 +23,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 - `ports`
   - interfaces for repositories and infrastructure capabilities
 - `infrastructure`
-  - `Drizzle`, SQLite, filesystem blob store, push providers, auth hashing, and HTTP adapters
+  - `Drizzle`, SQLite, filesystem blob store, push providers, and HTTP adapters
 - `interfaces`
   - `Hono` route handlers, CLI wiring, Capacitor mobile integration, and macOS app integration
 
@@ -54,8 +54,8 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 ### Trust and device identity
 
 - The relay is Tailnet-only.
-- Protected routes identify the caller by the registered `x-relay-device-id` header.
-- Do not add a second application-layer auth mechanism in v1.
+- Relay Hub endpoints do not use application-layer authentication.
+- Endpoints that need device context accept explicit `sourceDeviceId` or `targetDeviceId` request data.
 
 ### IDs and time
 
@@ -239,7 +239,7 @@ The goal is to keep the stack explicit, reduce re-litigation, and make the inten
 
 ## Explicit non-choices for v1
 
-- No JWT-based or token-based device auth
+- No JWT-based or token-based device credentials
 - No resumable upload protocol
 - No Android PWA
 - No mobile-web fallback client

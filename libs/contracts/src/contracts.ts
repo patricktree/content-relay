@@ -49,10 +49,6 @@ export const registerDeviceRequestSchema = z
 
 export const deviceIdSchema = z.string();
 
-export const authHeadersSchema = z.object({
-  "x-relay-device-id": deviceIdSchema,
-});
-
 export const registerDeviceResponseSchema = z.object({
   deviceId: deviceIdSchema,
   nickname: z.string(),
@@ -78,12 +74,14 @@ export const deviceSummarySchema = z.object({
 export const deviceListResponseSchema = z.array(deviceSummarySchema);
 
 export const createTextItemRequestSchema = z.object({
+  sourceDeviceId: deviceIdSchema,
   text: z.string().min(1),
   title: z.string().trim().min(1).optional(),
   targetDeviceIds: z.array(deviceIdSchema).min(1),
 });
 
 export const createUrlItemRequestSchema = z.object({
+  sourceDeviceId: deviceIdSchema,
   url: z.string().url(),
   title: z.string().trim().min(1).optional(),
   targetDeviceIds: z.array(deviceIdSchema).min(1),
@@ -198,7 +196,6 @@ export type DownloadDeliveryResponse = z.infer<typeof downloadDeliveryResponseSc
 export type UpdateDeviceRequest = z.infer<typeof updateDeviceRequestSchema>;
 export type PushRegistration = z.infer<typeof pushRegistrationSchema>;
 export type PushTokenRequest = z.infer<typeof pushTokenRequestSchema>;
-export type AuthHeaders = z.infer<typeof authHeadersSchema>;
 export type DeviceId = z.infer<typeof deviceIdSchema>;
 
 export function isMobileDevicePlatform(platform: DevicePlatform): platform is MobileDevicePlatform {

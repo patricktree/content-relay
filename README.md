@@ -82,9 +82,10 @@ Example from another CLI device:
 ```bash
 pnpm --filter '@content-relay/cli' exec node ./src/cli.ts \
   --relay-hub-base-url http://YOUR-PI:4000 \
-  --active-device-id dev_SENDER \
-  send text "hello mac" \
-  --to dev_MAC
+  send text \
+  --source-device-id dev_SENDER \
+  "hello mac" \
+  --target-device-id dev_MAC
 ```
 
 Expected behavior:
