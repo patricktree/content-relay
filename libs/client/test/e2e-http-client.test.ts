@@ -343,9 +343,7 @@ test("deleting a device hides it from active device listings", async () => {
     expect(deliveries.deliveries).toEqual([]);
 
     const devices = await parseOkResponse(
-      new RpcClient(senderProfile.relayHubBaseUrl)
-        .createDeviceRpcClient(senderProfile.deviceId)
-        .listDevices(),
+      new RpcClient(senderProfile.relayHubBaseUrl).listDevices(),
     );
     expect(devices.map((device) => device.deviceId)).not.toContain(receiverProfile.deviceId);
   });
@@ -398,9 +396,7 @@ test("device routes support rename, listing, and path-selected device actions", 
     expect(renamedDevice.nickname).toBe("Renamed iPhone Sim");
 
     const devices = await parseOkResponse(
-      new RpcClient(senderProfile.relayHubBaseUrl)
-        .createDeviceRpcClient(senderProfile.deviceId)
-        .listDevices(),
+      new RpcClient(senderProfile.relayHubBaseUrl).listDevices(),
     );
     expect(devices).toEqual(
       expect.arrayContaining([

@@ -103,7 +103,7 @@ test("device management commands cover list, rename, push-token, and delete", as
     });
 
     const listResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, primaryDevice.deviceId, ["--json", "device", "list"]),
+      withRelayHubBaseUrl(relayHubBaseUrl, ["--json", "device", "list"]),
     );
     expect(listResult.exitCode).toBe(0);
     const devices = parseJsonStdout(listResult, deviceListResponseSchema);
@@ -115,10 +115,12 @@ test("device management commands cover list, rename, push-token, and delete", as
     );
 
     const renameResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, primaryDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "device",
         "rename",
+        "--device-id",
+        primaryDevice.deviceId,
         "Renamed CLI",
       ]),
     );
@@ -127,11 +129,13 @@ test("device management commands cover list, rename, push-token, and delete", as
     expect(renamedDevice.nickname).toBe("Renamed CLI");
 
     const pushTokenResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, iosDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "device",
         "push-token",
         "set",
+        "--device-id",
+        iosDevice.deviceId,
         "push-token-123",
       ]),
     );
@@ -142,10 +146,12 @@ test("device management commands cover list, rename, push-token, and delete", as
     });
 
     const deleteResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, iosDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "device",
         "delete",
+        "--device-id",
+        iosDevice.deviceId,
         "--yes",
       ]),
     );
@@ -171,12 +177,14 @@ test("send text, receive once, and delivery open", async () => {
     });
 
     const sendResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, senderDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "send",
         "text",
+        "--source-device-id",
+        senderDevice.deviceId,
         "hello mac",
-        "--to",
+        "--target-device-id",
         receiverDevice.deviceId,
         "--title",
         "Greeting",
@@ -187,7 +195,13 @@ test("send text, receive once, and delivery open", async () => {
     expect(sentItem.item.type).toBe("text");
 
     const receiveResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, receiverDevice.deviceId, ["--json", "receive", "once"]),
+      withRelayHubBaseUrl(relayHubBaseUrl, [
+        "--json",
+        "receive",
+        "once",
+        "--target-device-id",
+        receiverDevice.deviceId,
+      ]),
     );
     expect(receiveResult.exitCode).toBe(0);
     const receivedDeliveries = parseJsonStdout(receiveResult, cliReceivedDeliveryResultsSchema);
@@ -199,10 +213,12 @@ test("send text, receive once, and delivery open", async () => {
     expect(receivedDelivery.simulation?.action).toBe("auto-opened-text-window");
 
     const openResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, receiverDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "delivery",
         "open",
+        "--target-device-id",
+        receiverDevice.deviceId,
         receivedDelivery.delivery.deliveryId,
       ]),
     );
@@ -226,12 +242,14 @@ test("send url and item list expose sent URL items", async () => {
     });
 
     const sendResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, senderDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "send",
         "url",
+        "--source-device-id",
+        senderDevice.deviceId,
         "https://example.com/docs",
-        "--to",
+        "--target-device-id",
         receiverDevice.deviceId,
         "--title",
         "Docs",
@@ -242,7 +260,13 @@ test("send url and item list expose sent URL items", async () => {
     expect(sentItem.item.type).toBe("url");
 
     const itemListResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, senderDevice.deviceId, ["--json", "item", "list"]),
+      withRelayHubBaseUrl(relayHubBaseUrl, [
+        "--json",
+        "item",
+        "list",
+        "--source-device-id",
+        senderDevice.deviceId,
+      ]),
     );
     expect(itemListResult.exitCode).toBe(0);
     const items = parseJsonStdout(itemListResult, itemListResponseSchema);
@@ -255,10 +279,12 @@ test("send url and item list expose sent URL items", async () => {
     );
 
     const itemShowResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, senderDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "item",
         "show",
+        "--source-device-id",
+        senderDevice.deviceId,
         sentItem.item.itemId,
       ]),
     );
@@ -286,12 +312,14 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
     });
 
     const sendResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, senderDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "send",
         "text",
+        "--source-device-id",
+        senderDevice.deviceId,
         "manual transitions",
-        "--to",
+        "--target-device-id",
         receiverDevice.deviceId,
       ]),
     );
@@ -302,10 +330,12 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
     assert(delivery !== undefined);
 
     const listResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, receiverDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "delivery",
         "list",
+        "--target-device-id",
+        receiverDevice.deviceId,
         "--state",
         "pending",
       ]),
@@ -316,10 +346,12 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
     );
 
     const showResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, receiverDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "delivery",
         "show",
+        "--target-device-id",
+        receiverDevice.deviceId,
         delivery.deliveryId,
       ]),
     );
@@ -330,10 +362,12 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
     });
 
     const ackResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, receiverDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "delivery",
         "ack",
+        "--target-device-id",
+        receiverDevice.deviceId,
         delivery.deliveryId,
       ]),
     );
@@ -343,10 +377,12 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
     );
 
     const viewedResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, receiverDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "delivery",
         "viewed",
+        "--target-device-id",
+        receiverDevice.deviceId,
         delivery.deliveryId,
       ]),
     );
@@ -375,13 +411,15 @@ test("send file creates a file item", async () => {
     await fs.promises.writeFile(betaFilePath, "beta\n");
 
     const sendResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, senderDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "send",
         "file",
+        "--source-device-id",
+        senderDevice.deviceId,
         alphaFilePath,
         betaFilePath,
-        "--to",
+        "--target-device-id",
         receiverDevice.deviceId,
         "--title",
         "Trip docs",
@@ -415,12 +453,8 @@ async function registerCliDevice(input: {
   return parseJsonStdout(registerResult, registerDeviceResponseSchema);
 }
 
-function withActiveDevice(
-  relayHubBaseUrl: string,
-  activeDeviceId: string,
-  args: string[],
-): string[] {
-  return ["--relay-hub-base-url", relayHubBaseUrl, "--active-device-id", activeDeviceId, ...args];
+function withRelayHubBaseUrl(relayHubBaseUrl: string, args: string[]): string[] {
+  return ["--relay-hub-base-url", relayHubBaseUrl, ...args];
 }
 
 function parseJsonStdout<T>(result: CliInvocationResult, schema: z.ZodType<T>): T {

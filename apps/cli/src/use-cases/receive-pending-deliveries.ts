@@ -4,9 +4,8 @@ import {
   simulatePlatformDelivery,
   type SimulatedDeliveryResult,
 } from "@content-relay/client";
-import type { DeliveryResource } from "@content-relay/contracts";
+import type { DeliveryResource, DevicePlatform } from "@content-relay/contracts";
 
-import type { ActiveDeviceWithPlatform } from "#pkg/use-cases/device-context.ts";
 import { transitionDeliveryToDelivered } from "#pkg/use-cases/transition-delivery-to-delivered.ts";
 
 export type ReceivedDeliveryResult = {
@@ -15,24 +14,26 @@ export type ReceivedDeliveryResult = {
   simulation: SimulatedDeliveryResult | null;
 };
 
-export async function receivePendingDeliveries(
-  deviceContext: ActiveDeviceWithPlatform,
-): Promise<ReceivedDeliveryResult[]> {
+export async function receivePendingDeliveries(input: {
+  relayHubBaseUrl: string;
+  deviceId: string;
+  platform: DevicePlatform;
+}): Promise<ReceivedDeliveryResult[]> {
   const pending = await parseOkResponse(
-    new RpcClient(deviceContext.relayHubBaseUrl)
-      .createDeviceRpcClient(deviceContext.deviceId)
+    new RpcClient(input.relayHubBaseUrl)
+      .createDeviceRpcClient(input.deviceId)
       .fetchPendingDeliveries(),
   );
   const results: ReceivedDeliveryResult[] = [];
 
   for (const delivery of pending.deliveries) {
-    const simulation = simulatePlatformDelivery(deviceContext.platform, delivery);
-    let currentDelivery = await transitionDeliveryToDelivered(deviceContext, delivery.deliveryId);
+    const simulation = simulatePlatformDelivery(input.platform, delivery);
+    let currentDelivery = await transitionDeliveryToDelivered(input, delivery.deliveryId);
 
     if (simulation.shouldMarkViewed) {
       const viewed = await parseOkResponse(
-        new RpcClient(deviceContext.relayHubBaseUrl)
-          .createDeviceRpcClient(deviceContext.deviceId)
+        new RpcClient(input.relayHubBaseUrl)
+          .createDeviceRpcClient(input.deviceId)
           .markDeliveryViewed({ deliveryId: delivery.deliveryId }),
       );
       currentDelivery = viewed.delivery;

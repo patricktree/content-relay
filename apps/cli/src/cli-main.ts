@@ -20,10 +20,6 @@ import {
 } from "@content-relay/contracts";
 import * as numberUtils from "@content-relay/utils-ecma/number.utils";
 
-import type {
-  ActiveDeviceContext,
-  ActiveDeviceWithPlatform,
-} from "#pkg/use-cases/device-context.ts";
 import { openDelivery } from "#pkg/use-cases/open-delivery.ts";
 import { receivePendingDeliveries } from "#pkg/use-cases/receive-pending-deliveries.ts";
 import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-delivery.ts";
@@ -35,11 +31,11 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
     .showHelpAfterError()
     .addOption(new Option("--json", "emit JSON responses"))
     .addOption(
-      new Option("--relay-hub-base-url <url>", "Relay Hub base URL").argParser((value) =>
-        assertValidAbsoluteUrl(value),
-      ),
-    )
-    .addOption(new Option("--active-device-id <device-id>", "source device id"));
+      new Option("--relay-hub-base-url <url>", "Relay Hub base URL")
+        .env("RELAY_HUB_BASE_URL")
+        .makeOptionMandatory()
+        .argParser((value) => assertValidAbsoluteUrl(value)),
+    );
 
   const deviceCommand = program.command("device").description("Manage devices");
   const devicePushTokenCommand = deviceCommand
@@ -61,7 +57,7 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
     )
     .option("--push-token <token>", "push token override for simulated mobile registration")
     .action(async (options) => {
-      const relayHubBaseUrl = resolveRelayHubBaseUrl(program.opts().relayHubBaseUrl);
+      const { relayHubBaseUrl } = program.opts();
       const pushRegistration = buildCliPushRegistration({
         nickname: options.name,
         platform: options.platform,
@@ -82,20 +78,23 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
     .command("list")
     .description("List registered devices from the Relay Hub")
     .action(async () => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
-      const devices = await parseOkResponse(makeDeviceRpcClient(deviceContext).listDevices());
+      const { relayHubBaseUrl } = program.opts();
+      const devices = await parseOkResponse(new RpcClient(relayHubBaseUrl).listDevices());
 
       await writeSuccess(devices, Boolean(program.opts().json));
     });
 
   deviceCommand
     .command("rename")
-    .description("Rename the active device")
+    .description("Rename a device")
+    .requiredOption("--device-id <device-id>", "device id")
     .argument("<nickname>", "new device nickname")
-    .action(async (nickname: string) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
+    .action(async (nickname: string, options) => {
+      const { relayHubBaseUrl } = program.opts();
       const response = await parseOkResponse(
-        makeDeviceRpcClient(deviceContext).renameDevice({ nickname }),
+        new RpcClient(relayHubBaseUrl)
+          .createDeviceRpcClient(options.deviceId)
+          .renameDevice({ nickname }),
       );
 
       await writeSuccess(response, Boolean(program.opts().json));
@@ -103,16 +102,19 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
 
   deviceCommand
     .command("delete")
-    .description("Delete the active device")
+    .description("Delete a device")
+    .requiredOption("--device-id <device-id>", "device id")
     .requiredOption("--yes", "confirm device deletion")
-    .action(async () => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
-      await parseOkResponse(makeDeviceRpcClient(deviceContext).deleteDevice());
+    .action(async (options) => {
+      const { relayHubBaseUrl } = program.opts();
+      await parseOkResponse(
+        new RpcClient(relayHubBaseUrl).createDeviceRpcClient(options.deviceId).deleteDevice(),
+      );
 
       await writeSuccess(
         {
           deleted: true,
-          deviceId: deviceContext.deviceId,
+          deviceId: options.deviceId,
         } as const,
         Boolean(program.opts().json),
       );
@@ -120,15 +122,20 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
 
   devicePushTokenCommand
     .command("set")
-    .description("Set the push token for the active device")
+    .description("Set the push token for a device")
+    .requiredOption("--device-id <device-id>", "device id")
     .argument("<token>", "push token")
-    .action(async (token: string) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
-      await parseOkResponse(makeDeviceRpcClient(deviceContext).setPushToken({ token }));
+    .action(async (token: string, options) => {
+      const { relayHubBaseUrl } = program.opts();
+      await parseOkResponse(
+        new RpcClient(relayHubBaseUrl)
+          .createDeviceRpcClient(options.deviceId)
+          .setPushToken({ token }),
+      );
 
       await writeSuccess(
         {
-          deviceId: deviceContext.deviceId,
+          deviceId: options.deviceId,
           pushTokenUpdated: true,
         } as const,
         Boolean(program.opts().json),
@@ -139,14 +146,15 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
     .command("text")
     .description("Send a text item")
     .argument("<text>", "text to send")
-    .requiredOption("--to <device...>", "target device ids")
+    .requiredOption("--source-device-id <device-id>", "source device id")
+    .requiredOption("--target-device-id <device...>", "target device ids")
     .option("--title <title>", "optional title")
     .action(async (text: string, options) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
+      const { relayHubBaseUrl } = program.opts();
       const response = await parseOkResponse(
-        makeDeviceRpcClient(deviceContext).sendText({
+        new RpcClient(relayHubBaseUrl).createDeviceRpcClient(options.sourceDeviceId).sendText({
           text,
-          targetDeviceIds: uniqueValues(options.to),
+          targetDeviceIds: uniqueValues(options.targetDeviceId),
           ...(options.title !== undefined ? { title: options.title } : {}),
         }),
       );
@@ -158,14 +166,15 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
     .command("url")
     .description("Send a URL item")
     .argument("<url>", "URL to send")
-    .requiredOption("--to <device...>", "target device ids")
+    .requiredOption("--source-device-id <device-id>", "source device id")
+    .requiredOption("--target-device-id <device...>", "target device ids")
     .option("--title <title>", "optional title")
     .action(async (url: string, options) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
+      const { relayHubBaseUrl } = program.opts();
       const response = await parseOkResponse(
-        makeDeviceRpcClient(deviceContext).sendUrl({
+        new RpcClient(relayHubBaseUrl).createDeviceRpcClient(options.sourceDeviceId).sendUrl({
           url,
-          targetDeviceIds: uniqueValues(options.to),
+          targetDeviceIds: uniqueValues(options.targetDeviceId),
           ...(options.title !== undefined ? { title: options.title } : {}),
         }),
       );
@@ -177,10 +186,11 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
     .command("file")
     .description("Send one or more files")
     .argument("<filePaths...>", "paths of files to upload")
-    .requiredOption("--to <device...>", "target device ids")
+    .requiredOption("--source-device-id <device-id>", "source device id")
+    .requiredOption("--target-device-id <device...>", "target device ids")
     .option("--title <title>", "optional title")
     .action(async (filePaths: string[], options) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
+      const { relayHubBaseUrl } = program.opts();
       const files = await Promise.all(
         filePaths.map(async (filePath) => {
           const content = await fs.promises.readFile(filePath);
@@ -192,9 +202,9 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
         }),
       );
       const response = await parseOkResponse(
-        makeDeviceRpcClient(deviceContext).sendFiles({
+        new RpcClient(relayHubBaseUrl).createDeviceRpcClient(options.sourceDeviceId).sendFiles({
           files,
-          targetDeviceIds: uniqueValues(options.to),
+          targetDeviceIds: uniqueValues(options.targetDeviceId),
           ...(options.title !== undefined ? { title: options.title } : {}),
         }),
       );
@@ -205,9 +215,23 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
   receiveCommand
     .command("once")
     .description("Fetch pending deliveries once")
-    .action(async () => {
-      const deviceContext = await resolveActiveDeviceWithPlatform(program.opts());
-      const receivedDeliveries = await receivePendingDeliveries(deviceContext);
+    .requiredOption("--target-device-id <device-id>", "target device id")
+    .action(async (options) => {
+      const { relayHubBaseUrl } = program.opts();
+      const devices = await parseOkResponse(new RpcClient(relayHubBaseUrl).listDevices());
+      const targetDevice = devices.find((device) => device.deviceId === options.targetDeviceId);
+
+      if (targetDevice === undefined) {
+        throw new Error(
+          `Target device does not exist or is not visible: ${options.targetDeviceId}`,
+        );
+      }
+
+      const receivedDeliveries = await receivePendingDeliveries({
+        relayHubBaseUrl,
+        deviceId: options.targetDeviceId,
+        platform: targetDevice.platform,
+      });
 
       await writeSuccess(receivedDeliveries, Boolean(program.opts().json));
     });
@@ -225,13 +249,16 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
       "maximum number of deliveries to return",
       numberUtils.parsePositiveInteger,
     )
+    .requiredOption("--target-device-id <device-id>", "target device id")
     .action(async (options) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
+      const { relayHubBaseUrl } = program.opts();
       const deliveries = await parseOkResponse(
-        makeDeviceRpcClient(deviceContext).listDeliveries({
-          state: options.state,
-          limit: options.limit ?? 50,
-        }),
+        new RpcClient(relayHubBaseUrl)
+          .createDeviceRpcClient(options.targetDeviceId)
+          .listDeliveries({
+            state: options.state,
+            limit: options.limit ?? 50,
+          }),
       );
 
       await writeSuccess(deliveries, Boolean(program.opts().json));
@@ -240,11 +267,14 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
   deliveryCommand
     .command("show")
     .description("Show a delivery")
+    .requiredOption("--target-device-id <device-id>", "target device id")
     .argument("<deliveryId>", "delivery id")
-    .action(async (deliveryId: string) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
+    .action(async (deliveryId: string, options) => {
+      const { relayHubBaseUrl } = program.opts();
       const delivery = await parseOkResponse(
-        makeDeviceRpcClient(deviceContext).getDelivery({ deliveryId: deliveryId }),
+        new RpcClient(relayHubBaseUrl)
+          .createDeviceRpcClient(options.targetDeviceId)
+          .getDelivery({ deliveryId: deliveryId }),
       );
 
       await writeSuccess(delivery.delivery, Boolean(program.opts().json));
@@ -253,11 +283,14 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
   deliveryCommand
     .command("ack")
     .description("Acknowledge a delivery")
+    .requiredOption("--target-device-id <device-id>", "target device id")
     .argument("<deliveryId>", "delivery id")
-    .action(async (deliveryId: string) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
+    .action(async (deliveryId: string, options) => {
+      const { relayHubBaseUrl } = program.opts();
       const response = await parseOkResponse(
-        makeDeviceRpcClient(deviceContext).acknowledgeDelivery({ deliveryId: deliveryId }),
+        new RpcClient(relayHubBaseUrl)
+          .createDeviceRpcClient(options.targetDeviceId)
+          .acknowledgeDelivery({ deliveryId: deliveryId }),
       );
 
       await writeSuccess(response, Boolean(program.opts().json));
@@ -266,11 +299,14 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
   deliveryCommand
     .command("viewed")
     .description("Mark a delivery as viewed")
+    .requiredOption("--target-device-id <device-id>", "target device id")
     .argument("<deliveryId>", "delivery id")
-    .action(async (deliveryId: string) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
+    .action(async (deliveryId: string, options) => {
+      const { relayHubBaseUrl } = program.opts();
       const response = await parseOkResponse(
-        makeDeviceRpcClient(deviceContext).markDeliveryViewed({ deliveryId: deliveryId }),
+        new RpcClient(relayHubBaseUrl)
+          .createDeviceRpcClient(options.targetDeviceId)
+          .markDeliveryViewed({ deliveryId: deliveryId }),
       );
 
       await writeSuccess(response, Boolean(program.opts().json));
@@ -279,10 +315,14 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
   deliveryCommand
     .command("open")
     .description("Open a delivery and mark it viewed")
+    .requiredOption("--target-device-id <device-id>", "target device id")
     .argument("<deliveryId>", "delivery id")
-    .action(async (deliveryId: string) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
-      const response = await openDelivery(deviceContext, deliveryId);
+    .action(async (deliveryId: string, options) => {
+      const { relayHubBaseUrl } = program.opts();
+      const response = await openDelivery(
+        { relayHubBaseUrl, deviceId: options.targetDeviceId },
+        deliveryId,
+      );
 
       await writeSuccess(response, Boolean(program.opts().json));
     });
@@ -290,12 +330,15 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
   deliveryCommand
     .command("download")
     .description("Download files from a delivery")
+    .requiredOption("--target-device-id <device-id>", "target device id")
     .argument("<deliveryId>", "delivery id")
     .option("--out <path>", "output file or directory")
     .action(async (deliveryId: string, options) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
+      const { relayHubBaseUrl } = program.opts();
       const download = await parseOkResponse(
-        makeDeviceRpcClient(deviceContext).downloadDelivery({ deliveryId: deliveryId }),
+        new RpcClient(relayHubBaseUrl)
+          .createDeviceRpcClient(options.targetDeviceId)
+          .downloadDelivery({ deliveryId: deliveryId }),
       );
       const outputPaths = await writeDownloadedDelivery(download, options.out);
 
@@ -316,10 +359,13 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
       "maximum number of items to return",
       numberUtils.parsePositiveInteger,
     )
+    .requiredOption("--source-device-id <device-id>", "source device id")
     .action(async (options) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
+      const { relayHubBaseUrl } = program.opts();
       const items = await parseOkResponse(
-        makeDeviceRpcClient(deviceContext).listItems({ limit: options.limit ?? 50 }),
+        new RpcClient(relayHubBaseUrl)
+          .createDeviceRpcClient(options.sourceDeviceId)
+          .listItems({ limit: options.limit ?? 50 }),
       );
 
       await writeSuccess(items, Boolean(program.opts().json));
@@ -328,11 +374,14 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
   itemCommand
     .command("show")
     .description("Show a sent item")
+    .requiredOption("--source-device-id <device-id>", "source device id")
     .argument("<itemId>", "item id")
-    .action(async (itemId: string) => {
-      const deviceContext = resolveActiveDeviceContext(program.opts());
+    .action(async (itemId: string, options) => {
+      const { relayHubBaseUrl } = program.opts();
       const item = await parseOkResponse(
-        makeDeviceRpcClient(deviceContext).getItem({ itemId: itemId }),
+        new RpcClient(relayHubBaseUrl)
+          .createDeviceRpcClient(options.sourceDeviceId)
+          .getItem({ itemId: itemId }),
       );
 
       await writeSuccess(item, Boolean(program.opts().json));
@@ -351,11 +400,6 @@ type BuildCliPushRegistrationInput = {
   pushTokenOverride?: string | undefined;
 };
 
-type GlobalCliOptions = {
-  relayHubBaseUrl?: string | undefined;
-  activeDeviceId?: string | undefined;
-};
-
 function buildCliPushRegistration(
   input: BuildCliPushRegistrationInput,
 ): PushRegistration | undefined {
@@ -372,58 +416,6 @@ function buildCliPushRegistration(
       input.pushTokenOverride ??
       `simulated-${input.platform}-${input.nickname.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-token`,
   };
-}
-
-function resolveActiveDeviceContext(options: GlobalCliOptions): ActiveDeviceContext {
-  return {
-    relayHubBaseUrl: resolveRelayHubBaseUrl(options.relayHubBaseUrl),
-    deviceId: resolveActiveDeviceId(options.activeDeviceId),
-  };
-}
-
-async function resolveActiveDeviceWithPlatform(
-  options: GlobalCliOptions,
-): Promise<ActiveDeviceWithPlatform> {
-  const deviceContext = resolveActiveDeviceContext(options);
-  const devices = await parseOkResponse(makeDeviceRpcClient(deviceContext).listDevices());
-  const activeDevice = devices.find((device) => device.deviceId === deviceContext.deviceId);
-
-  if (activeDevice === undefined) {
-    throw new Error(`Active device does not exist or is not visible: ${deviceContext.deviceId}`);
-  }
-
-  return {
-    ...deviceContext,
-    platform: activeDevice.platform,
-  };
-}
-
-function resolveRelayHubBaseUrl(explicitRelayHubBaseUrl: string | undefined): string {
-  const relayHubBaseUrl = explicitRelayHubBaseUrl ?? process.env["RELAY_HUB_BASE_URL"];
-
-  if (relayHubBaseUrl === undefined) {
-    throw new Error(
-      "Missing required --relay-hub-base-url <url> option or RELAY_HUB_BASE_URL environment variable.",
-    );
-  }
-
-  return relayHubBaseUrl;
-}
-
-function resolveActiveDeviceId(explicitActiveDeviceId: string | undefined): string {
-  const activeDeviceId = explicitActiveDeviceId ?? process.env["RELAY_ACTIVE_DEVICE_ID"];
-
-  if (activeDeviceId === undefined) {
-    throw new Error(
-      "Missing required --active-device-id <device-id> option or RELAY_ACTIVE_DEVICE_ID environment variable.",
-    );
-  }
-
-  return activeDeviceId;
-}
-
-function makeDeviceRpcClient(deviceContext: ActiveDeviceContext) {
-  return new RpcClient(deviceContext.relayHubBaseUrl).createDeviceRpcClient(deviceContext.deviceId);
 }
 
 function uniqueValues(values: string[]): string[] {

@@ -22,6 +22,10 @@ export class RpcClient {
     return this.#honoClient.devices.register.$post({ json: params });
   }
 
+  async listDevices() {
+    return this.#honoClient.devices.$get();
+  }
+
   createDeviceRpcClient(deviceId: DeviceId): DeviceRpcClient {
     return new DeviceRpcClient(this.#honoClient, deviceId);
   }
@@ -34,10 +38,6 @@ class DeviceRpcClient {
   constructor(honoClient: HonoClient, deviceId: DeviceId) {
     this.#honoClient = honoClient;
     this.#deviceId = deviceId;
-  }
-
-  async listDevices() {
-    return this.#honoClient.devices.$get();
   }
 
   async renameDevice(params: { deviceId?: string; nickname: string }) {

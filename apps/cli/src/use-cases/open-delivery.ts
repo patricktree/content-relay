@@ -3,7 +3,6 @@ import { assertIsUnreachable } from "@patricktree/commons-ecma/util/assert";
 import { parseOkResponse, RpcClient } from "@content-relay/client";
 import type { DeliveryResource } from "@content-relay/contracts";
 
-import type { ActiveDeviceContext } from "#pkg/use-cases/device-context.ts";
 import { transitionDeliveryToDelivered } from "#pkg/use-cases/transition-delivery-to-delivered.ts";
 
 export type OpenDeliveryResponse = {
@@ -12,26 +11,26 @@ export type OpenDeliveryResponse = {
 };
 
 export async function openDelivery(
-  deviceContext: ActiveDeviceContext,
+  input: { relayHubBaseUrl: string; deviceId: string },
   deliveryId: string,
 ): Promise<OpenDeliveryResponse> {
   let delivery = (
     await parseOkResponse(
-      new RpcClient(deviceContext.relayHubBaseUrl)
-        .createDeviceRpcClient(deviceContext.deviceId)
+      new RpcClient(input.relayHubBaseUrl)
+        .createDeviceRpcClient(input.deviceId)
         .getDelivery({ deliveryId: deliveryId }),
     )
   ).delivery;
 
   if (delivery.state === "pending") {
-    delivery = await transitionDeliveryToDelivered(deviceContext, deliveryId);
+    delivery = await transitionDeliveryToDelivered(input, deliveryId);
   }
 
   if (delivery.state !== "viewed") {
     delivery = (
       await parseOkResponse(
-        new RpcClient(deviceContext.relayHubBaseUrl)
-          .createDeviceRpcClient(deviceContext.deviceId)
+        new RpcClient(input.relayHubBaseUrl)
+          .createDeviceRpcClient(input.deviceId)
           .markDeliveryViewed({ deliveryId: deliveryId }),
       )
     ).delivery;
