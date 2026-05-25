@@ -33,6 +33,34 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
     let platform: String
   }
 
+  private struct RelaySendTextPayload: Encodable {
+    let sourceDeviceId: String
+    let text: String
+    let title: String?
+    let targetDeviceIds: [String]
+
+    init(sourceDeviceId: String, request: RelaySendTextRequest) {
+      self.sourceDeviceId = sourceDeviceId
+      self.text = request.text
+      self.title = request.title
+      self.targetDeviceIds = request.targetDeviceIds
+    }
+  }
+
+  private struct RelaySendURLPayload: Encodable {
+    let sourceDeviceId: String
+    let url: String
+    let title: String?
+    let targetDeviceIds: [String]
+
+    init(sourceDeviceId: String, request: RelaySendURLRequest) {
+      self.sourceDeviceId = sourceDeviceId
+      self.url = request.url
+      self.title = request.title
+      self.targetDeviceIds = request.targetDeviceIds
+    }
+  }
+
   private let credentials: RelayDeviceCredentials
   private let session: URLSession
   private let jsonDecoder: JSONDecoder
@@ -56,7 +84,7 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
       session: session
     )
 
-    return try await client.sendUnauthenticatedJSONRequest(
+    return try await client.sendJSONRequestWithoutDeviceContext(
       path: "/devices/register",
       method: "POST",
       body: RegisterDeviceRequest(nickname: nickname, platform: platform)
@@ -65,7 +93,7 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
 
   public func fetchPendingDeliveries() async throws -> [RelayDelivery] {
     let response: RelayPendingDeliveriesResponse = try await sendRequest(
-      path: "/deliveries/pending",
+      path: "/deliveries/pending?targetDeviceId=\(urlEncoded(credentials.deviceId))",
       method: "GET"
     )
 
@@ -74,7 +102,7 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
 
   public func acknowledgeDelivery(deliveryId: String) async throws -> RelayDelivery {
     let response: RelayDeliveryActionResponse = try await sendRequest(
-      path: "/deliveries/\(deliveryId)/ack",
+      path: "/deliveries/\(deliveryId)/ack?targetDeviceId=\(urlEncoded(credentials.deviceId))",
       method: "POST"
     )
 
@@ -83,7 +111,7 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
 
   public func markDeliveryViewed(deliveryId: String) async throws -> RelayDelivery {
     let response: RelayDeliveryActionResponse = try await sendRequest(
-      path: "/deliveries/\(deliveryId)/viewed",
+      path: "/deliveries/\(deliveryId)/viewed?targetDeviceId=\(urlEncoded(credentials.deviceId))",
       method: "POST"
     )
 
@@ -92,7 +120,7 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
 
   public func getDelivery(deliveryId: String) async throws -> RelayDelivery {
     let response: RelayDeliveryActionResponse = try await sendRequest(
-      path: "/deliveries/\(deliveryId)",
+      path: "/deliveries/\(deliveryId)?targetDeviceId=\(urlEncoded(credentials.deviceId))",
       method: "GET"
     )
 
@@ -104,11 +132,19 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
   }
 
   public func sendText(_ request: RelaySendTextRequest) async throws -> RelayCreateItemResponse {
-    try await sendJSONRequest(path: "/items/text", method: "POST", body: request)
+    try await sendJSONRequest(
+      path: "/items/text",
+      method: "POST",
+      body: RelaySendTextPayload(sourceDeviceId: credentials.deviceId, request: request)
+    )
   }
 
   public func sendURL(_ request: RelaySendURLRequest) async throws -> RelayCreateItemResponse {
-    try await sendJSONRequest(path: "/items/url", method: "POST", body: request)
+    try await sendJSONRequest(
+      path: "/items/url",
+      method: "POST",
+      body: RelaySendURLPayload(sourceDeviceId: credentials.deviceId, request: request)
+    )
   }
 
   public func sendFiles(
@@ -137,7 +173,10 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
   }
 
   public func downloadDelivery(deliveryId: String) async throws -> RelayDownloadDeliveryResponse {
-    try await sendRequest(path: "/deliveries/\(deliveryId)/download", method: "GET")
+    try await sendRequest(
+      path: "/deliveries/\(deliveryId)/download?targetDeviceId=\(urlEncoded(credentials.deviceId))",
+      method: "GET"
+    )
   }
 
   private func sendJSONRequest<Response: Decodable, Body: Encodable>(
@@ -153,7 +192,7 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
     )
   }
 
-  private func sendUnauthenticatedJSONRequest<Response: Decodable, Body: Encodable>(
+  private func sendJSONRequestWithoutDeviceContext<Response: Decodable, Body: Encodable>(
     path: String,
     method: String,
     body: Body
@@ -162,8 +201,7 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
       path: path,
       method: method,
       bodyData: jsonEncoder.encode(body),
-      contentType: "application/json",
-      includesDeviceIdHeader: false
+      contentType: "application/json"
     )
   }
 
@@ -171,15 +209,13 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
     path: String,
     method: String,
     bodyData: Data? = nil,
-    contentType: String? = nil,
-    includesDeviceIdHeader: Bool = true
+    contentType: String? = nil
   ) async throws -> Response {
     let request = try buildRequest(
       path: path,
       method: method,
       bodyData: bodyData,
-      contentType: contentType,
-      includesDeviceIdHeader: includesDeviceIdHeader
+      contentType: contentType
     )
     let (data, response) = try await session.data(for: request)
 
@@ -198,8 +234,7 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
     path: String,
     method: String,
     bodyData: Data?,
-    contentType: String?,
-    includesDeviceIdHeader: Bool
+    contentType: String?
   ) throws -> URLRequest {
     let normalizedPath = path.hasPrefix("/") ? path : "/\(path)"
 
@@ -210,10 +245,6 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
     var request = URLRequest(url: url)
     request.httpMethod = method
     request.setValue("application/json", forHTTPHeaderField: "accept")
-
-    if includesDeviceIdHeader {
-      request.setValue(credentials.deviceId, forHTTPHeaderField: "x-relay-device-id")
-    }
 
     if let bodyData {
       request.httpBody = bodyData
@@ -252,6 +283,11 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
     }
 
     appendString("--\(boundary)\(lineBreak)")
+    appendString("Content-Disposition: form-data; name=\"sourceDeviceId\"\(lineBreak)\(lineBreak)")
+    appendString(credentials.deviceId)
+    appendString(lineBreak)
+
+    appendString("--\(boundary)\(lineBreak)")
     appendString("Content-Disposition: form-data; name=\"targetDeviceIds\"\(lineBreak)\(lineBreak)")
     appendString(try encodeJSONString(targetDeviceIds))
     appendString(lineBreak)
@@ -278,6 +314,10 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
 
     appendString("--\(boundary)--\(lineBreak)")
     return data
+  }
+
+  private func urlEncoded(_ value: String) -> String {
+    value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? value
   }
 
   private func encodeJSONString(_ value: [String]) throws -> String {

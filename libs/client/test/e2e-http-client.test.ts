@@ -24,7 +24,6 @@ import { RpcClient } from "#pkg/rpc-client.ts";
 
 import {
   allocatePort,
-  createAuthHeaders,
   listenOnPort,
   receivePendingDeliveries,
   registerTestDevice,
@@ -318,7 +317,7 @@ test("macos simulated receive auto-marks text and url deliveries viewed", async 
   });
 });
 
-test("deleting a device invalidates its authentication and hides it from active device listings", async () => {
+test("deleting a device hides it from active device listings", async () => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
     const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
@@ -336,20 +335,12 @@ test("deleting a device invalidates its authentication and hides it from active 
       .deleteDevice();
     expect(removeResponse.status).toBe(204);
 
-    const listDeliveriesPromise = parseOkResponse(
+    const deliveries = await parseOkResponse(
       new RpcClient(receiverProfile.relayHubBaseUrl)
         .createDeviceRpcClient(receiverProfile.deviceId)
         .listDeliveries({ state: "all", limit: 10 }),
     );
-    await expect(listDeliveriesPromise).rejects.toSatisfy(isParseResponseError);
-    await expect(listDeliveriesPromise).rejects.toMatchObject({
-      statusCode: 401,
-      detail: {
-        data: {
-          error: expect.stringMatching(/authentication failed/i),
-        },
-      },
-    });
+    expect(deliveries.deliveries).toEqual([]);
 
     const devices = await parseOkResponse(
       new RpcClient(senderProfile.relayHubBaseUrl)
@@ -360,7 +351,7 @@ test("deleting a device invalidates its authentication and hides it from active 
   });
 });
 
-test("push tokens can be upserted for the authenticated device", async () => {
+test("push tokens can be upserted for a path device", async () => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
     const device = await registerTestDevice({
       relayHubBaseUrl,
@@ -381,30 +372,10 @@ test("push tokens can be upserted for the authenticated device", async () => {
         token: "ExponentPushToken[device-token-2]",
       });
     expect(upsertResponse2.status).toBe(204);
-
-    const removeResponse = await new RpcClient(device.relayHubBaseUrl)
-      .createDeviceRpcClient(device.deviceId)
-      .deleteDevice();
-    expect(removeResponse.status).toBe(204);
-
-    const upsertDeletedDevicePushTokenPromise = parseOkResponse(
-      new RpcClient(device.relayHubBaseUrl)
-        .createDeviceRpcClient(device.deviceId)
-        .setPushToken({ token: "ExponentPushToken[device-token-3]" }),
-    );
-    await expect(upsertDeletedDevicePushTokenPromise).rejects.toSatisfy(isParseResponseError);
-    await expect(upsertDeletedDevicePushTokenPromise).rejects.toMatchObject({
-      statusCode: 401,
-      detail: {
-        data: {
-          error: expect.stringMatching(/authentication failed/i),
-        },
-      },
-    });
   });
 });
 
-test("device routes support rename, listing, and same-device identity guards", async () => {
+test("device routes support rename, listing, and path-selected device actions", async () => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
     const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
@@ -440,60 +411,25 @@ test("device routes support rename, listing, and same-device identity guards", a
       ]),
     );
 
-    const renameAnotherDevicePromise = parseOkResponse(
-      new RpcClient(receiverProfile.relayHubBaseUrl)
-        .createDeviceRpcClient(receiverProfile.deviceId)
-        .renameDevice({
-          deviceId: senderProfile.deviceId,
-          nickname: "Malicious Rename",
-        }),
-    );
-    await expect(renameAnotherDevicePromise).rejects.toSatisfy(isParseResponseError);
-    await expect(renameAnotherDevicePromise).rejects.toMatchObject({
-      statusCode: 403,
-      detail: {
-        data: {
-          error: expect.stringMatching(/Cannot rename another device\./i),
-        },
-      },
-    });
+    const renameSenderResponse = await new RpcClient(receiverProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(receiverProfile.deviceId)
+      .renameDevice({
+        deviceId: senderProfile.deviceId,
+        nickname: "Renamed Developer CLI",
+      });
+    expect(renameSenderResponse.status).toBe(200);
 
-    const deleteAnotherDevicePromise = parseOkResponse(
-      new RpcClient(receiverProfile.relayHubBaseUrl)
-        .createDeviceRpcClient(receiverProfile.deviceId)
-        .deleteDevice({ deviceId: senderProfile.deviceId }),
-    );
-    await expect(deleteAnotherDevicePromise).rejects.toSatisfy(isParseResponseError);
-    await expect(deleteAnotherDevicePromise).rejects.toMatchObject({
-      statusCode: 403,
-      detail: {
-        data: {
-          error: expect.stringMatching(/Cannot remove another device\./i),
-        },
-      },
-    });
-
-    const updateAnotherDevicePushTokenPromise = parseOkResponse(
-      new RpcClient(receiverProfile.relayHubBaseUrl)
-        .createDeviceRpcClient(receiverProfile.deviceId)
-        .setPushToken({
-          deviceId: senderProfile.deviceId,
-          token: "ExponentPushToken[cross-device]",
-        }),
-    );
-    await expect(updateAnotherDevicePushTokenPromise).rejects.toSatisfy(isParseResponseError);
-    await expect(updateAnotherDevicePushTokenPromise).rejects.toMatchObject({
-      statusCode: 403,
-      detail: {
-        data: {
-          error: expect.stringMatching(/Cannot update another device\./i),
-        },
-      },
-    });
+    const updateSenderPushTokenResponse = await new RpcClient(receiverProfile.relayHubBaseUrl)
+      .createDeviceRpcClient(receiverProfile.deviceId)
+      .setPushToken({
+        deviceId: senderProfile.deviceId,
+        token: "ExponentPushToken[cross-device]",
+      });
+    expect(updateSenderPushTokenResponse.status).toBe(204);
   });
 });
 
-test("item and delivery routes list and fetch the authenticated device resources", async () => {
+test("item and delivery routes list and fetch device-scoped resources", async () => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
     const senderProfile = await registerTestDevice({
       relayHubBaseUrl,
@@ -902,22 +838,22 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
       error: expect.stringMatching(/(greater than 0|>0)/i),
     });
 
-    const missingTargetDeviceIdsForm = new FormData();
-    missingTargetDeviceIdsForm.set(
+    const missingSourceDeviceIdForm = new FormData();
+    missingSourceDeviceIdForm.set(
       "files",
       new File([Buffer.from("alpha\n")], "alpha.txt", { type: "text/plain" }),
     );
-    const missingTargetDeviceIdsResponse = await fetch(`${relayHubBaseUrl}/items/file`, {
+    const missingSourceDeviceIdResponse = await fetch(`${relayHubBaseUrl}/items/file`, {
       method: "POST",
-      headers: createAuthHeaders(senderProfile),
-      body: missingTargetDeviceIdsForm,
+      body: missingSourceDeviceIdForm,
     });
-    expect(missingTargetDeviceIdsResponse.status).toBe(400);
-    expect(await missingTargetDeviceIdsResponse.json()).toMatchObject({
-      error: expect.stringMatching(/Expected `targetDeviceIds` JSON form field\./i),
+    expect(missingSourceDeviceIdResponse.status).toBe(400);
+    expect(await missingSourceDeviceIdResponse.json()).toMatchObject({
+      error: expect.stringMatching(/Expected `sourceDeviceId` form field\./i),
     });
 
     const invalidJsonTargetDeviceIdsForm = new FormData();
+    invalidJsonTargetDeviceIdsForm.set("sourceDeviceId", senderProfile.deviceId);
     invalidJsonTargetDeviceIdsForm.set("targetDeviceIds", "not-json");
     invalidJsonTargetDeviceIdsForm.set(
       "files",
@@ -925,7 +861,6 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
     );
     const invalidJsonTargetDeviceIdsResponse = await fetch(`${relayHubBaseUrl}/items/file`, {
       method: "POST",
-      headers: createAuthHeaders(senderProfile),
       body: invalidJsonTargetDeviceIdsForm,
     });
     expect(invalidJsonTargetDeviceIdsResponse.status).toBe(400);
@@ -934,6 +869,7 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
     });
 
     const invalidTargetDeviceIdArrayForm = new FormData();
+    invalidTargetDeviceIdArrayForm.set("sourceDeviceId", senderProfile.deviceId);
     invalidTargetDeviceIdArrayForm.set("targetDeviceIds", JSON.stringify([]));
     invalidTargetDeviceIdArrayForm.set(
       "files",
@@ -941,7 +877,6 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
     );
     const invalidTargetDeviceIdArrayResponse = await fetch(`${relayHubBaseUrl}/items/file`, {
       method: "POST",
-      headers: createAuthHeaders(senderProfile),
       body: invalidTargetDeviceIdArrayForm,
     });
     expect(invalidTargetDeviceIdArrayResponse.status).toBe(400);
@@ -952,10 +887,10 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
     });
 
     const noFilesForm = new FormData();
+    noFilesForm.set("sourceDeviceId", senderProfile.deviceId);
     noFilesForm.set("targetDeviceIds", JSON.stringify([receiverProfile.deviceId]));
     const noFilesResponse = await fetch(`${relayHubBaseUrl}/items/file`, {
       method: "POST",
-      headers: createAuthHeaders(senderProfile),
       body: noFilesForm,
     });
     expect(noFilesResponse.status).toBe(400);
@@ -964,11 +899,11 @@ test("validation errors are returned for JSON, query, and multipart routes", asy
     });
 
     const invalidFileFieldForm = new FormData();
+    invalidFileFieldForm.set("sourceDeviceId", senderProfile.deviceId);
     invalidFileFieldForm.set("targetDeviceIds", JSON.stringify([receiverProfile.deviceId]));
     invalidFileFieldForm.set("files", "not-a-file");
     const invalidFileFieldResponse = await fetch(`${relayHubBaseUrl}/items/file`, {
       method: "POST",
-      headers: createAuthHeaders(senderProfile),
       body: invalidFileFieldForm,
     });
     expect(invalidFileFieldResponse.status).toBe(400);
@@ -1053,24 +988,21 @@ test("resource lookup routes reject unknown resources and invalid file downloads
   });
 });
 
-test("items, deliveries, and devices collection routes reject unauthenticated requests", async () => {
+test("collection routes only require explicit device parameters where needed", async () => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
     const listDevicesResponse = await fetch(`${relayHubBaseUrl}/devices`);
-    expect(listDevicesResponse.status).toBe(401);
-    expect(await listDevicesResponse.json()).toMatchObject({
-      error: expect.stringMatching(/Missing x-relay-device-id header\./i),
-    });
+    expect(listDevicesResponse.status).toBe(200);
 
     const listItemsResponse = await fetch(`${relayHubBaseUrl}/items`);
-    expect(listItemsResponse.status).toBe(401);
+    expect(listItemsResponse.status).toBe(400);
     expect(await listItemsResponse.json()).toMatchObject({
-      error: expect.stringMatching(/Missing x-relay-device-id header\./i),
+      error: expect.stringMatching(/sourceDeviceId/i),
     });
 
-    const listDeliveriesWithoutAuthResponse = await fetch(`${relayHubBaseUrl}/deliveries`);
-    expect(listDeliveriesWithoutAuthResponse.status).toBe(401);
-    expect(await listDeliveriesWithoutAuthResponse.json()).toMatchObject({
-      error: expect.stringMatching(/Missing x-relay-device-id header\./i),
+    const listDeliveriesResponse = await fetch(`${relayHubBaseUrl}/deliveries`);
+    expect(listDeliveriesResponse.status).toBe(400);
+    expect(await listDeliveriesResponse.json()).toMatchObject({
+      error: expect.stringMatching(/targetDeviceId/i),
     });
   });
 });

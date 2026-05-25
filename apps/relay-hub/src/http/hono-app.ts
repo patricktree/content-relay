@@ -1,10 +1,8 @@
 import { $, createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { type Context, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 
 import {
-  authHeadersSchema,
   createItemResponseSchema,
   createTextItemRequestSchema,
   createUrlItemRequestSchema,
@@ -21,11 +19,7 @@ import {
 } from "@content-relay/contracts";
 import { createLogger } from "@content-relay/o11y.logs";
 
-import {
-  RelayAuthenticationFailedError,
-  RelayInvalidInputError,
-  RelayResourceNotFoundError,
-} from "#pkg/errors.ts";
+import { RelayInvalidInputError, RelayResourceNotFoundError } from "#pkg/errors.ts";
 import {
   presentCreateItemOutput,
   presentDeliveryAction,
@@ -39,7 +33,6 @@ import {
 } from "#pkg/http/presenters.ts";
 import { instrumentationScopeFromModuleURL } from "#pkg/observability/instrumentation-scope.ts";
 import { acknowledgeDelivery } from "#pkg/use-cases/acknowledge-delivery.ts";
-import { authenticateDevice } from "#pkg/use-cases/authenticate-device.ts";
 import { createFileItem } from "#pkg/use-cases/create-file-item.ts";
 import { createTextItem } from "#pkg/use-cases/create-text-item.ts";
 import { createUrlItem } from "#pkg/use-cases/create-url-item.ts";
@@ -64,9 +57,8 @@ const API_TAGS = {
   items: "Items",
 } as const;
 
-const AUTH_SECURITY = [{ RelayDeviceIdHeader: [] }];
 const allowedCorsOrigins = ["https://localhost"];
-const allowedCorsHeaders = ["content-type", "x-relay-device-id"];
+const allowedCorsHeaders = ["content-type"];
 const allowedCorsMethods = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"];
 
 const deliveryIdParamsSchema = z.object({
@@ -108,18 +100,32 @@ const itemIdParamsSchema = z.object({
     }),
 });
 
+const sourceDeviceQuerySchema = z.object({
+  sourceDeviceId: z.string({ error: "Expected `sourceDeviceId` query parameter." }).min(1),
+});
+
+const targetDeviceQuerySchema = z.object({
+  targetDeviceId: z.string({ error: "Expected `targetDeviceId` query parameter." }).min(1),
+});
+
 const deliveryListQuerySchema = z.object({
+  targetDeviceId: z.string({ error: "Expected `targetDeviceId` query parameter." }).min(1),
   state: z.enum(["pending", "delivered", "viewed", "all"]).optional(),
   limit: z.coerce.number().int().positive().max(500).optional(),
 });
 
 const itemListQuerySchema = z.object({
+  sourceDeviceId: z.string({ error: "Expected `sourceDeviceId` query parameter." }).min(1),
   limit: z.coerce.number().int().positive().max(500).optional(),
 });
 
 const fileUploadRequestSchema = z.any().openapi({
   type: "object",
   properties: {
+    sourceDeviceId: {
+      type: "string",
+      description: "Device ID that creates the item.",
+    },
     targetDeviceIds: {
       type: "string",
       description: "JSON-encoded array of target device IDs.",
@@ -137,27 +143,8 @@ const fileUploadRequestSchema = z.any().openapi({
   },
 });
 
-type HonoEnvironment = {
-  Variables: {
-    authenticatedDeviceId: string;
-  };
-};
-
-type AuthenticatedContext = Context<HonoEnvironment>;
-
-const authenticateProtectedRoute: MiddlewareHandler<HonoEnvironment> = async (context, next) => {
-  if (context.req.method === "OPTIONS") {
-    await next();
-
-    return;
-  }
-
-  await authenticateRequest(context);
-  await next();
-};
-
 export async function createHonoApp() {
-  const app = new OpenAPIHono<HonoEnvironment>({
+  const app = new OpenAPIHono({
     defaultHook: (result, context) => {
       if (result.success) {
         return undefined;
@@ -170,12 +157,6 @@ export async function createHonoApp() {
         400,
       );
     },
-  });
-
-  app.openAPIRegistry.registerComponent("securitySchemes", "RelayDeviceIdHeader", {
-    type: "apiKey",
-    in: "header",
-    name: "x-relay-device-id",
   });
 
   // Capacitor serves the bundled app from https://localhost, so the Relay Hub must
@@ -247,14 +228,6 @@ export async function createHonoApp() {
           },
           description: "Invalid request.",
         },
-        401: {
-          content: {
-            "application/json": {
-              schema: errorResponseSchema,
-            },
-          },
-          description: "Authentication failed.",
-        },
         500: {
           content: {
             "application/json": {
@@ -272,25 +245,13 @@ export async function createHonoApp() {
     },
   );
 
-  const routes = $(
-    publicRoutes
-      .use("/devices", authenticateProtectedRoute)
-      .use("/devices/:deviceId", authenticateProtectedRoute)
-      .use("/devices/:deviceId/push-token", authenticateProtectedRoute)
-      .use("/items", authenticateProtectedRoute)
-      .use("/items/*", authenticateProtectedRoute)
-      .use("/deliveries", authenticateProtectedRoute)
-      .use("/deliveries/*", authenticateProtectedRoute),
-  )
+  const routes = $(publicRoutes)
     .openapi(
       createRoute({
         method: "get",
         path: "/devices",
         tags: [API_TAGS.devices],
-        security: AUTH_SECURITY,
-        request: {
-          headers: authHeadersSchema,
-        },
+        request: {},
         responses: {
           200: {
             content: {
@@ -299,14 +260,6 @@ export async function createHonoApp() {
               },
             },
             description: "Devices listed.",
-          },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
           },
           500: {
             content: {
@@ -329,9 +282,7 @@ export async function createHonoApp() {
         method: "patch",
         path: "/devices/{deviceId}",
         tags: [API_TAGS.devices],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           params: deviceIdParamsSchema,
           body: {
             content: {
@@ -359,22 +310,6 @@ export async function createHonoApp() {
             },
             description: "Invalid request.",
           },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
-          403: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Forbidden.",
-          },
           404: {
             content: {
               "application/json": {
@@ -394,15 +329,7 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
         const { deviceId } = context.req.valid("param");
-
-        assertAuthenticatedDeviceMatchesTargetDevice(
-          authenticatedDeviceId,
-          deviceId,
-          "Cannot rename another device.",
-        );
-
         const device = await renameDevice(deviceId, context.req.valid("json").nickname);
 
         return context.json(presentDeviceSummary(device), 200);
@@ -413,30 +340,12 @@ export async function createHonoApp() {
         method: "delete",
         path: "/devices/{deviceId}",
         tags: [API_TAGS.devices],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           params: deviceIdParamsSchema,
         },
         responses: {
           204: {
             description: "Device deleted.",
-          },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
-          403: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Forbidden.",
           },
           404: {
             content: {
@@ -457,14 +366,7 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
         const { deviceId } = context.req.valid("param");
-
-        assertAuthenticatedDeviceMatchesTargetDevice(
-          authenticatedDeviceId,
-          deviceId,
-          "Cannot remove another device.",
-        );
 
         await deleteDevice(deviceId);
 
@@ -476,9 +378,7 @@ export async function createHonoApp() {
         method: "post",
         path: "/devices/{deviceId}/push-token",
         tags: [API_TAGS.devices],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           params: deviceIdParamsSchema,
           body: {
             content: {
@@ -501,22 +401,6 @@ export async function createHonoApp() {
             },
             description: "Invalid request.",
           },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
-          403: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Forbidden.",
-          },
           404: {
             content: {
               "application/json": {
@@ -536,14 +420,7 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
         const { deviceId } = context.req.valid("param");
-
-        assertAuthenticatedDeviceMatchesTargetDevice(
-          authenticatedDeviceId,
-          deviceId,
-          "Cannot update another device.",
-        );
 
         await upsertPushToken(deviceId, context.req.valid("json").token);
 
@@ -555,9 +432,7 @@ export async function createHonoApp() {
         method: "post",
         path: "/items/text",
         tags: [API_TAGS.items],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           body: {
             content: {
               "application/json": {
@@ -584,14 +459,6 @@ export async function createHonoApp() {
             },
             description: "Invalid request.",
           },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
           500: {
             content: {
               "application/json": {
@@ -603,9 +470,8 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
         const input = context.req.valid("json");
-        const result = await createTextItem(authenticatedDeviceId, {
+        const result = await createTextItem(input.sourceDeviceId, {
           text: input.text,
           targetDeviceIds: input.targetDeviceIds,
           ...(input.title !== undefined ? { title: input.title } : {}),
@@ -619,9 +485,7 @@ export async function createHonoApp() {
         method: "post",
         path: "/items/url",
         tags: [API_TAGS.items],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           body: {
             content: {
               "application/json": {
@@ -648,14 +512,6 @@ export async function createHonoApp() {
             },
             description: "Invalid request.",
           },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
           500: {
             content: {
               "application/json": {
@@ -667,9 +523,8 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
         const input = context.req.valid("json");
-        const result = await createUrlItem(authenticatedDeviceId, {
+        const result = await createUrlItem(input.sourceDeviceId, {
           url: input.url,
           targetDeviceIds: input.targetDeviceIds,
           ...(input.title !== undefined ? { title: input.title } : {}),
@@ -683,9 +538,7 @@ export async function createHonoApp() {
         method: "post",
         path: "/items/file",
         tags: [API_TAGS.items],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           body: {
             content: {
               "multipart/form-data": {
@@ -713,14 +566,6 @@ export async function createHonoApp() {
             },
             description: "Invalid request.",
           },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
           500: {
             content: {
               "application/json": {
@@ -732,9 +577,8 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
         const input = await parseFileUploadRequest(context.req);
-        const result = await createFileItem(authenticatedDeviceId, input);
+        const result = await createFileItem(input.sourceDeviceId, input);
 
         return context.json(presentCreateItemOutput(result), 201);
       },
@@ -744,9 +588,8 @@ export async function createHonoApp() {
         method: "get",
         path: "/deliveries/pending",
         tags: [API_TAGS.deliveries],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
+          query: targetDeviceQuerySchema,
         },
         responses: {
           200: {
@@ -757,14 +600,6 @@ export async function createHonoApp() {
             },
             description: "Pending deliveries listed.",
           },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
           500: {
             content: {
               "application/json": {
@@ -776,8 +611,8 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
-        const deliveries = await listPendingDeliveries(authenticatedDeviceId);
+        const { targetDeviceId } = context.req.valid("query");
+        const deliveries = await listPendingDeliveries(targetDeviceId);
 
         return context.json(presentDeliveryList(deliveries), 200);
       },
@@ -787,9 +622,7 @@ export async function createHonoApp() {
         method: "get",
         path: "/deliveries",
         tags: [API_TAGS.deliveries],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           query: deliveryListQuerySchema,
         },
         responses: {
@@ -809,14 +642,6 @@ export async function createHonoApp() {
             },
             description: "Invalid request.",
           },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
           500: {
             content: {
               "application/json": {
@@ -828,10 +653,9 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
         const query = context.req.valid("query");
         const deliveries = await listDeliveries(
-          authenticatedDeviceId,
+          query.targetDeviceId,
           query.state ?? "pending",
           query.limit ?? 50,
         );
@@ -844,10 +668,9 @@ export async function createHonoApp() {
         method: "get",
         path: "/deliveries/{deliveryId}",
         tags: [API_TAGS.deliveries],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           params: deliveryIdParamsSchema,
+          query: targetDeviceQuerySchema,
         },
         responses: {
           200: {
@@ -858,14 +681,6 @@ export async function createHonoApp() {
             },
             description: "Delivery loaded.",
           },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
           404: {
             content: {
               "application/json": {
@@ -885,9 +700,9 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
         const { deliveryId } = context.req.valid("param");
-        const delivery = await getDelivery(authenticatedDeviceId, deliveryId);
+        const { targetDeviceId } = context.req.valid("query");
+        const delivery = await getDelivery(targetDeviceId, deliveryId);
 
         return context.json(presentDeliveryAction(delivery), 200);
       },
@@ -897,10 +712,9 @@ export async function createHonoApp() {
         method: "post",
         path: "/deliveries/{deliveryId}/ack",
         tags: [API_TAGS.deliveries],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           params: deliveryIdParamsSchema,
+          query: targetDeviceQuerySchema,
         },
         responses: {
           200: {
@@ -911,14 +725,6 @@ export async function createHonoApp() {
             },
             description: "Delivery acknowledged.",
           },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
           404: {
             content: {
               "application/json": {
@@ -938,9 +744,9 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
         const { deliveryId } = context.req.valid("param");
-        const delivery = await acknowledgeDelivery(authenticatedDeviceId, deliveryId);
+        const { targetDeviceId } = context.req.valid("query");
+        const delivery = await acknowledgeDelivery(targetDeviceId, deliveryId);
 
         return context.json(presentDeliveryAction(delivery), 200);
       },
@@ -950,10 +756,9 @@ export async function createHonoApp() {
         method: "post",
         path: "/deliveries/{deliveryId}/viewed",
         tags: [API_TAGS.deliveries],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           params: deliveryIdParamsSchema,
+          query: targetDeviceQuerySchema,
         },
         responses: {
           200: {
@@ -964,14 +769,6 @@ export async function createHonoApp() {
             },
             description: "Delivery marked as viewed.",
           },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
           404: {
             content: {
               "application/json": {
@@ -991,9 +788,9 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
         const { deliveryId } = context.req.valid("param");
-        const delivery = await markDeliveryViewed(authenticatedDeviceId, deliveryId);
+        const { targetDeviceId } = context.req.valid("query");
+        const delivery = await markDeliveryViewed(targetDeviceId, deliveryId);
 
         return context.json(presentDeliveryAction(delivery), 200);
       },
@@ -1003,10 +800,9 @@ export async function createHonoApp() {
         method: "get",
         path: "/deliveries/{deliveryId}/download",
         tags: [API_TAGS.deliveries],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           params: deliveryIdParamsSchema,
+          query: targetDeviceQuerySchema,
         },
         responses: {
           200: {
@@ -1017,14 +813,6 @@ export async function createHonoApp() {
             },
             description: "Delivery content downloaded.",
           },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
           404: {
             content: {
               "application/json": {
@@ -1044,9 +832,9 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
         const { deliveryId } = context.req.valid("param");
-        const result = await downloadDelivery(authenticatedDeviceId, deliveryId);
+        const { targetDeviceId } = context.req.valid("query");
+        const result = await downloadDelivery(targetDeviceId, deliveryId);
 
         return context.json(presentDownloadDeliveryOutput(result), 200);
       },
@@ -1056,9 +844,7 @@ export async function createHonoApp() {
         method: "get",
         path: "/items",
         tags: [API_TAGS.items],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           query: itemListQuerySchema,
         },
         responses: {
@@ -1078,14 +864,6 @@ export async function createHonoApp() {
             },
             description: "Invalid request.",
           },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
-          },
           500: {
             content: {
               "application/json": {
@@ -1097,9 +875,8 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
-        const { limit = 50 } = context.req.valid("query");
-        const items = await listItems(authenticatedDeviceId, limit);
+        const { sourceDeviceId, limit = 50 } = context.req.valid("query");
+        const items = await listItems(sourceDeviceId, limit);
 
         return context.json(presentItemList(items), 200);
       },
@@ -1109,10 +886,9 @@ export async function createHonoApp() {
         method: "get",
         path: "/items/{itemId}",
         tags: [API_TAGS.items],
-        security: AUTH_SECURITY,
         request: {
-          headers: authHeadersSchema,
           params: itemIdParamsSchema,
+          query: sourceDeviceQuerySchema,
         },
         responses: {
           200: {
@@ -1122,14 +898,6 @@ export async function createHonoApp() {
               },
             },
             description: "Item loaded.",
-          },
-          401: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Authentication failed.",
           },
           404: {
             content: {
@@ -1150,9 +918,9 @@ export async function createHonoApp() {
         },
       }),
       async (context) => {
-        const authenticatedDeviceId = context.get("authenticatedDeviceId");
         const { itemId } = context.req.valid("param");
-        const item = await getItem(authenticatedDeviceId, itemId);
+        const { sourceDeviceId } = context.req.valid("query");
+        const item = await getItem(sourceDeviceId, itemId);
 
         return context.json(presentLoadedItem(item), 200);
       },
@@ -1161,34 +929,10 @@ export async function createHonoApp() {
   return routes;
 }
 
-async function authenticateRequest(context: AuthenticatedContext): Promise<void> {
-  const deviceId = context.req.header("x-relay-device-id");
-
-  if (deviceId === undefined) {
-    throw new HTTPException(401, {
-      message: "Missing x-relay-device-id header.",
-    });
-  }
-
-  await authenticateDevice(deviceId);
-  context.set("authenticatedDeviceId", deviceId);
-}
-
-function assertAuthenticatedDeviceMatchesTargetDevice(
-  authenticatedDeviceId: string,
-  targetDeviceId: string,
-  errorMessage: string,
-): void {
-  if (authenticatedDeviceId === targetDeviceId) {
-    return;
-  }
-
-  throw new HTTPException(403, { message: errorMessage });
-}
-
 async function parseFileUploadRequest(
   request: Request | { formData(): Promise<FormData> },
 ): Promise<{
+  sourceDeviceId: string;
   title?: string;
   targetDeviceIds: string[];
   files: {
@@ -1198,11 +942,13 @@ async function parseFileUploadRequest(
   }[];
 }> {
   const formData = await request.formData();
+  const sourceDeviceId = parseRequiredFormString(formData.get("sourceDeviceId"), "sourceDeviceId");
   const targetDeviceIds = parseTargetDeviceIds(formData.get("targetDeviceIds"));
   const files = await parseUploadedFiles(formData.getAll("files"));
   const title = normalizeOptionalFormString(formData.get("title"));
 
   return {
+    sourceDeviceId,
     ...(title !== undefined ? { title } : {}),
     targetDeviceIds,
     files,
@@ -1233,6 +979,17 @@ async function parseUploadedFiles(uploadedFiles: FormDataEntryValue[]): Promise<
       };
     }),
   );
+}
+
+function parseRequiredFormString(value: FormDataEntryValue | null, fieldName: string): string {
+  const normalizedValue = normalizeOptionalFormString(value);
+  if (normalizedValue === undefined) {
+    throw new HTTPException(400, {
+      message: `Expected \`${fieldName}\` form field.`,
+    });
+  }
+
+  return normalizedValue;
 }
 
 function normalizeOptionalFormString(value: FormDataEntryValue | null): string | undefined {
@@ -1295,10 +1052,6 @@ function getHttpStatus(error: unknown): 400 | 401 | 403 | 404 | 500 {
       default:
         return 500;
     }
-  }
-
-  if (error instanceof RelayAuthenticationFailedError) {
-    return 401;
   }
 
   if (error instanceof RelayResourceNotFoundError) {

@@ -1,5 +1,4 @@
 import type {
-  AuthHeaders,
   DevicePlatform,
   DeliveryListState,
   PushRegistration,
@@ -38,12 +37,11 @@ class DeviceRpcClient {
   }
 
   async listDevices() {
-    return this.#honoClient.devices.$get({ header: createAuthHeaders(this.#deviceId) });
+    return this.#honoClient.devices.$get();
   }
 
   async renameDevice(params: { deviceId?: string; nickname: string }) {
     return this.#honoClient.devices[":deviceId"].$patch({
-      header: createAuthHeaders(this.#deviceId),
       param: { deviceId: params.deviceId ?? this.#deviceId },
       json: { nickname: params.nickname },
     });
@@ -51,14 +49,12 @@ class DeviceRpcClient {
 
   async deleteDevice(params: { deviceId?: string } = {}) {
     return this.#honoClient.devices[":deviceId"].$delete({
-      header: createAuthHeaders(this.#deviceId),
       param: { deviceId: params.deviceId ?? this.#deviceId },
     });
   }
 
   async setPushToken(params: { deviceId?: string; token: string }) {
     return this.#honoClient.devices[":deviceId"]["push-token"].$post({
-      header: createAuthHeaders(this.#deviceId),
       param: { deviceId: params.deviceId ?? this.#deviceId },
       json: { token: params.token },
     });
@@ -66,15 +62,13 @@ class DeviceRpcClient {
 
   async sendText(params: { text: string; targetDeviceIds: string[]; title?: string }) {
     return this.#honoClient.items.text.$post({
-      header: createAuthHeaders(this.#deviceId),
-      json: params,
+      json: { sourceDeviceId: this.#deviceId, ...params },
     });
   }
 
   async sendUrl(params: { url: string; targetDeviceIds: string[]; title?: string }) {
     return this.#honoClient.items.url.$post({
-      header: createAuthHeaders(this.#deviceId),
-      json: params,
+      json: { sourceDeviceId: this.#deviceId, ...params },
     });
   }
 
@@ -90,8 +84,8 @@ class DeviceRpcClient {
     );
 
     return this.#honoClient.items.file.$post({
-      header: createAuthHeaders(this.#deviceId),
       form: {
+        sourceDeviceId: this.#deviceId,
         targetDeviceIds: JSON.stringify(params.targetDeviceIds),
         ...(params.title !== undefined ? { title: params.title } : {}),
         files,
@@ -100,27 +94,29 @@ class DeviceRpcClient {
   }
 
   async fetchPendingDeliveries() {
-    return this.#honoClient.deliveries.pending.$get({ header: createAuthHeaders(this.#deviceId) });
+    return this.#honoClient.deliveries.pending.$get({
+      query: { targetDeviceId: this.#deviceId },
+    });
   }
 
   async acknowledgeDelivery(params: { deliveryId: string }) {
     return this.#honoClient.deliveries[":deliveryId"].ack.$post({
-      header: createAuthHeaders(this.#deviceId),
       param: { deliveryId: params.deliveryId },
+      query: { targetDeviceId: this.#deviceId },
     });
   }
 
   async markDeliveryViewed(params: { deliveryId: string }) {
     return this.#honoClient.deliveries[":deliveryId"].viewed.$post({
-      header: createAuthHeaders(this.#deviceId),
       param: { deliveryId: params.deliveryId },
+      query: { targetDeviceId: this.#deviceId },
     });
   }
 
   async listDeliveries(params: { state?: DeliveryListState; limit?: number | string } = {}) {
     return this.#honoClient.deliveries.$get({
-      header: createAuthHeaders(this.#deviceId),
       query: {
+        targetDeviceId: this.#deviceId,
         ...(params.state !== undefined ? { state: params.state } : {}),
         ...(params.limit !== undefined ? { limit: String(params.limit) } : {}),
       },
@@ -129,15 +125,15 @@ class DeviceRpcClient {
 
   async getDelivery(params: { deliveryId: string }) {
     return this.#honoClient.deliveries[":deliveryId"].$get({
-      header: createAuthHeaders(this.#deviceId),
       param: { deliveryId: params.deliveryId },
+      query: { targetDeviceId: this.#deviceId },
     });
   }
 
   async listItems(params: { limit?: number | string } = {}) {
     return this.#honoClient.items.$get({
-      header: createAuthHeaders(this.#deviceId),
       query: {
+        sourceDeviceId: this.#deviceId,
         ...(params.limit !== undefined ? { limit: String(params.limit) } : {}),
       },
     });
@@ -145,21 +141,15 @@ class DeviceRpcClient {
 
   async getItem(params: { itemId: string }) {
     return this.#honoClient.items[":itemId"].$get({
-      header: createAuthHeaders(this.#deviceId),
       param: { itemId: params.itemId },
+      query: { sourceDeviceId: this.#deviceId },
     });
   }
 
   async downloadDelivery(params: { deliveryId: string }) {
     return this.#honoClient.deliveries[":deliveryId"].download.$get({
-      header: createAuthHeaders(this.#deviceId),
       param: { deliveryId: params.deliveryId },
+      query: { targetDeviceId: this.#deviceId },
     });
   }
-}
-
-function createAuthHeaders(deviceId: DeviceId): AuthHeaders {
-  return {
-    "x-relay-device-id": deviceId,
-  } as const satisfies AuthHeaders;
 }

@@ -1,29 +1,7 @@
 import Foundation
-import HTTPTypes
 import OpenAPIRuntime
 import OpenAPIURLSession
 import RelayOpenAPI
-
-extension HTTPField.Name {
-  static let relayDeviceId = Self("x-relay-device-id")!
-}
-
-private struct RelayDeviceIdMiddleware: ClientMiddleware {
-  let deviceId: String
-
-  func intercept(
-    _ request: HTTPRequest,
-    body: HTTPBody?,
-    baseURL: URL,
-    operationID: String,
-    next: (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
-  ) async throws -> (HTTPResponse, HTTPBody?) {
-    var request = request
-    request.headerFields[.relayDeviceId] = deviceId
-
-    return try await next(request, body, baseURL)
-  }
-}
 
 public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   private let underlyingClient: any APIProtocol
@@ -39,7 +17,6 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
         session: session,
         httpBodyProcessingMode: .buffered
       )),
-      middlewares: [RelayDeviceIdMiddleware(deviceId: credentials.deviceId)]
     )
     self.jsonDecoder = JSONDecoder()
     self.jsonEncoder = JSONEncoder()
@@ -47,15 +24,13 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
 
   public func fetchPendingDeliveries() async throws -> [RelayDelivery] {
     let response = try await underlyingClient.getDeliveriesPending(
-      .init(headers: .init(xRelayDeviceId: deviceId))
+      .init(query: .init(targetDeviceId: deviceId))
     )
 
     switch response {
     case let .ok(ok):
       let payload = try convertPayload(ok.body.json, as: RelayPendingDeliveriesResponse.self)
       return payload.deliveries
-    case let .unauthorized(unauthorized):
-      throw relayAPIError(statusCode: 401, payload: try unauthorized.body.json)
     case let .internalServerError(internalServerError):
       throw relayAPIError(statusCode: 500, payload: try internalServerError.body.json)
     case let .undocumented(statusCode, _):
@@ -66,15 +41,13 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   public func acknowledgeDelivery(deliveryId: String) async throws -> RelayDelivery {
     let response = try await underlyingClient.postDeliveriesDeliveryIdAck(
       path: .init(deliveryId: deliveryId),
-      headers: .init(xRelayDeviceId: deviceId)
+      query: .init(targetDeviceId: deviceId)
     )
 
     switch response {
     case let .ok(ok):
       let payload = try convertPayload(ok.body.json, as: RelayDeliveryActionResponse.self)
       return payload.delivery
-    case let .unauthorized(unauthorized):
-      throw relayAPIError(statusCode: 401, payload: try unauthorized.body.json)
     case let .notFound(notFound):
       throw relayAPIError(statusCode: 404, payload: try notFound.body.json)
     case let .internalServerError(internalServerError):
@@ -87,15 +60,13 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   public func markDeliveryViewed(deliveryId: String) async throws -> RelayDelivery {
     let response = try await underlyingClient.postDeliveriesDeliveryIdViewed(
       path: .init(deliveryId: deliveryId),
-      headers: .init(xRelayDeviceId: deviceId)
+      query: .init(targetDeviceId: deviceId)
     )
 
     switch response {
     case let .ok(ok):
       let payload = try convertPayload(ok.body.json, as: RelayDeliveryActionResponse.self)
       return payload.delivery
-    case let .unauthorized(unauthorized):
-      throw relayAPIError(statusCode: 401, payload: try unauthorized.body.json)
     case let .notFound(notFound):
       throw relayAPIError(statusCode: 404, payload: try notFound.body.json)
     case let .internalServerError(internalServerError):
@@ -108,15 +79,13 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   public func getDelivery(deliveryId: String) async throws -> RelayDelivery {
     let response = try await underlyingClient.getDeliveriesDeliveryId(
       path: .init(deliveryId: deliveryId),
-      headers: .init(xRelayDeviceId: deviceId)
+      query: .init(targetDeviceId: deviceId)
     )
 
     switch response {
     case let .ok(ok):
       let payload = try convertPayload(ok.body.json, as: RelayDeliveryActionResponse.self)
       return payload.delivery
-    case let .unauthorized(unauthorized):
-      throw relayAPIError(statusCode: 401, payload: try unauthorized.body.json)
     case let .notFound(notFound):
       throw relayAPIError(statusCode: 404, payload: try notFound.body.json)
     case let .internalServerError(internalServerError):
@@ -127,15 +96,11 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   }
 
   public func listDevices() async throws -> [RelayDeviceSummary] {
-    let response = try await underlyingClient.getDevices(
-      .init(headers: .init(xRelayDeviceId: deviceId))
-    )
+    let response = try await underlyingClient.getDevices(.init())
 
     switch response {
     case let .ok(ok):
       return try convertPayload(ok.body.json, as: [RelayDeviceSummary].self)
-    case let .unauthorized(unauthorized):
-      throw relayAPIError(statusCode: 401, payload: try unauthorized.body.json)
     case let .internalServerError(internalServerError):
       throw relayAPIError(statusCode: 500, payload: try internalServerError.body.json)
     case let .undocumented(statusCode, _):
@@ -145,9 +110,9 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
 
   public func sendText(_ request: RelaySendTextRequest) async throws -> RelayCreateItemResponse {
     let response = try await underlyingClient.postItemsText(
-      headers: .init(xRelayDeviceId: deviceId),
       body: .json(
         .init(
+          sourceDeviceId: deviceId,
           text: request.text,
           title: request.title,
           targetDeviceIds: request.targetDeviceIds
@@ -160,8 +125,6 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
       return try convertPayload(created.body.json, as: RelayCreateItemResponse.self)
     case let .badRequest(badRequest):
       throw relayAPIError(statusCode: 400, payload: try badRequest.body.json)
-    case let .unauthorized(unauthorized):
-      throw relayAPIError(statusCode: 401, payload: try unauthorized.body.json)
     case let .internalServerError(internalServerError):
       throw relayAPIError(statusCode: 500, payload: try internalServerError.body.json)
     case let .undocumented(statusCode, _):
@@ -171,9 +134,9 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
 
   public func sendURL(_ request: RelaySendURLRequest) async throws -> RelayCreateItemResponse {
     let response = try await underlyingClient.postItemsUrl(
-      headers: .init(xRelayDeviceId: deviceId),
       body: .json(
         .init(
+          sourceDeviceId: deviceId,
           url: request.url,
           title: request.title,
           targetDeviceIds: request.targetDeviceIds
@@ -186,8 +149,6 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
       return try convertPayload(created.body.json, as: RelayCreateItemResponse.self)
     case let .badRequest(badRequest):
       throw relayAPIError(statusCode: 400, payload: try badRequest.body.json)
-    case let .unauthorized(unauthorized):
-      throw relayAPIError(statusCode: 401, payload: try unauthorized.body.json)
     case let .internalServerError(internalServerError):
       throw relayAPIError(statusCode: 500, payload: try internalServerError.body.json)
     case let .undocumented(statusCode, _):
@@ -210,7 +171,6 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
       targetDeviceIds: targetDeviceIds
     )
     let response = try await underlyingClient.postItemsFile(
-      headers: .init(xRelayDeviceId: deviceId),
       body: .multipartForm(multipartBody)
     )
 
@@ -219,8 +179,6 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
       return try convertPayload(created.body.json, as: RelayCreateItemResponse.self)
     case let .badRequest(badRequest):
       throw relayAPIError(statusCode: 400, payload: try badRequest.body.json)
-    case let .unauthorized(unauthorized):
-      throw relayAPIError(statusCode: 401, payload: try unauthorized.body.json)
     case let .internalServerError(internalServerError):
       throw relayAPIError(statusCode: 500, payload: try internalServerError.body.json)
     case let .undocumented(statusCode, _):
@@ -231,14 +189,12 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   public func downloadDelivery(deliveryId: String) async throws -> RelayDownloadDeliveryResponse {
     let response = try await underlyingClient.getDeliveriesDeliveryIdDownload(
       path: .init(deliveryId: deliveryId),
-      headers: .init(xRelayDeviceId: deviceId)
+      query: .init(targetDeviceId: deviceId)
     )
 
     switch response {
     case let .ok(ok):
       return try convertPayload(ok.body.json, as: RelayDownloadDeliveryResponse.self)
-    case let .unauthorized(unauthorized):
-      throw relayAPIError(statusCode: 401, payload: try unauthorized.body.json)
     case let .notFound(notFound):
       throw relayAPIError(statusCode: 404, payload: try notFound.body.json)
     case let .internalServerError(internalServerError):
@@ -255,6 +211,7 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   ) throws -> MultipartBody<Operations.PostItemsFile.Input.Body.MultipartFormPayload> {
     let encodedTargetDeviceIds = try encodeJSONString(targetDeviceIds)
     var parts: [Operations.PostItemsFile.Input.Body.MultipartFormPayload] = [
+      .sourceDeviceId(.init(payload: .init(body: HTTPBody(deviceId)))),
       .targetDeviceIds(.init(payload: .init(body: HTTPBody(encodedTargetDeviceIds)))),
     ]
 

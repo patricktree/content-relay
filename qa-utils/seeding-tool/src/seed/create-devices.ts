@@ -15,14 +15,10 @@ async function registerDevice(
   relayHubBaseUrl: string,
   input: { nickname: string; platform: DevicePlatform },
 ) {
-  const inviteDevice = await parseOkResponse(
-    new RpcClient(relayHubBaseUrl).createInvite({ expiresInSeconds: 60 }),
-  );
   const registerResult = await parseOkResponse(
     new RpcClient(relayHubBaseUrl).registerDevice({
       nickname: input.nickname,
       platform: input.platform,
-      invite: inviteDevice.inviteCode,
       ...(input.platform === "ios" || input.platform === "android"
         ? { pushRegistration: { token: `test-${input.platform}-${input.nickname}` } }
         : {}),

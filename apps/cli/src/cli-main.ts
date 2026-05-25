@@ -39,7 +39,7 @@ import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-deliver
         assertValidAbsoluteUrl(value),
       ),
     )
-    .addOption(new Option("--active-device-id <device-id>", "source/auth device id"));
+    .addOption(new Option("--active-device-id <device-id>", "source device id"));
 
   const deviceCommand = program.command("device").description("Manage devices");
   const devicePushTokenCommand = deviceCommand
