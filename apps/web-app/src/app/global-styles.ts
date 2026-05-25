@@ -84,6 +84,9 @@ export const cssReset = css`
 export const cssBase = css`
   @layer base {
     *:root {
+      /* https://base-ui.com/react/overview/quick-start#ios-26-safari */
+      position: relative;
+
       overflow-x: hidden;
       overflow-y: scroll;
       font-size: ${17 / 16}rem;

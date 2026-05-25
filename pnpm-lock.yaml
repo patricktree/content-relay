@@ -308,7 +308,7 @@ importers:
         version: 8.0.10(@types/node@24.12.2)
       vitest:
         specifier: 'catalog:'
-        version: 4.1.5(@types/node@24.12.2)(vite@8.0.10(@types/node@24.12.2))
+        version: 4.1.5(@types/node@24.12.2)
 
   libs/client:
     dependencies:
@@ -521,12 +521,18 @@ importers:
 
   qa-utils/seeding-tool:
     dependencies:
+      '@commander-js/extra-typings':
+        specifier: ^14.0.0
+        version: 14.0.0(commander@14.0.3)
       '@content-relay/client':
         specifier: workspace:*
         version: link:../../libs/client
       '@content-relay/contracts':
         specifier: workspace:*
         version: link:../../libs/contracts
+      commander:
+        specifier: ^14.0.3
+        version: 14.0.3
     devDependencies:
       '@content-relay/config-oxlint':
         specifier: workspace:*
@@ -4843,7 +4849,6 @@ packages:
       '@vitest/ui': 4.1.5
       happy-dom: '*'
       jsdom: '*'
-      vite: ^6.0.0 || ^7.0.0 || ^8.0.0
     peerDependenciesMeta:
       '@edge-runtime/vm':
         optional: true
@@ -7227,12 +7232,6 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.5':
-    dependencies:
-      '@vitest/spy': 4.1.5
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-
   '@vitest/mocker@4.1.5(vite@8.0.10(@types/node@24.12.2))':
     dependencies:
       '@vitest/spy': 4.1.5
@@ -9317,32 +9316,6 @@ snapshots:
   vitest@4.1.5(@types/node@24.12.2):
     dependencies:
       '@vitest/expect': 4.1.5
-      '@vitest/mocker': 4.1.5
-      '@vitest/pretty-format': 4.1.5
-      '@vitest/runner': 4.1.5
-      '@vitest/snapshot': 4.1.5
-      '@vitest/spy': 4.1.5
-      '@vitest/utils': 4.1.5
-      es-module-lexer: 2.1.0
-      expect-type: 1.3.0
-      magic-string: 0.30.21
-      obug: 2.1.1
-      pathe: 2.0.3
-      picomatch: 4.0.4
-      std-env: 4.1.0
-      tinybench: 2.9.0
-      tinyexec: 1.1.1
-      tinyglobby: 0.2.16
-      tinyrainbow: 3.1.0
-      why-is-node-running: 2.3.0
-    optionalDependencies:
-      '@types/node': 24.12.2
-    transitivePeerDependencies:
-      - msw
-
-  vitest@4.1.5(@types/node@24.12.2)(vite@8.0.10(@types/node@24.12.2)):
-    dependencies:
-      '@vitest/expect': 4.1.5
       '@vitest/mocker': 4.1.5(vite@8.0.10(@types/node@24.12.2))
       '@vitest/pretty-format': 4.1.5
       '@vitest/runner': 4.1.5
@@ -9365,7 +9338,18 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.12.2
     transitivePeerDependencies:
+      - '@vitejs/devtools'
+      - esbuild
+      - jiti
+      - less
       - msw
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - terser
+      - tsx
+      - yaml
 
   walk-up-path@4.0.0: {}
 

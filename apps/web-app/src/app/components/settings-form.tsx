@@ -2,10 +2,9 @@ import { Toast } from "@base-ui/react/toast";
 import React from "react";
 import z from "zod";
 
-import { deviceIdSchema } from "@content-relay/contracts";
-
 import { useSettingsContext } from "#pkg/app/components/settings-context.tsx";
 import { useAppForm } from "#pkg/app/form/create-form-hook.ts";
+import { settingsSchema } from "#pkg/settings-storage.js";
 
 type SettingsFormProps = {};
 
@@ -17,13 +16,10 @@ export const SettingsForm: React.FC<SettingsFormProps> = () => {
   const form = useAppForm({
     defaultValues: {
       relayHubUrl: settings?.relayHubUrl ?? "",
-      deviceId: settings?.deviceId ?? "",
+      deviceNickname: settings?.deviceNickname ?? "",
     },
     validators: {
-      onChange: z.object({
-        relayHubUrl: z.url(),
-        deviceId: deviceIdSchema,
-      }),
+      onChange: settingsSchema,
     },
     onSubmit: function saveSettings({ value }) {
       setSettings(value);
@@ -45,8 +41,8 @@ export const SettingsForm: React.FC<SettingsFormProps> = () => {
           children={(field) => <field.TextField label="Relay Hub URL:" />}
         />
         <form.AppField
-          name="deviceId"
-          children={(field) => <field.TextField label="Device ID:" />}
+          name="deviceNickname"
+          children={(field) => <field.TextField label="Device Nickname:" />}
         />
         <form.SubmitButton label="Save" />
       </form.AppForm>

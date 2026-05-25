@@ -2,9 +2,9 @@ import z from "zod";
 
 import { deviceIdSchema } from "@content-relay/contracts";
 
-const settingsSchema = z.object({
+export const settingsSchema = z.object({
   relayHubUrl: z.url().trim(),
-  deviceId: deviceIdSchema,
+  deviceNickname: z.string(),
 });
 
 export type Settings = z.infer<typeof settingsSchema>;

@@ -13,10 +13,7 @@ export const App: React.FC<AppProps> = () => {
     <SettingsProvider>
       <PageShell>
         <SendTextForm />
-        <SettingsPanel>
-          <SettingsSummary>Settings</SettingsSummary>
-          <SettingsForm />
-        </SettingsPanel>
+        <SettingsForm />
       </PageShell>
       <AppToasts />
     </SettingsProvider>
@@ -29,7 +26,3 @@ const PageShell = styled.main`
   min-height: 100vh;
   max-width: 800px;
 `;
-
-const SettingsPanel = styled.details``;
-
-const SettingsSummary = styled.summary``;
