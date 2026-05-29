@@ -6,5 +6,5 @@ export default defineConfig({
   build: {
     outDir: "dist/web",
   },
-  plugins: [wyw(), react()],
+  plugins: [wyw({ keepComments: true }), react()],
 });

@@ -12,6 +12,12 @@
       "ignoreDependencies": ["@capacitor/ios", "@content-relay/config-typescript"],
       "ignoreFiles": ["./android/**", "./ios/**"]
     },
+    "apps/web-app": {
+      "ignoreFiles": ["./wyw-in-js.config.cjs"]
+    },
+    "qa-utils/seeding-tool": {
+      "ignoreFiles": ["./src/playground.ts"]
+    },
     "tooling/pkg-management": {
       "ignoreDependencies": ["@pnpm/worker"]
     }

@@ -2,18 +2,19 @@
   "extends": [
     "@content-relay/config-typescript/tsconfig.defaults.json",
     "@content-relay/config-typescript/tsconfig.node-direct-ts-execution.json",
-    "@content-relay/config-typescript/tsconfig.web.json",
-    "@content-relay/config-typescript/tsconfig.vitest.json"
+    "@content-relay/config-typescript/tsconfig.playwright.json"
   ],
   "compilerOptions": {
     /* Modules */
-    "rootDir": "./test",
+    "rootDir": ".",
     "types": ["node"],
+
+    /* Emit */
+    "noEmit": true,
 
     /* Language and Environment */
     "jsx": "react-jsx"
   },
-  "include": ["test/**/*", "src/**/*.test.ts"],
-  "exclude": ["test-e2e/**/*"],
+  "include": ["playwright.config.ts", "tests/**/*"],
   "references": [{ "path": "./tsconfig.build.json" }]
 }

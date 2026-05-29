@@ -1,23 +1,12 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import "material-symbols/rounded.css";
+import "@fontsource/rubik/400.css";
+import "@fontsource/rubik/700.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import { App } from "#pkg/App.tsx";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    mutations: {
-      retry: false,
-    },
-    queries: {
-      gcTime: 0,
-      refetchOnWindowFocus: false,
-      retry: false,
-      staleTime: 0,
-      refetchOnReconnect: false,
-    },
-  },
-});
+import { App } from "#pkg/app/app.js";
+import { GlobalProviders } from "#pkg/app/global-providers.js";
+import { cssReset } from "#pkg/app/global-styles.ts";
 
 const rootElement = document.getElementById("root");
 
@@ -27,8 +16,10 @@ if (rootElement === null) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <GlobalProviders>
+      <style dangerouslySetInnerHTML={{ __html: cssReset }} />
+
       <App />
-    </QueryClientProvider>
+    </GlobalProviders>
   </React.StrictMode>,
 );

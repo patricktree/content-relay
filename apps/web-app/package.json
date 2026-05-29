@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "imports": {
+    "#pkg-test-e2e/*.ts": "./test-e2e/*.ts",
     "#pkg/*.ts": {
       "types": "./dist/types/*.d.ts",
       "default": "./src/*.ts"
@@ -26,25 +27,36 @@
     "lint": "turbo run turbo:lint",
     "lint:fix": "turbo run turbo:lint:fix",
     "test": "turbo run turbo:test",
+    "test:e2e": "docker pull mcr.microsoft.com/playwright:v1.60.0-noble && pnpm exec playwright test",
+    "test:e2e:ui": "pnpm run test:e2e --ui",
+    "test:e2e:update": "pnpm run test:e2e --update-snapshots",
+    "test:vitest": "vitest run",
     "turbo:build": "tsgo --build ./tsconfig.json && vite build",
     "turbo:dev": "vite",
     "turbo:lint": "oxlint --type-aware --max-warnings 0 .",
     "turbo:lint:fix": "pnpm run turbo:lint --fix",
-    "turbo:test": "vitest run"
+    "turbo:test": "pnpm run test:vitest && pnpm run test:e2e"
   },
   "dependencies": {
+    "@base-ui/react": "^1.4.1",
     "@capacitor/core": "^8.3.1",
     "@content-relay/client": "workspace:*",
     "@content-relay/contracts": "workspace:*",
+    "@fontsource/rubik": "^5.2.8",
     "@linaria/react": "^7.0.1",
-    "@tanstack/react-query": "^5.100.7",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "@tanstack/react-form": "^1.32.0",
+    "@tanstack/react-query": "^5.100.10",
+    "material-symbols": "^0.44.8",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@content-relay/config-oxlint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
+    "@content-relay/relay-hub-test-utils": "workspace:*",
+    "@content-relay/seeding-tool": "workspace:*",
+    "@playwright/test": "1.60.0",
     "@types/node": "catalog:",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

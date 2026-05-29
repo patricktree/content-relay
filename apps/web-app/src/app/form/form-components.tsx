@@ -1,0 +1,70 @@
+import { Input } from "@base-ui/react/input";
+import { styled } from "@linaria/react";
+
+import { DSButton } from "#pkg/app/design-system/button.js";
+import { useFieldContext } from "#pkg/app/form/use-app-form.js";
+import { useFormContext } from "#pkg/app/form/use-app-form.js";
+
+export const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: calc(2 * var(--spacing-base));
+`;
+
+export const FormActions = styled.div`
+  display: flex;
+  justify-content: end;
+`;
+
+export const FieldError = styled.em`
+  color: var(--color-red);
+`;
+
+type SubmitButtonProps = {
+  label: string;
+};
+
+export function SubmitButton({ label }: SubmitButtonProps) {
+  const form = useFormContext();
+  return (
+    <form.Subscribe selector={(state) => state.isSubmitting}>
+      {(isSubmitting) => (
+        <DSButton type="submit" variant="contained" disabled={isSubmitting}>
+          {isSubmitting ? "Sending…" : label}
+        </DSButton>
+      )}
+    </form.Subscribe>
+  );
+}
+
+type TextFieldProps = {
+  label: string;
+};
+
+export function TextField({ label }: TextFieldProps) {
+  const field = useFieldContext<string>();
+
+  return (
+    <FieldLabel>
+      <FieldLabelText>{label}</FieldLabelText>
+      <FieldInput
+        value={field.state.value}
+        onBlur={() => field.handleBlur()}
+        onChange={(event) => field.handleChange(event.target.value)}
+      />
+      {!field.state.meta.isValid && (
+        <FieldError>{field.state.meta.errors.map((error) => error.message).join(", ")}</FieldError>
+      )}
+    </FieldLabel>
+  );
+}
+
+const FieldLabel = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.5 * var(--spacing-base));
+`;
+
+const FieldLabelText = styled.span``;
+
+const FieldInput = styled(Input)``;

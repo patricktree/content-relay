@@ -69,6 +69,11 @@ const cliOpenedDeliveryResponseSchema = deliveryActionResponseSchema.extend({
   action: z.string(),
 });
 
+const cliDownloadDeliveryResponseSchema = z.object({
+  itemId: z.string(),
+  outputPaths: z.array(z.string()),
+});
+
 test("device register returns a device registration", async () => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
     const registerResult = await runCli([
@@ -393,7 +398,7 @@ test("delivery list, show, ack, and viewed manage delivery state transitions", a
   });
 });
 
-test("send file creates a file item", async () => {
+test("send file and delivery download write the files", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {
     const senderDevice = await registerCliDevice({
       nickname: "Developer CLI",
@@ -429,6 +434,40 @@ test("send file creates a file item", async () => {
     const fileItem = parseJsonStdout(sendResult, createItemResponseSchema);
     expect(fileItem.item.type).toBe("file");
     expect(fileItem.deliveries).toHaveLength(1);
+    const delivery = fileItem.deliveries[0];
+    expect(delivery).toBeDefined();
+    assert(delivery !== undefined);
+
+    const downloadDirectory = path.join(rootDirectory, "downloads");
+    const downloadResult = await runCli(
+      withRelayHubBaseUrl(relayHubBaseUrl, [
+        "--json",
+        "delivery",
+        "download",
+        "--target-device-id",
+        receiverDevice.deviceId,
+        delivery.deliveryId,
+        "--out",
+        downloadDirectory,
+      ]),
+    );
+    expect(downloadResult.exitCode).toBe(0);
+    const download = parseJsonStdout(downloadResult, cliDownloadDeliveryResponseSchema);
+    expect(download.itemId).toBe(fileItem.item.itemId);
+    expect(download.outputPaths).toHaveLength(2);
+
+    const downloadedAlphaPath = download.outputPaths.find((outputPath) =>
+      outputPath.endsWith("alpha.txt"),
+    );
+    const downloadedBetaPath = download.outputPaths.find((outputPath) =>
+      outputPath.endsWith("beta.txt"),
+    );
+    expect(downloadedAlphaPath).toBeDefined();
+    expect(downloadedBetaPath).toBeDefined();
+    assert(downloadedAlphaPath !== undefined);
+    assert(downloadedBetaPath !== undefined);
+    await expect(fs.promises.readFile(downloadedAlphaPath, "utf8")).resolves.toBe("alpha\n");
+    await expect(fs.promises.readFile(downloadedBetaPath, "utf8")).resolves.toBe("beta\n");
   });
 });
 

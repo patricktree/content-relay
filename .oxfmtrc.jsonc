@@ -23,6 +23,11 @@
         "groupName": "subpath-imports-test-modules",
         "elementNamePattern": ["#pkg-test/**"],
       },
+      /* create a group for subpath imports for E2E test modules */
+      {
+        "groupName": "subpath-imports-test-modules-e2e",
+        "elementNamePattern": ["#pkg-test-e2e/**"],
+      },
     ],
     "groups": [
       ["value-builtin", "value-external"],
@@ -31,6 +36,7 @@
       "content-relay-packages",
       "subpath-imports",
       "subpath-imports-test-modules",
+      "subpath-imports-test-modules-e2e",
       ["value-parent", "value-sibling", "value-index"],
       "unknown",
     ],

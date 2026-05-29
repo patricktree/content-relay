@@ -1,34 +1,15 @@
 import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor/core";
-import { z } from "zod";
 
-import { createShareDraft, type ShareDraft } from "#pkg/share-draft.ts";
+import { isValidAbsoluteUrl } from "@content-relay/contracts";
 
-const androidSharePayloadSchema = z.object({
-  shareId: z.uuid(),
-  text: z.string().trim().min(1),
-  title: z.string().trim().min(1).nullable().optional(),
-});
-const consumePendingShareResponseSchema = z.object({
-  share: androidSharePayloadSchema.nullable().optional(),
-});
+import {
+  sharePayloadSchema,
+  consumePendingShareResponseSchema,
+  type ShareCompletion,
+  type SharePlugin,
+} from "#pkg/platform/share-plugin.interface.js";
 
-export type AndroidShareCompletion = {
-  message: string;
-};
-
-type AndroidSharePayload = z.infer<typeof androidSharePayloadSchema>;
-
-type AndroidSharePlugin = {
-  closeShareOverlay(): Promise<void>;
-  completeShareOverlay(input: AndroidShareCompletion): Promise<void>;
-  consumePendingShare(): Promise<z.infer<typeof consumePendingShareResponseSchema>>;
-  addListener(
-    eventName: "shareIntentReceived",
-    listenerFunc: (payload: AndroidSharePayload) => void,
-  ): Promise<PluginListenerHandle>;
-};
-
-const androidSharePlugin = registerPlugin<AndroidSharePlugin>("AndroidShare");
+const androidSharePlugin = registerPlugin<SharePlugin>("AndroidShare");
 
 export async function addAndroidShareListener(
   listener: (shareDraft: ShareDraft) => void,
@@ -72,7 +53,7 @@ export async function closeAndroidShareOverlay(): Promise<void> {
   await androidSharePlugin.closeShareOverlay();
 }
 
-export async function completeAndroidShareOverlay(input: AndroidShareCompletion): Promise<void> {
+export async function completeAndroidShareOverlay(input: ShareCompletion): Promise<void> {
   if (!isAndroidShareAvailable()) {
     throw new Error("Android share overlay is not available on this platform.");
   }
@@ -85,7 +66,7 @@ function isAndroidShareAvailable(): boolean {
 }
 
 function parseShareDraft(payload: unknown): ShareDraft | null {
-  const result = androidSharePayloadSchema.safeParse(payload);
+  const result = sharePayloadSchema.safeParse(payload);
 
   if (!result.success) {
     console.error("Received invalid Android share payload.", result.error);
@@ -94,4 +75,24 @@ function parseShareDraft(payload: unknown): ShareDraft | null {
   }
 
   return createShareDraft(result.data);
+}
+
+export type ShareDraft = {
+  shareId: string;
+  itemType: "text" | "url";
+  title: string;
+  value: string;
+};
+
+function createShareDraft(input: {
+  shareId: string;
+  text: string;
+  title?: string | null | undefined;
+}): ShareDraft {
+  return {
+    shareId: input.shareId.trim(),
+    itemType: isValidAbsoluteUrl(input.text.trim()) ? "url" : "text",
+    title: input.title?.trim() ?? "",
+    value: input.text.trim(),
+  };
 }
