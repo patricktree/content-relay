@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { parseOkResponse, RpcClient } from "@content-relay/client";
 
@@ -8,7 +8,7 @@ type UseAvailableDevicesQueryOpts = {
 };
 
 export function useAvailableDevicesQuery(opts: UseAvailableDevicesQueryOpts) {
-  const query = useQuery({
+  const query = useSuspenseQuery({
     queryFn: async () => {
       return parseOkResponse(new RpcClient(opts.relayHubUrl).listDevices());
     },

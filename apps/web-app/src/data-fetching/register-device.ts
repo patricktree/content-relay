@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { parseOkResponse, RpcClient } from "@content-relay/client";
 
@@ -8,7 +8,7 @@ type UseRegisteredDeviceQueryOpts = {
 };
 
 export function useRegisteredDeviceQuery(opts: UseRegisteredDeviceQueryOpts) {
-  return useQuery({
+  return useSuspenseQuery({
     queryFn: async () => {
       return parseOkResponse(
         new RpcClient(opts.relayHubUrl).registerDevice({

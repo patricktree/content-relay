@@ -19,34 +19,30 @@ import { useRegisteredDeviceQuery } from "#pkg/data-fetching/register-device.js"
 
 export const SendTextForm: React.FC = () => {
   const { settings } = useSettingsContext();
+  const pendingAndroidShareQuery = usePendingAndroidShareQuery();
+
   if (!settings) {
     return null;
   }
 
-  const registeredDeviceQuery = useRegisteredDeviceQuery({
-    relayHubUrl: settings.relayHubUrl,
-    deviceNickname: settings.deviceNickname,
-  });
-
-  if (registeredDeviceQuery.isPending) {
-    return <>Registering device...</>;
-  }
-
-  if (registeredDeviceQuery.isError) {
-    return <>Could not register this device.</>;
-  }
-
   return (
     <SendTextFormContent
+      key={pendingAndroidShareQuery.data?.shareId}
       relayHubUrl={settings.relayHubUrl}
-      deviceId={registeredDeviceQuery.data.deviceId}
+      deviceNickname={settings.deviceNickname}
+      formDefaultValues={pendingAndroidShareQuery.data ?? undefined}
+      hasPendingAndroidShare={
+        pendingAndroidShareQuery.data !== null && pendingAndroidShareQuery.data !== undefined
+      }
     />
   );
 };
 
 type SendTextFormContentProps = {
   relayHubUrl: string;
-  deviceId: string;
+  deviceNickname: string;
+  formDefaultValues: Omit<SendItemFormValues, "targetDeviceIds"> | undefined;
+  hasPendingAndroidShare: boolean;
 };
 
 type SendItemFormValues = z.infer<typeof sendItemFormSchema>;
@@ -85,18 +81,29 @@ const sendItemFormSchema = z
     }
   });
 
-const SendTextFormContent: React.FC<SendTextFormContentProps> = ({ relayHubUrl, deviceId }) => {
+const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
+  relayHubUrl,
+  deviceNickname,
+  formDefaultValues,
+  hasPendingAndroidShare,
+}) => {
   const toastManager = Toast.useToastManager();
-  const pendingAndroidShareQuery = usePendingAndroidShareQuery();
   const completeAndroidShareMutation = useCompleteAndroidShareMutation();
   const closeAndroidShareMutation = useCloseAndroidShareMutation();
-  const appliedAndroidShareIdRef = React.useRef<string | null>(null);
+  const registeredDeviceQuery = useRegisteredDeviceQuery({
+    relayHubUrl,
+    deviceNickname,
+  });
+  const { deviceId } = registeredDeviceQuery.data;
   const availableDevicesQuery = useAvailableDevicesQuery({ relayHubUrl, deviceId });
   const availableDevices =
     availableDevicesQuery.data?.filter((device) => device.deviceId !== deviceId) ?? [];
 
   const form = useAppForm({
-    defaultValues: defaultSendItemFormValues,
+    defaultValues: {
+      ...defaultSendItemFormValues,
+      ...formDefaultValues,
+    } satisfies SendItemFormValues,
     validators: {
       onChange: sendItemFormSchema,
     },
@@ -125,36 +132,13 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({ relayHubUrl, 
         );
       }
 
-      if (pendingAndroidShareQuery.data !== null && pendingAndroidShareQuery.data !== undefined) {
+      if (hasPendingAndroidShare) {
         await completeAndroidShareMutation.mutateAsync({ message: "Item sent" });
       }
 
       toastManager.add({ title: "Item sent" });
     },
   });
-
-  React.useEffect(
-    function applyPendingAndroidShareToForm() {
-      const pendingAndroidShare = pendingAndroidShareQuery.data;
-
-      if (pendingAndroidShare === null || pendingAndroidShare === undefined) {
-        return;
-      }
-
-      if (appliedAndroidShareIdRef.current === pendingAndroidShare.shareId) {
-        return;
-      }
-
-      appliedAndroidShareIdRef.current = pendingAndroidShare.shareId;
-      form.setFieldValue("itemType", pendingAndroidShare.itemType);
-      form.setFieldValue("title", pendingAndroidShare.title);
-      form.setFieldValue("value", pendingAndroidShare.value);
-    },
-    [form, pendingAndroidShareQuery.data],
-  );
-
-  const hasPendingAndroidShare =
-    pendingAndroidShareQuery.data !== null && pendingAndroidShareQuery.data !== undefined;
 
   return (
     <form.Form
