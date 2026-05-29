@@ -1,9 +1,8 @@
 import { Toast } from "@base-ui/react/toast";
 import React from "react";
-import z from "zod";
 
 import { useSettingsContext } from "#pkg/app/components/settings-context.tsx";
-import { useAppForm } from "#pkg/app/form/create-form-hook.ts";
+import { useAppForm } from "#pkg/app/form/form.js";
 import { settingsSchema } from "#pkg/settings-storage.js";
 
 type SettingsFormProps = {};
@@ -28,7 +27,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = () => {
   });
 
   return (
-    <form
+    <form.Form
       onSubmit={(event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -44,8 +43,10 @@ export const SettingsForm: React.FC<SettingsFormProps> = () => {
           name="deviceNickname"
           children={(field) => <field.TextField label="Device Nickname:" />}
         />
-        <form.SubmitButton label="Save" />
+        <form.Actions>
+          <form.SubmitButton label="Save" />
+        </form.Actions>
       </form.AppForm>
-    </form>
+    </form.Form>
   );
 };

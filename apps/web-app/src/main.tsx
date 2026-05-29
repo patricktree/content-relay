@@ -1,13 +1,12 @@
-import "@fontsource/roboto/latin-400.css";
-import "@fontsource/roboto/latin-700.css";
-import "@fontsource/roboto/latin-800.css";
 import "material-symbols/rounded.css";
+import "@fontsource/rubik/400.css";
+import "@fontsource/rubik/700.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import { App } from "#pkg/app/App.tsx";
+import { App } from "#pkg/app/app.js";
 import { GlobalProviders } from "#pkg/app/global-providers.js";
-import { cssBase, cssReset } from "#pkg/app/global-styles.ts";
+import { cssReset } from "#pkg/app/global-styles.ts";
 
 const rootElement = document.getElementById("root");
 
@@ -19,7 +18,6 @@ ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <GlobalProviders>
       <style dangerouslySetInnerHTML={{ __html: cssReset }} />
-      <style dangerouslySetInnerHTML={{ __html: cssBase }} />
 
       <App />
     </GlobalProviders>

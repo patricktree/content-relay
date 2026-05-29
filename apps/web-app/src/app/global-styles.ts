@@ -87,21 +87,21 @@ export const cssBase = css`
       /* https://base-ui.com/react/overview/quick-start#ios-26-safari */
       position: relative;
 
-      overflow-x: hidden;
-      overflow-y: scroll;
-      font-size: ${17 / 16}rem;
+      font-size: ${16 / 16}rem;
       color: var(--color-fg);
       background-color: var(--color-bg);
-      font-family: Roboto, Arial, sans-serif;
+      font-family: "Rubik", Arial, sans-serif;
 
       /* design tokens */
       --color-white: rgb(250 250 250); /* https://web.dev/prefers-color-scheme/#avoid-pure-white */
-      --color-black: hsl(0, 0%, 12%);
-      --color-lightgrey: hsl(0, 0%, 71%);
+      --color-black: #111214;
+      --color-lightgrey: hsl(0, 0%, 80%);
+      --color-red: oklch(48% 0.18 28);
 
       --color-fg: var(--color-black);
       --color-bg: var(--color-white);
       --color-selected: var(--color-lightgrey);
+      --color-error: var(--color-red);
 
       --font-size-sm: 0.85rem;
       --font-size-base: 1rem;
@@ -111,13 +111,25 @@ export const cssBase = css`
       --font-size-xxxl: 1.75rem;
       --font-size-xxxxl: 2rem;
       --font-weight-bold: 800;
+
       --spacing-base: 8px;
+      --app-padding-block: calc(1 * var(--spacing-base));
+      --app-padding-inline: calc(2 * var(--spacing-base));
 
       --selected-outline: 2px solid var(--color-fg);
-    }
 
-    body {
-      font-family: Roboto, Arial, sans-serif;
+      --border-radius: 4px;
+
+      /* taken from MUI Snackbar https://mui.com/material-ui/react-snackbar/ */
+      --mui-shadows-6:
+        0px 3px 5px -1px rgba(0, 0, 0, 0.2), 0px 6px 10px 0px rgba(0, 0, 0, 0.14),
+        0px 1px 18px 0px rgba(0, 0, 0, 0.12);
+      --paper-shadow: var(
+        --mui-shadows-6,
+        0px 3px 5px -1px rgba(0, 0, 0, 0.2),
+        0px 6px 10px 0px rgba(0, 0, 0, 0.14),
+        0px 1px 18px 0px rgba(0, 0, 0, 0.12)
+      );
     }
   }
 `;

@@ -9,16 +9,14 @@ import { gotoWebApp, prepareWebApp } from "#pkg-test-e2e/helpers.ts";
 
 test("send text item", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const [{ deviceId: senderDeviceId }, { deviceId: receiverDeviceId }] =
-      await seed.registerDevices(relayHubBaseUrl, [
-        { nickname: "test-device-browser", platform: "android" },
-        { nickname: "test-device-generic", platform: "cli" },
-      ]);
+    const [{ deviceId: receiverDeviceId }] = await seed.registerDevices(relayHubBaseUrl, [
+      { nickname: "test-device-generic", platform: "cli" },
+    ]);
 
     await prepareWebApp(page, {
       settings: {
         relayHubUrl: relayHubBaseUrl,
-        deviceId: senderDeviceId,
+        deviceNickname: "test-device-browser",
       },
     });
 
@@ -47,16 +45,14 @@ test("send text item", async ({ page }) => {
 
 test("send URL item", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const [{ deviceId: senderDeviceId }, { deviceId: receiverDeviceId }] =
-      await seed.registerDevices(relayHubBaseUrl, [
-        { nickname: "test-device-browser", platform: "android" },
-        { nickname: "test-device-generic", platform: "cli" },
-      ]);
+    const [{ deviceId: receiverDeviceId }] = await seed.registerDevices(relayHubBaseUrl, [
+      { nickname: "test-device-generic", platform: "cli" },
+    ]);
 
     await prepareWebApp(page, {
       settings: {
         relayHubUrl: relayHubBaseUrl,
-        deviceId: senderDeviceId,
+        deviceNickname: "test-device-browser",
       },
     });
 
@@ -86,8 +82,7 @@ test("send URL item", async ({ page }) => {
 
 test("matches send form screenshot", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const [{ deviceId: senderDeviceId }] = await seed.registerDevices(relayHubBaseUrl, [
-      { nickname: "MacBook", platform: "macos" },
+    await seed.registerDevices(relayHubBaseUrl, [
       { nickname: "Pixel 9", platform: "android" },
       { nickname: "iPhone", platform: "ios" },
       { nickname: "Desk Mac", platform: "macos" },
@@ -96,7 +91,7 @@ test("matches send form screenshot", async ({ page }) => {
     await prepareWebApp(page, {
       settings: {
         relayHubUrl: relayHubBaseUrl,
-        deviceId: senderDeviceId,
+        deviceNickname: "MacBook",
       },
     });
 
@@ -106,7 +101,7 @@ test("matches send form screenshot", async ({ page }) => {
     await expect(sendItemForm.getByRole("checkbox", { name: "iPhone (ios)" })).toBeVisible();
     await expect(sendItemForm.getByRole("checkbox", { name: "Desk Mac (macos)" })).toBeVisible();
 
-    await expect(page).toHaveScreenshot("send-form.png", { fullPage: true });
+    await expect(sendItemForm).toHaveScreenshot("send-form.png");
   });
 });
 

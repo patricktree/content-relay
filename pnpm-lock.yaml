@@ -236,9 +236,9 @@ importers:
       '@content-relay/contracts':
         specifier: workspace:*
         version: link:../../libs/contracts
-      '@fontsource/roboto':
-        specifier: ^5.2.10
-        version: 5.2.10
+      '@fontsource/rubik':
+        specifier: ^5.2.8
+        version: 5.2.8
       '@linaria/react':
         specifier: ^7.0.1
         version: 7.0.1(react@19.2.6)
@@ -521,18 +521,12 @@ importers:
 
   qa-utils/seeding-tool:
     dependencies:
-      '@commander-js/extra-typings':
-        specifier: ^14.0.0
-        version: 14.0.0(commander@14.0.3)
       '@content-relay/client':
         specifier: workspace:*
         version: link:../../libs/client
       '@content-relay/contracts':
         specifier: workspace:*
         version: link:../../libs/contracts
-      commander:
-        specifier: ^14.0.3
-        version: 14.0.3
     devDependencies:
       '@content-relay/config-oxlint':
         specifier: workspace:*
@@ -825,8 +819,8 @@ packages:
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
 
-  '@fontsource/roboto@5.2.10':
-    resolution: {integrity: sha512-8HlA5FtSfz//oFSr2eL7GFXAiE7eIkcGOtx7tjsLKq+as702x9+GU7K95iDeWFapHC4M2hv9RrpXKRTGGBI8Zg==}
+  '@fontsource/rubik@5.2.8':
+    resolution: {integrity: sha512-PIc8QR7FqWPcYhbdRiGff56vQlKqg/ytES1YqecSq1GkgxiH4TBshrFvDEOZ9JonUF9m1qQ+qXxJj7wD5zgXEw==}
 
   '@grpc/grpc-js@1.14.3':
     resolution: {integrity: sha512-Iq8QQQ/7X3Sac15oB6p0FmUg/klxQvXLeileoqrTRGJYLV+/9tubbr9ipz0GKHjmXVsgFPo/+W+2cA8eNcR+XA==}
@@ -5208,7 +5202,7 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
-  '@fontsource/roboto@5.2.10': {}
+  '@fontsource/rubik@5.2.8': {}
 
   '@grpc/grpc-js@1.14.3':
     dependencies:

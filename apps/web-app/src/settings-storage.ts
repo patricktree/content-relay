@@ -1,7 +1,5 @@
 import z from "zod";
 
-import { deviceIdSchema } from "@content-relay/contracts";
-
 export const settingsSchema = z.object({
   relayHubUrl: z.url().trim(),
   deviceNickname: z.string(),

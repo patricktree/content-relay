@@ -440,10 +440,12 @@ test("send file and delivery download write the files", async () => {
 
     const downloadDirectory = path.join(rootDirectory, "downloads");
     const downloadResult = await runCli(
-      withActiveDevice(relayHubBaseUrl, receiverDevice.deviceId, [
+      withRelayHubBaseUrl(relayHubBaseUrl, [
         "--json",
         "delivery",
         "download",
+        "--target-device-id",
+        receiverDevice.deviceId,
         delivery.deliveryId,
         "--out",
         downloadDirectory,

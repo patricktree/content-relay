@@ -41,7 +41,7 @@
     "@base-ui/react": "^1.4.1",
     "@content-relay/client": "workspace:*",
     "@content-relay/contracts": "workspace:*",
-    "@fontsource/roboto": "^5.2.10",
+    "@fontsource/rubik": "^5.2.8",
     "@linaria/react": "^7.0.1",
     "@tanstack/react-form": "^1.32.0",
     "@tanstack/react-query": "^5.100.10",

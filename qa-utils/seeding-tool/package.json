@@ -34,10 +34,8 @@
     "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
   "dependencies": {
-    "@commander-js/extra-typings": "^14.0.0",
     "@content-relay/client": "workspace:*",
-    "@content-relay/contracts": "workspace:*",
-    "commander": "^14.0.3"
+    "@content-relay/contracts": "workspace:*"
   },
   "devDependencies": {
     "@content-relay/config-oxlint": "workspace:*",

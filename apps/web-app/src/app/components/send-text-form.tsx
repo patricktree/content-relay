@@ -7,8 +7,9 @@ import { parseOkResponse, RpcClient } from "@content-relay/client";
 import { deviceIdSchema, isValidAbsoluteUrl, relayItemTypeSchema } from "@content-relay/contracts";
 
 import { useSettingsContext } from "#pkg/app/components/settings-context.tsx";
-import { useAppForm } from "#pkg/app/form/create-form-hook.ts";
-import { useAvailableDevices } from "#pkg/data-fetching/available-devices.js";
+import { useAppForm } from "#pkg/app/form/form.js";
+import { useAvailableDevicesQuery } from "#pkg/data-fetching/available-devices.js";
+import { useRegisteredDeviceQuery } from "#pkg/data-fetching/register-device.js";
 
 export const SendTextForm: React.FC = () => {
   const { settings } = useSettingsContext();
@@ -16,7 +17,25 @@ export const SendTextForm: React.FC = () => {
     return null;
   }
 
-  return <SendTextFormContent relayHubUrl={settings.relayHubUrl} deviceId={settings.deviceId} />;
+  const registeredDeviceQuery = useRegisteredDeviceQuery({
+    relayHubUrl: settings.relayHubUrl,
+    deviceNickname: settings.deviceNickname,
+  });
+
+  if (registeredDeviceQuery.isPending) {
+    return <>Registering device...</>;
+  }
+
+  if (registeredDeviceQuery.isError) {
+    return <>Could not register this device.</>;
+  }
+
+  return (
+    <SendTextFormContent
+      relayHubUrl={settings.relayHubUrl}
+      deviceId={registeredDeviceQuery.data.deviceId}
+    />
+  );
 };
 
 type SendTextFormContentProps = {
@@ -62,7 +81,7 @@ const sendItemFormSchema = z
 
 const SendTextFormContent: React.FC<SendTextFormContentProps> = ({ relayHubUrl, deviceId }) => {
   const toastManager = Toast.useToastManager();
-  const availableDevicesQuery = useAvailableDevices({ relayHubUrl, deviceId });
+  const availableDevicesQuery = useAvailableDevicesQuery({ relayHubUrl, deviceId });
   const availableDevices =
     availableDevicesQuery.data?.filter((device) => device.deviceId !== deviceId) ?? [];
 
@@ -101,7 +120,7 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({ relayHubUrl, 
   });
 
   return (
-    <Form
+    <form.Form
       aria-label="Send item"
       onSubmit={(event) => {
         event.preventDefault();
@@ -143,57 +162,61 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({ relayHubUrl, 
                 <TargetDevicesUl>
                   {availableDevices.map((device) => (
                     <TargetDeviceLi key={device.deviceId}>
-                      <TargetDeviceCheckbox
-                        type="checkbox"
-                        name="targetDeviceId"
-                        value={device.deviceId}
-                        checked={field.state.value.has(device.deviceId)}
-                        aria-label={`${device.nickname} (${device.platform})`}
-                        onBlur={() => field.handleBlur()}
-                        onChange={(event) =>
-                          field.handleChange((oldValue) => {
-                            const newSet = new Set(oldValue);
+                      <TargetDeviceLabel>
+                        <TargetDeviceCheckbox
+                          type="checkbox"
+                          name="targetDeviceId"
+                          value={device.deviceId}
+                          checked={field.state.value.has(device.deviceId)}
+                          aria-label={`${device.nickname} (${device.platform})`}
+                          onBlur={() => field.handleBlur()}
+                          onChange={(event) =>
+                            field.handleChange((oldValue) => {
+                              const newSet = new Set(oldValue);
 
-                            if (event.target.checked) {
-                              newSet.add(event.target.value);
-                            } else {
-                              newSet.delete(event.target.value);
-                            }
+                              if (event.target.checked) {
+                                newSet.add(event.target.value);
+                              } else {
+                                newSet.delete(event.target.value);
+                              }
 
-                            return newSet;
-                          })
-                        }
-                      />
-                      <TargetDeviceName>{device.nickname}</TargetDeviceName>
+                              return newSet;
+                            })
+                          }
+                        />
+                        <TargetDeviceName>{device.nickname}</TargetDeviceName>
+                      </TargetDeviceLabel>
                     </TargetDeviceLi>
                   ))}
                 </TargetDevicesUl>
+
+                {!field.state.meta.isValid && (
+                  <form.FieldError>
+                    {field.state.meta.errors.map((error) => error?.message).join(", ")}
+                  </form.FieldError>
+                )}
               </TargetDevicesFieldset>
             )}
           />
         )}
 
-        <ItemDetails>
-          <form.AppField name="title" children={(field) => <field.TextField label="Title:" />} />
-          <form.AppField
-            name="value"
-            children={(field) => (
-              <form.Subscribe selector={(state) => state.values.itemType}>
-                {(itemType) => <field.TextField label={itemType === "url" ? "URL:" : "Text:"} />}
-              </form.Subscribe>
-            )}
-          />
-        </ItemDetails>
+        <form.AppField name="title" children={(field) => <field.TextField label="Title:" />} />
+        <form.AppField
+          name="value"
+          children={(field) => (
+            <form.Subscribe selector={(state) => state.values.itemType}>
+              {(itemType) => <field.TextField label={itemType === "url" ? "URL:" : "Text:"} />}
+            </form.Subscribe>
+          )}
+        />
 
-        <FormActions>
+        <form.Actions>
           <form.SubmitButton label="Send" />
-        </FormActions>
+        </form.Actions>
       </form.AppForm>
-    </Form>
+    </form.Form>
   );
 };
-
-const Form = styled.form``;
 
 const ItemTypeLabel = styled.label``;
 
@@ -211,36 +234,65 @@ const TargetDevicesUl = styled.ul`
   display: flex;
   flex-wrap: wrap;
   gap: calc(1.5 * var(--spacing-base));
+  padding: 0;
   list-style: none;
 `;
 
 const TargetDeviceLi = styled.li``;
 
-const TargetDeviceCheckbox = styled.input`
-  border: 2px solid var(--color-fg);
-  border-radius: 4px;
+const TargetDeviceLabel = styled.label`
+  /* position: relative so that it is an "anchor" for the child checkbox */
+  position: relative;
+  /* isolation: isolate so that it is a new stacking context for the child checkbox z-index */
+  isolation: isolate;
 
-  &:hover {
-    cursor: pointer;
+  display: block;
+
+  & > input[type="checkbox"] {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0;
+
+    &:hover {
+      cursor: pointer;
+    }
   }
 
-  &:focus-visible {
+  &:has(> input[type="checkbox"]:checked) > span {
+    background-color: var(--color-selected);
+  }
+
+  &:has(> input[type="checkbox"]:focus-visible) > span {
     outline: var(--selected-outline);
-  }
-
-  &:checked {
-    color: var(--color-selected);
+    outline-offset: 2px;
   }
 `;
 
-const TargetDeviceName = styled.span``;
-
-const ItemDetails = styled.div`
-  display: grid;
-  gap: 28px;
+const TargetDeviceCheckbox = styled.input`
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
 `;
 
-const FormActions = styled.div`
+const TargetDeviceName = styled.span`
+  --size: 64px;
+
   display: flex;
-  justify-content: end;
+  align-items: center;
+  justify-content: center;
+  height: var(--size);
+  width: var(--size);
+  border: 1px solid var(--color-fg);
+  border-radius: var(--border-radius);
+  padding: calc(0.5 * var(--spacing-base));
+
+  overflow: hidden;
+  color: var(--color-fg);
+  font-size: var(--font-size-sm);
+  line-height: 1.1;
+  text-align: center;
+  overflow-wrap: anywhere;
+  user-select: none;
 `;
