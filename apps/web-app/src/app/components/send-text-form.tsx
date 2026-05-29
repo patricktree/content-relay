@@ -1,5 +1,6 @@
 import { Toast } from "@base-ui/react/toast";
 import { styled } from "@linaria/react";
+import { useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
 import React from "react";
 import z from "zod";
 
@@ -12,14 +13,14 @@ import { useAppForm } from "#pkg/app/form/use-app-form.js";
 import {
   useCloseAndroidShareMutation,
   useCompleteAndroidShareMutation,
-  usePendingAndroidShareQuery,
+  createPendingAndroidShareQuery,
 } from "#pkg/data-fetching/android-share.js";
-import { useAvailableDevicesQuery } from "#pkg/data-fetching/available-devices.js";
-import { useRegisteredDeviceQuery } from "#pkg/data-fetching/register-device.js";
+import { createAvailableDevicesQuery } from "#pkg/data-fetching/available-devices.js";
+import { createRegisteredDeviceQuery } from "#pkg/data-fetching/register-device.js";
 
 export const SendTextForm: React.FC = () => {
   const { settings } = useSettingsContext();
-  const pendingAndroidShareQuery = usePendingAndroidShareQuery();
+  const pendingAndroidShareQuery = useSuspenseQuery(createPendingAndroidShareQuery());
 
   if (!settings) {
     return null;
@@ -90,12 +91,16 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
   const toastManager = Toast.useToastManager();
   const completeAndroidShareMutation = useCompleteAndroidShareMutation();
   const closeAndroidShareMutation = useCloseAndroidShareMutation();
-  const registeredDeviceQuery = useRegisteredDeviceQuery({
-    relayHubUrl,
-    deviceNickname,
+  const [registeredDeviceQuery, availableDevicesQuery] = useSuspenseQueries({
+    queries: [
+      createRegisteredDeviceQuery({
+        relayHubUrl,
+        deviceNickname,
+      }),
+      createAvailableDevicesQuery({ relayHubUrl }),
+    ],
   });
   const { deviceId } = registeredDeviceQuery.data;
-  const availableDevicesQuery = useAvailableDevicesQuery({ relayHubUrl });
   const availableDevices =
     availableDevicesQuery.data.filter((device) => device.deviceId !== deviceId) ?? [];
 

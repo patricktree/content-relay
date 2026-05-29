@@ -1,14 +1,12 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-
 import { parseOkResponse, RpcClient } from "@content-relay/client";
 
-type UseRegisteredDeviceQueryOpts = {
+type RegisteredDeviceQueryOpts = {
   relayHubUrl: string;
   deviceNickname: string;
 };
 
-export function useRegisteredDeviceQuery(opts: UseRegisteredDeviceQueryOpts) {
-  return useSuspenseQuery({
+export function createRegisteredDeviceQuery(opts: RegisteredDeviceQueryOpts) {
+  return {
     queryFn: async () => {
       return parseOkResponse(
         new RpcClient(opts.relayHubUrl).registerDevice({
@@ -18,5 +16,5 @@ export function useRegisteredDeviceQuery(opts: UseRegisteredDeviceQueryOpts) {
       );
     },
     queryKey: ["registered-device", opts.relayHubUrl, opts.deviceNickname],
-  });
+  };
 }

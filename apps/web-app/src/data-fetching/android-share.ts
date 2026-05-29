@@ -1,9 +1,4 @@
-import {
-  useMutation,
-  useSuspenseQuery,
-  useQueryClient,
-  type QueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import React from "react";
 
 import {
@@ -16,14 +11,14 @@ import {
 
 const pendingAndroidShareQueryKey = ["android-share", "pending"] as const;
 
-export function usePendingAndroidShareQuery() {
-  return useSuspenseQuery({
+export function createPendingAndroidShareQuery() {
+  return {
     queryFn: consumePendingAndroidShare,
     queryKey: pendingAndroidShareQueryKey,
     retry: false,
     gcTime: Infinity,
     staleTime: Infinity,
-  });
+  };
 }
 
 export function useSyncAndroidSharesToTanstackQuery(): void {
