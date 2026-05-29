@@ -8,7 +8,7 @@ import { deviceIdSchema, isValidAbsoluteUrl, relayItemTypeSchema } from "@conten
 
 import { useSettingsContext } from "#pkg/app/components/settings-context.tsx";
 import { DSButton } from "#pkg/app/design-system/button.js";
-import { useAppForm } from "#pkg/app/form/form.js";
+import { useAppForm } from "#pkg/app/form/use-app-form.js";
 import {
   useCloseAndroidShareMutation,
   useCompleteAndroidShareMutation,
@@ -95,9 +95,9 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
     deviceNickname,
   });
   const { deviceId } = registeredDeviceQuery.data;
-  const availableDevicesQuery = useAvailableDevicesQuery({ relayHubUrl, deviceId });
+  const availableDevicesQuery = useAvailableDevicesQuery({ relayHubUrl });
   const availableDevices =
-    availableDevicesQuery.data?.filter((device) => device.deviceId !== deviceId) ?? [];
+    availableDevicesQuery.data.filter((device) => device.deviceId !== deviceId) ?? [];
 
   const form = useAppForm({
     defaultValues: {

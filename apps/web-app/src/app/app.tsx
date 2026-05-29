@@ -8,9 +8,7 @@ import { SettingsForm } from "#pkg/app/components/settings-form.tsx";
 import { cssBase } from "#pkg/app/global-styles.js";
 import { useSyncAndroidSharesToTanstackQuery } from "#pkg/data-fetching/android-share.js";
 
-type AppProps = {};
-
-export const App: React.FC<AppProps> = () => {
+export const App: React.FC = () => {
   useSyncAndroidSharesToTanstackQuery();
 
   return (

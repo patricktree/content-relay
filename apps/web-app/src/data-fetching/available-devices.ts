@@ -4,7 +4,6 @@ import { parseOkResponse, RpcClient } from "@content-relay/client";
 
 type UseAvailableDevicesQueryOpts = {
   relayHubUrl: string;
-  deviceId: string;
 };
 
 export function useAvailableDevicesQuery(opts: UseAvailableDevicesQueryOpts) {
@@ -12,7 +11,7 @@ export function useAvailableDevicesQuery(opts: UseAvailableDevicesQueryOpts) {
     queryFn: async () => {
       return parseOkResponse(new RpcClient(opts.relayHubUrl).listDevices());
     },
-    queryKey: ["available-devices", opts.relayHubUrl, opts.deviceId],
+    queryKey: ["available-devices", opts.relayHubUrl],
   });
 
   return query;

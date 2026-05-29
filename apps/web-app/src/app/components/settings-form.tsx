@@ -2,7 +2,7 @@ import { Toast } from "@base-ui/react/toast";
 import React from "react";
 
 import { useSettingsContext } from "#pkg/app/components/settings-context.tsx";
-import { useAppForm } from "#pkg/app/form/form.js";
+import { useAppForm } from "#pkg/app/form/use-app-form.js";
 import { settingsSchema } from "#pkg/settings-storage.js";
 
 type SettingsFormProps = {};
