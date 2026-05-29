@@ -7,7 +7,13 @@ import { parseOkResponse, RpcClient } from "@content-relay/client";
 import { deviceIdSchema, isValidAbsoluteUrl, relayItemTypeSchema } from "@content-relay/contracts";
 
 import { useSettingsContext } from "#pkg/app/components/settings-context.tsx";
+import { DSButton } from "#pkg/app/design-system/button.js";
 import { useAppForm } from "#pkg/app/form/form.js";
+import {
+  useCloseAndroidShareMutation,
+  useCompleteAndroidShareMutation,
+  usePendingAndroidShareQuery,
+} from "#pkg/data-fetching/android-share.js";
 import { useAvailableDevicesQuery } from "#pkg/data-fetching/available-devices.js";
 import { useRegisteredDeviceQuery } from "#pkg/data-fetching/register-device.js";
 
@@ -81,6 +87,10 @@ const sendItemFormSchema = z
 
 const SendTextFormContent: React.FC<SendTextFormContentProps> = ({ relayHubUrl, deviceId }) => {
   const toastManager = Toast.useToastManager();
+  const pendingAndroidShareQuery = usePendingAndroidShareQuery();
+  const completeAndroidShareMutation = useCompleteAndroidShareMutation();
+  const closeAndroidShareMutation = useCloseAndroidShareMutation();
+  const appliedAndroidShareIdRef = React.useRef<string | null>(null);
   const availableDevicesQuery = useAvailableDevicesQuery({ relayHubUrl, deviceId });
   const availableDevices =
     availableDevicesQuery.data?.filter((device) => device.deviceId !== deviceId) ?? [];
@@ -115,9 +125,36 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({ relayHubUrl, 
         );
       }
 
+      if (pendingAndroidShareQuery.data !== null && pendingAndroidShareQuery.data !== undefined) {
+        await completeAndroidShareMutation.mutateAsync({ message: "Item sent" });
+      }
+
       toastManager.add({ title: "Item sent" });
     },
   });
+
+  React.useEffect(
+    function applyPendingAndroidShareToForm() {
+      const pendingAndroidShare = pendingAndroidShareQuery.data;
+
+      if (pendingAndroidShare === null || pendingAndroidShare === undefined) {
+        return;
+      }
+
+      if (appliedAndroidShareIdRef.current === pendingAndroidShare.shareId) {
+        return;
+      }
+
+      appliedAndroidShareIdRef.current = pendingAndroidShare.shareId;
+      form.setFieldValue("itemType", pendingAndroidShare.itemType);
+      form.setFieldValue("title", pendingAndroidShare.title);
+      form.setFieldValue("value", pendingAndroidShare.value);
+    },
+    [form, pendingAndroidShareQuery.data],
+  );
+
+  const hasPendingAndroidShare =
+    pendingAndroidShareQuery.data !== null && pendingAndroidShareQuery.data !== undefined;
 
   return (
     <form.Form
@@ -211,6 +248,20 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({ relayHubUrl, 
         />
 
         <form.Actions>
+          {hasPendingAndroidShare && (
+            <DSButton
+              type="button"
+              variant="text"
+              disabled={
+                closeAndroidShareMutation.isPending || completeAndroidShareMutation.isPending
+              }
+              onClick={() => {
+                void closeAndroidShareMutation.mutateAsync();
+              }}
+            >
+              Cancel
+            </DSButton>
+          )}
           <form.SubmitButton label="Send" />
         </form.Actions>
       </form.AppForm>
