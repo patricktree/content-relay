@@ -2,7 +2,7 @@
   "extends": [
     "@content-relay/config-typescript/tsconfig.defaults.json",
     "@content-relay/config-typescript/tsconfig.node-direct-ts-execution.json",
-    "@content-relay/config-typescript/tsconfig.vitest.json"
+    "@content-relay/config-typescript/tsconfig.playwright.json"
   ],
   "compilerOptions": {
     /* Modules */
