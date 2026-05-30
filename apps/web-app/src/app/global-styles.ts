@@ -110,7 +110,7 @@ export const cssBase = css`
       --font-size-xxl: 1.5rem;
       --font-size-xxxl: 1.75rem;
       --font-size-xxxxl: 2rem;
-      --font-weight-bold: 800;
+      --font-weight-bold: 700;
 
       --spacing-base: 8px;
       --app-padding-block: calc(1 * var(--spacing-base));

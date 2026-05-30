@@ -2,6 +2,7 @@ import { styled } from "@linaria/react";
 import React from "react";
 
 import { AppToasts } from "#pkg/app/components/app-toasts.tsx";
+import { DeliveryList } from "#pkg/app/components/delivery-list.tsx";
 import { SendTextForm } from "#pkg/app/components/send-text-form.tsx";
 import { SettingsProvider } from "#pkg/app/components/settings-context.tsx";
 import { SettingsForm } from "#pkg/app/components/settings-form.tsx";
@@ -19,6 +20,7 @@ export const App: React.FC = () => {
         <PageShell>
           <MainHeading>Content Relay</MainHeading>
           <SendTextForm />
+          <DeliveryList />
           <SettingsForm />
         </PageShell>
         <AppToasts />
