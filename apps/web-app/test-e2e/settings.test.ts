@@ -89,32 +89,37 @@ test("hide send form until settings are saved", async ({ page }) => {
   await expect(page.getByRole("form", { name: "Send item" })).toBeHidden();
 });
 
-test("fail fast when saved settings are malformed JSON", async ({ page }) => {
+test("show global error when saved settings are malformed JSON", async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem("settings", "not-json");
   });
-  const pageErrorPromise = page.waitForEvent("pageerror");
 
   await gotoWebApp(page);
 
-  const pageError = await pageErrorPromise;
-  expect(pageError.message).toContain("JSON");
+  const alert = page.getByRole("alert");
+  await expect(alert).toContainText("Something went wrong");
+  await page.getByText("Error details").click();
+  await expect(alert).toContainText("SyntaxError");
+  await expect(alert).toContainText("JSON");
+  await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
   await expect(page.getByRole("form", { name: "Send item" })).toBeHidden();
 });
 
-test("fail fast when saved settings do not match the schema", async ({ page }) => {
+test("show global error when saved settings do not match the schema", async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem(
       "settings",
       JSON.stringify({ relayHubUrl: "not-a-url", deviceNickname: "test-device-browser" }),
     );
   });
-  const pageErrorPromise = page.waitForEvent("pageerror");
 
   await gotoWebApp(page);
 
-  const pageError = await pageErrorPromise;
-  expect(pageError.message).toContain("Invalid URL");
+  const alert = page.getByRole("alert");
+  await expect(alert).toContainText("Something went wrong");
+  await page.getByText("Error details").click();
+  await expect(alert).toContainText("Invalid URL");
+  await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
   await expect(page.getByRole("form", { name: "Send item" })).toBeHidden();
 });
 

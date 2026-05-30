@@ -6,7 +6,6 @@ import { DeliveryList } from "#pkg/app/components/delivery-list.tsx";
 import { SendTextForm } from "#pkg/app/components/send-text-form.tsx";
 import { SettingsProvider } from "#pkg/app/components/settings-context.tsx";
 import { SettingsForm } from "#pkg/app/components/settings-form.tsx";
-import { cssBase } from "#pkg/app/global-styles.js";
 import { useSyncAndroidSharesToTanstackQuery } from "#pkg/data-fetching/android-share.js";
 
 export const App: React.FC = () => {
@@ -14,8 +13,6 @@ export const App: React.FC = () => {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: cssBase }} />
-
       <SettingsProvider>
         <PageShell>
           <MainHeading>Content Relay</MainHeading>

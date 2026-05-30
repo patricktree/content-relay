@@ -5,8 +5,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 
 import { App } from "#pkg/app/app.js";
+import { AppErrorBoundary } from "#pkg/app/components/app-error-boundary.js";
 import { GlobalProviders } from "#pkg/app/global-providers.js";
-import { cssReset } from "#pkg/app/global-styles.ts";
+import { cssBase, cssReset } from "#pkg/app/global-styles.ts";
 
 const rootElement = document.getElementById("root");
 
@@ -16,10 +17,13 @@ if (rootElement === null) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <GlobalProviders>
-      <style dangerouslySetInnerHTML={{ __html: cssReset }} />
+    <style dangerouslySetInnerHTML={{ __html: cssReset }} />
+    <style dangerouslySetInnerHTML={{ __html: cssBase }} />
 
-      <App />
+    <GlobalProviders>
+      <AppErrorBoundary>
+        <App />
+      </AppErrorBoundary>
     </GlobalProviders>
   </React.StrictMode>,
 );
