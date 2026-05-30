@@ -463,6 +463,7 @@ const DeliveryRows = styled.ul`
 `;
 
 const DeliveryRowLi = styled.li`
+  min-width: 0;
   display: flex;
   justify-content: space-between;
   gap: calc(2 * var(--spacing-base));
