@@ -1,7 +1,10 @@
 import { Button as BaseUIButton } from "@base-ui/react/button";
 import { styled } from "@linaria/react";
 
-type DSButtonProps = React.ComponentProps<"button"> & {
+import type { MapPropsToRequiredDataAttributeProps } from "#pkg/app/styling.utils.js";
+
+type DSButtonProps = React.ComponentProps<"button"> & DSButtonCustomProps;
+type DSButtonCustomProps = {
   variant?: "outlined" | "contained" | "text";
 };
 
@@ -18,9 +21,8 @@ export const DSButton: React.FC<DSButtonProps> = ({
   );
 };
 
-type StyledButtonProps = React.ComponentProps<"button"> & {
-  "data-variant": "outlined" | "contained" | "text";
-};
+type StyledButtonProps = React.ComponentProps<"button"> &
+  MapPropsToRequiredDataAttributeProps<DSButtonCustomProps>;
 
 const StyledButton = styled(BaseUIButton)<StyledButtonProps>`
   padding-block: calc(1 * var(--spacing-base));

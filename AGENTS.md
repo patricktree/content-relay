@@ -33,6 +33,7 @@ Co-Authored-By: (the agent's name and attribution byline)
 ## Architecture
 
 - Always load the `clean-architecture` skill before working in this monorepo.
+- Load `content-relay-frontend` before editing browser UI code, including React, TanStack Query/Form, Linaria, platform adapters, storage, or frontend tests.
 - Preserve strict ports-and-adapters / Clean Architecture boundaries; keep domain/application independent from frameworks and platform APIs.
 - Put shared contracts and types in `libs/contracts`; keep workspace config in `tooling/config-eslint` and `tooling/config-typescript`.
 - Follow the existing ESM + native TypeScript pattern, including `.ts` imports.
