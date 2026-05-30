@@ -189,8 +189,9 @@ private class StubURLProtocol: URLProtocol, @unchecked Sendable {
     #expect(request.url?.port == 8787)
 
     switch (request.httpMethod, request.url?.path()) {
-    case ("GET", "/deliveries/pending"):
+    case ("GET", "/deliveries"):
       #expect(request.url?.query()?.contains("targetDeviceId=device_macos") == true)
+      #expect(request.url?.query()?.contains("state=pending") == true)
       return jsonResponse(
         request: request,
         statusCode: 200,
@@ -372,7 +373,11 @@ private let pendingDeliveriesJSON = """
         "createdAt": "2026-04-16T10:00:00Z"
       }
     }
-  ]
+  ],
+  "pageInfo": {
+    "nextCursor": null,
+    "hasNextPage": false
+  }
 }
 """
 

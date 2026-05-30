@@ -23,14 +23,16 @@ public final class OpenAPIRelayAPIClient: RelayAPIClient, @unchecked Sendable {
   }
 
   public func fetchPendingDeliveries() async throws -> [RelayDelivery] {
-    let response = try await underlyingClient.getDeliveriesPending(
-      .init(query: .init(targetDeviceId: deviceId))
+    let response = try await underlyingClient.getDeliveries(
+      .init(query: .init(targetDeviceId: deviceId, state: .pending))
     )
 
     switch response {
     case let .ok(ok):
       let payload = try convertPayload(ok.body.json, as: RelayPendingDeliveriesResponse.self)
       return payload.deliveries
+    case let .badRequest(badRequest):
+      throw relayAPIError(statusCode: 400, payload: try badRequest.body.json)
     case let .internalServerError(internalServerError):
       throw relayAPIError(statusCode: 500, payload: try internalServerError.body.json)
     case let .undocumented(statusCode, _):

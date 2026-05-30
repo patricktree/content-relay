@@ -31,7 +31,7 @@ test("send text item", async ({ page }) => {
     const receivedDeliveries = await parseOkResponse(
       new RpcClient(relayHubBaseUrl)
         .createDeviceRpcClient(receiverDeviceId)
-        .fetchPendingDeliveries(),
+        .listDeliveries({ state: "pending" }),
     );
     expect(receivedDeliveries.deliveries).toHaveLength(1);
     expect(receivedDeliveries.deliveries[0]?.item).toMatchObject({
@@ -68,7 +68,7 @@ test("send URL item", async ({ page }) => {
     const receivedDeliveries = await parseOkResponse(
       new RpcClient(relayHubBaseUrl)
         .createDeviceRpcClient(receiverDeviceId)
-        .fetchPendingDeliveries(),
+        .listDeliveries({ state: "pending" }),
     );
     expect(receivedDeliveries.deliveries).toHaveLength(1);
     expect(receivedDeliveries.deliveries[0]?.item).toMatchObject({
@@ -220,7 +220,7 @@ test("trim text item values and omit blank title", async ({ page }) => {
     const receivedDeliveries = await parseOkResponse(
       new RpcClient(relayHubBaseUrl)
         .createDeviceRpcClient(receiverDeviceId)
-        .fetchPendingDeliveries(),
+        .listDeliveries({ state: "pending" }),
     );
     expect(receivedDeliveries.deliveries).toHaveLength(1);
     expect(receivedDeliveries.deliveries[0]?.item).toMatchObject({
@@ -256,7 +256,7 @@ test("send an item to multiple target devices", async ({ page }) => {
       const receivedDeliveries = await parseOkResponse(
         new RpcClient(relayHubBaseUrl)
           .createDeviceRpcClient(receiver.deviceId)
-          .fetchPendingDeliveries(),
+          .listDeliveries({ state: "pending" }),
       );
       expect(receivedDeliveries.deliveries).toHaveLength(1);
       expect(receivedDeliveries.deliveries[0]?.item).toMatchObject({ text: "group text" });
@@ -322,7 +322,7 @@ test("do not show success notification when text item submission fails", async (
     const receivedDeliveries = await parseOkResponse(
       new RpcClient(relayHubBaseUrl)
         .createDeviceRpcClient(receiverDeviceId)
-        .fetchPendingDeliveries(),
+        .listDeliveries({ state: "pending" }),
     );
     expect(receivedDeliveries.deliveries).toHaveLength(0);
   });

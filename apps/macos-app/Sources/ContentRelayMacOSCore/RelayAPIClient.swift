@@ -93,7 +93,7 @@ public final class URLSessionRelayAPIClient: RelayAPIClient, @unchecked Sendable
 
   public func fetchPendingDeliveries() async throws -> [RelayDelivery] {
     let response: RelayPendingDeliveriesResponse = try await sendRequest(
-      path: "/deliveries/pending?targetDeviceId=\(urlEncoded(credentials.deviceId))",
+      path: "/deliveries?targetDeviceId=\(urlEncoded(credentials.deviceId))&state=pending",
       method: "GET"
     )
 

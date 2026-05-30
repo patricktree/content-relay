@@ -22,6 +22,11 @@ export type CreateRegisteredDeviceInput = {
   pushToken?: PushTokenRecord;
 };
 
+export type DeliveryListCursor = {
+  createdAt: string;
+  deliveryId: string;
+};
+
 export type IRelayHubRepository = {
   createDevice(device: DeviceRecord): Promise<void>;
   createRegisteredDevice(input: CreateRegisteredDeviceInput): Promise<void>;
@@ -44,6 +49,7 @@ export type IRelayHubRepository = {
     targetDeviceId: string,
     state: DeliveryState | "all",
     limit: number,
+    cursor?: DeliveryListCursor,
   ): Promise<DeliveryRecord[]>;
   acknowledgeDelivery(deliveryId: string, acknowledgedAt: string): Promise<DeliveryRecord>;
   markDeliveryViewed(deliveryId: string, viewedAt: string): Promise<DeliveryRecord>;

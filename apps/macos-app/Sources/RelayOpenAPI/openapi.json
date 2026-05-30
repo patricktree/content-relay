@@ -1277,175 +1277,6 @@
         }
       }
     },
-    "/deliveries/pending": {
-      "get": {
-        "tags": ["Deliveries"],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "required": true,
-            "name": "targetDeviceId",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Pending deliveries listed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "deliveries": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "deliveryId": {
-                            "type": "string"
-                          },
-                          "itemId": {
-                            "type": "string"
-                          },
-                          "targetDeviceId": {
-                            "type": "string"
-                          },
-                          "state": {
-                            "type": "string",
-                            "enum": ["pending", "delivered", "viewed"]
-                          },
-                          "createdAt": {
-                            "type": "string"
-                          },
-                          "acknowledgedAt": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "viewedAt": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "item": {
-                            "type": "object",
-                            "properties": {
-                              "itemId": {
-                                "type": "string"
-                              },
-                              "type": {
-                                "type": "string",
-                                "enum": ["text", "url", "file"]
-                              },
-                              "title": {
-                                "type": "string",
-                                "nullable": true
-                              },
-                              "sourceDeviceId": {
-                                "type": "string"
-                              },
-                              "text": {
-                                "type": "string",
-                                "nullable": true
-                              },
-                              "url": {
-                                "type": "string",
-                                "nullable": true
-                              },
-                              "files": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "fileId": {
-                                      "type": "string"
-                                    },
-                                    "itemId": {
-                                      "type": "string"
-                                    },
-                                    "order": {
-                                      "type": "integer",
-                                      "minimum": 0
-                                    },
-                                    "fileName": {
-                                      "type": "string"
-                                    },
-                                    "storedFileName": {
-                                      "type": "string"
-                                    },
-                                    "contentType": {
-                                      "type": "string"
-                                    },
-                                    "sizeBytes": {
-                                      "type": "integer",
-                                      "minimum": 0
-                                    }
-                                  },
-                                  "required": [
-                                    "fileId",
-                                    "itemId",
-                                    "order",
-                                    "fileName",
-                                    "storedFileName",
-                                    "contentType",
-                                    "sizeBytes"
-                                  ]
-                                }
-                              },
-                              "createdAt": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "itemId",
-                              "type",
-                              "title",
-                              "sourceDeviceId",
-                              "text",
-                              "url",
-                              "files",
-                              "createdAt"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "deliveryId",
-                          "itemId",
-                          "targetDeviceId",
-                          "state",
-                          "createdAt",
-                          "acknowledgedAt",
-                          "viewedAt",
-                          "item"
-                        ]
-                      }
-                    }
-                  },
-                  "required": ["deliveries"]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected Relay Hub error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["error"]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/deliveries": {
       "get": {
         "tags": ["Deliveries"],
@@ -1477,6 +1308,15 @@
             },
             "required": false,
             "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -1609,9 +1449,22 @@
                           "item"
                         ]
                       }
+                    },
+                    "pageInfo": {
+                      "type": "object",
+                      "properties": {
+                        "nextCursor": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "hasNextPage": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": ["nextCursor", "hasNextPage"]
                     }
                   },
-                  "required": ["deliveries"]
+                  "required": ["deliveries", "pageInfo"]
                 }
               }
             }

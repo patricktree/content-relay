@@ -124,8 +124,14 @@ export const createItemResponseSchema = z.object({
   deliveries: z.array(deliveryResourceSchema),
 });
 
+export const deliveryListPageInfoSchema = z.object({
+  nextCursor: z.string().nullable(),
+  hasNextPage: z.boolean(),
+});
+
 export const deliveryListResponseSchema = z.object({
   deliveries: z.array(deliveryResourceSchema),
+  pageInfo: deliveryListPageInfoSchema,
 });
 
 export const itemListEntrySchema = z.object({
@@ -188,6 +194,7 @@ export type FileMetadata = z.infer<typeof fileMetadataSchema>;
 export type ItemResource = z.infer<typeof itemResourceSchema>;
 export type DeliveryResource = z.infer<typeof deliveryResourceSchema>;
 export type CreateItemResponse = z.infer<typeof createItemResponseSchema>;
+export type DeliveryListPageInfo = z.infer<typeof deliveryListPageInfoSchema>;
 export type DeliveryListResponse = z.infer<typeof deliveryListResponseSchema>;
 export type ItemListEntry = z.infer<typeof itemListEntrySchema>;
 export type ItemListResponse = z.infer<typeof itemListResponseSchema>;

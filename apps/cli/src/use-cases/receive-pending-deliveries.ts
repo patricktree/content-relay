@@ -22,7 +22,7 @@ export async function receivePendingDeliveries(input: {
   const pending = await parseOkResponse(
     new RpcClient(input.relayHubBaseUrl)
       .createDeviceRpcClient(input.deviceId)
-      .fetchPendingDeliveries(),
+      .listDeliveries({ state: "pending" }),
   );
   const results: ReceivedDeliveryResult[] = [];
 

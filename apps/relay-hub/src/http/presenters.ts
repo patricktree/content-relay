@@ -50,9 +50,13 @@ export function presentCreateItemOutput(
   };
 }
 
-export function presentDeliveryList(deliveries: LoadedDelivery[]): DeliveryListResponse {
+export function presentDeliveryList(input: {
+  deliveries: LoadedDelivery[];
+  pageInfo: DeliveryListResponse["pageInfo"];
+}): DeliveryListResponse {
   return {
-    deliveries: deliveries.map((delivery) => presentLoadedDelivery(delivery)),
+    deliveries: input.deliveries.map((delivery) => presentLoadedDelivery(delivery)),
+    pageInfo: input.pageInfo,
   };
 }
 

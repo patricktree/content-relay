@@ -93,12 +93,6 @@ class DeviceRpcClient {
     });
   }
 
-  async fetchPendingDeliveries() {
-    return this.#honoClient.deliveries.pending.$get({
-      query: { targetDeviceId: this.#deviceId },
-    });
-  }
-
   async acknowledgeDelivery(params: { deliveryId: string }) {
     return this.#honoClient.deliveries[":deliveryId"].ack.$post({
       param: { deliveryId: params.deliveryId },
@@ -113,12 +107,15 @@ class DeviceRpcClient {
     });
   }
 
-  async listDeliveries(params: { state?: DeliveryListState; limit?: number | string } = {}) {
+  async listDeliveries(
+    params: { state?: DeliveryListState; limit?: number | string; cursor?: string } = {},
+  ) {
     return this.#honoClient.deliveries.$get({
       query: {
         targetDeviceId: this.#deviceId,
         ...(params.state !== undefined ? { state: params.state } : {}),
         ...(params.limit !== undefined ? { limit: String(params.limit) } : {}),
+        ...(params.cursor !== undefined ? { cursor: params.cursor } : {}),
       },
     });
   }

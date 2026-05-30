@@ -43,7 +43,6 @@ import { getItem } from "#pkg/use-cases/get-item.ts";
 import { listDeliveries } from "#pkg/use-cases/list-deliveries.ts";
 import { listDevices } from "#pkg/use-cases/list-devices.ts";
 import { listItems } from "#pkg/use-cases/list-items.ts";
-import { listPendingDeliveries } from "#pkg/use-cases/list-pending-deliveries.ts";
 import { markDeliveryViewed } from "#pkg/use-cases/mark-delivery-viewed.ts";
 import { registerDevice } from "#pkg/use-cases/register-device.ts";
 import { renameDevice } from "#pkg/use-cases/rename-device.ts";
@@ -108,6 +107,7 @@ const deliveryListQuerySchema = z.object({
   targetDeviceId: z.string({ error: "Expected `targetDeviceId` query parameter." }).min(1),
   state: z.enum(["pending", "delivered", "viewed", "all"]).optional(),
   limit: z.coerce.number().int().positive().max(500).optional(),
+  cursor: z.string().min(1).optional(),
 });
 
 const itemListQuerySchema = z.object({
@@ -585,40 +585,6 @@ export async function createHonoApp() {
     .openapi(
       createRoute({
         method: "get",
-        path: "/deliveries/pending",
-        tags: [API_TAGS.deliveries],
-        request: {
-          query: targetDeviceQuerySchema,
-        },
-        responses: {
-          200: {
-            content: {
-              "application/json": {
-                schema: deliveryListResponseSchema,
-              },
-            },
-            description: "Pending deliveries listed.",
-          },
-          500: {
-            content: {
-              "application/json": {
-                schema: errorResponseSchema,
-              },
-            },
-            description: "Unexpected Relay Hub error.",
-          },
-        },
-      }),
-      async (context) => {
-        const { targetDeviceId } = context.req.valid("query");
-        const deliveries = await listPendingDeliveries(targetDeviceId);
-
-        return context.json(presentDeliveryList(deliveries), 200);
-      },
-    )
-    .openapi(
-      createRoute({
-        method: "get",
         path: "/deliveries",
         tags: [API_TAGS.deliveries],
         request: {
@@ -653,11 +619,12 @@ export async function createHonoApp() {
       }),
       async (context) => {
         const query = context.req.valid("query");
-        const deliveries = await listDeliveries(
-          query.targetDeviceId,
-          query.state ?? "pending",
-          query.limit ?? 50,
-        );
+        const deliveries = await listDeliveries({
+          targetDeviceId: query.targetDeviceId,
+          state: query.state ?? "pending",
+          limit: query.limit ?? 50,
+          cursor: query.cursor,
+        });
 
         return context.json(presentDeliveryList(deliveries), 200);
       },

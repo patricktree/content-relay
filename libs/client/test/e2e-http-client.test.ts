@@ -155,7 +155,7 @@ test("milestone 0 flow covers registration, send, receive, viewed, and file down
     const androidPendingBeforeAck = await parseOkResponse(
       new RpcClient(androidProfile.relayHubBaseUrl)
         .createDeviceRpcClient(androidProfile.deviceId)
-        .fetchPendingDeliveries(),
+        .listDeliveries({ state: "pending" }),
     );
     expect(androidPendingBeforeAck.deliveries).toHaveLength(2);
 
@@ -458,7 +458,7 @@ test("item and delivery routes list and fetch device-scoped resources", async ()
     const pendingDeliveries = await parseOkResponse(
       new RpcClient(receiverProfile.relayHubBaseUrl)
         .createDeviceRpcClient(receiverProfile.deviceId)
-        .fetchPendingDeliveries(),
+        .listDeliveries({ state: "pending" }),
     );
     expect(pendingDeliveries.deliveries).toHaveLength(2);
 
@@ -525,6 +525,86 @@ test("item and delivery routes list and fetch device-scoped resources", async ()
         }),
       ]),
     );
+  });
+});
+
+test("delivery listing paginates with opaque cursors", async () => {
+  await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
+    const senderProfile = await registerTestDevice({
+      relayHubBaseUrl,
+      nickname: "Developer CLI",
+      platform: "cli",
+    });
+    const receiverProfile = await registerTestDevice({
+      relayHubBaseUrl,
+      nickname: "Developer Android Sim",
+      platform: "android",
+    });
+    const receiverClient = new RpcClient(receiverProfile.relayHubBaseUrl).createDeviceRpcClient(
+      receiverProfile.deviceId,
+    );
+    const senderClient = new RpcClient(senderProfile.relayHubBaseUrl).createDeviceRpcClient(
+      senderProfile.deviceId,
+    );
+
+    const firstItem = await parseOkResponse(
+      senderClient.sendText({
+        text: "oldest delivery",
+        targetDeviceIds: [receiverProfile.deviceId],
+      }),
+    );
+    const secondItem = await parseOkResponse(
+      senderClient.sendText({
+        text: "middle delivery",
+        targetDeviceIds: [receiverProfile.deviceId],
+      }),
+    );
+    const thirdItem = await parseOkResponse(
+      senderClient.sendText({
+        text: "newest delivery",
+        targetDeviceIds: [receiverProfile.deviceId],
+      }),
+    );
+
+    const firstPage = await parseOkResponse(
+      receiverClient.listDeliveries({ state: "pending", limit: 2 }),
+    );
+    expect(firstPage.deliveries).toHaveLength(2);
+    expect(firstPage.pageInfo.hasNextPage).toBe(true);
+    expect(firstPage.pageInfo.nextCursor).toEqual(expect.any(String));
+    assert(firstPage.pageInfo.nextCursor !== null);
+
+    const secondPage = await parseOkResponse(
+      receiverClient.listDeliveries({
+        state: "pending",
+        limit: 2,
+        cursor: firstPage.pageInfo.nextCursor,
+      }),
+    );
+    expect(secondPage.deliveries).toHaveLength(1);
+    expect([
+      ...firstPage.deliveries.map((delivery) => delivery.item.itemId),
+      ...secondPage.deliveries.map((delivery) => delivery.item.itemId),
+    ]).toEqual(
+      expect.arrayContaining([
+        firstItem.item.itemId,
+        secondItem.item.itemId,
+        thirdItem.item.itemId,
+      ]),
+    );
+    expect(secondPage.pageInfo).toEqual({
+      nextCursor: null,
+      hasNextPage: false,
+    });
+
+    const malformedCursorResponse = await receiverClient.listDeliveries({
+      state: "pending",
+      cursor: "not-a-valid-cursor",
+    });
+    expect(malformedCursorResponse.status).toBe(400);
+    expect(await malformedCursorResponse.json()).toMatchObject({
+      error: expect.stringMatching(/Malformed delivery list cursor/i),
+    });
   });
 });
 

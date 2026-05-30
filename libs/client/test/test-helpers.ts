@@ -64,7 +64,7 @@ export async function receivePendingDeliveries(
   options: ReceivePendingOptions,
 ): Promise<ReceivedDeliveryResult[]> {
   const rpcClient = new RpcClient(device.relayHubBaseUrl).createDeviceRpcClient(device.deviceId);
-  const pending = await parseResponse(rpcClient.fetchPendingDeliveries());
+  const pending = await parseResponse(rpcClient.listDeliveries({ state: "pending" }));
   const results: ReceivedDeliveryResult[] = [];
   const handledDeliveryIds = options.handledDeliveryIds ?? new Set<string>();
 

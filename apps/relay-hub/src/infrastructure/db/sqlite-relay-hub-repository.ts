@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, lt, or } from "drizzle-orm";
 import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import path from "node:path";
 import { Temporal } from "temporal-polyfill";
@@ -17,6 +17,7 @@ import {
 import type {
   IRelayHubRepository,
   CreateRegisteredDeviceInput,
+  DeliveryListCursor,
   DeliveryRecord,
   DeviceRecord,
   ItemRecord,
@@ -202,7 +203,21 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
     targetDeviceId: string,
     state: DeliveryRecord["state"] | "all",
     limit: number,
+    cursor?: DeliveryListCursor,
   ): Promise<DeliveryRecord[]> {
+    const targetFilter = eq(deliveriesTable.targetDeviceId, targetDeviceId);
+    const stateFilter = state === "all" ? undefined : eq(deliveriesTable.state, state);
+    const cursorFilter =
+      cursor === undefined
+        ? undefined
+        : or(
+            lt(deliveriesTable.createdAt, cursor.createdAt),
+            and(
+              eq(deliveriesTable.createdAt, cursor.createdAt),
+              lt(deliveriesTable.id, cursor.deliveryId),
+            ),
+          );
+
     return (this.#db
       .select({
         id: deliveriesTable.id,
@@ -214,15 +229,8 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
         viewedAt: deliveriesTable.viewedAt,
       })
       .from(deliveriesTable)
-      .where(
-        state === "all"
-          ? eq(deliveriesTable.targetDeviceId, targetDeviceId)
-          : and(
-              eq(deliveriesTable.targetDeviceId, targetDeviceId),
-              eq(deliveriesTable.state, state),
-            ),
-      )
-      .orderBy(desc(deliveriesTable.createdAt))
+      .where(and(targetFilter, stateFilter, cursorFilter))
+      .orderBy(desc(deliveriesTable.createdAt), desc(deliveriesTable.id))
       .limit(limit)
       .all() ?? []) as DeliveryRecord[];
   }
