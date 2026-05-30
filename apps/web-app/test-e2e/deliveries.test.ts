@@ -277,7 +277,7 @@ test("open a text Delivery and mark it Viewed", async ({ page }) => {
   });
 });
 
-test("open a URL Delivery without navigating away", async ({ page }) => {
+test("open a URL Delivery in a new browser surface without navigating away", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
     const [sourceDevice, targetDevice] = await seed.registerDevices(relayHubBaseUrl, [
       { nickname: "source-device", platform: "cli" },
@@ -304,18 +304,17 @@ test("open a URL Delivery without navigating away", async ({ page }) => {
     });
 
     await gotoWebApp(page);
+    const popupPromise = page.waitForEvent("popup");
     await page
       .getByRole("listitem")
       .filter({ hasText: "Article" })
       .getByRole("button", { name: "Open" })
       .click();
 
-    const dialog = page.getByRole("dialog", { name: "Article" });
-    await expect(dialog).toContainText("https://example.com/article");
-    await expect(dialog.getByRole("link", { name: "Open URL" })).toHaveAttribute(
-      "href",
-      "https://example.com/article",
-    );
+    const popup = await popupPromise;
+    await expect(popup).toHaveURL("https://example.com/article");
+    await popup.close();
+    await expect(page.getByRole("dialog", { name: "Article" })).not.toBeVisible();
     await expect(page).toHaveURL("http://localhost:4173/");
   });
 });

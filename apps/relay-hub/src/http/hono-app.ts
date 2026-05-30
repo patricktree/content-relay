@@ -155,15 +155,16 @@ export async function createHonoApp() {
     },
   });
 
-  // Capacitor serves the bundled app from https://localhost, so the Relay Hub must
-  // explicitly allow that origin for browser-style requests from the mobile shell.
+  // Capacitor and Tauri serve bundled apps from local custom origins, so the
+  // Relay Hub must explicitly allow them for browser-style requests from native shells.
   app.use(
     "/*",
     cors({
       origin: (origin) =>
         origin.startsWith("http://localhost") ||
         origin.startsWith("https://localhost") ||
-        origin.startsWith("http://127.0.0.1")
+        origin.startsWith("http://127.0.0.1") ||
+        origin === "tauri://localhost"
           ? origin
           : undefined,
       allowHeaders: ["content-type", "x-relay-device-id"],

@@ -2,6 +2,8 @@
   "ignorePatterns": [
     /* pnpm-workspace.yaml is managed by pnpm */
     "/pnpm-workspace.yaml",
+    /* macos-app tauri generated files */
+    "/apps/macos-app/src/gen/**",
   ],
   "sortPackageJson": {
     "sortScripts": true,

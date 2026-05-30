@@ -3,15 +3,21 @@
   "private": true,
   "scripts": {
     "build": "turbo run turbo:build",
-    "clean": "del-cli --dot=true \".build\" \"dist\"",
+    "clean": "del-cli --dot=true \".build\" \"dist\" \"src/target\"",
+    "dev": "turbo run turbo:dev",
     "lint": "turbo run turbo:lint",
     "lint:fix": "turbo run turbo:lint:fix",
     "test": "turbo run turbo:test",
-    "turbo:build": "cp ./node_modules/@content-relay/client/dist/content-relay-hub-openapi.json ./Sources/RelayOpenAPI/openapi.json && ./scripts/build.sh",
-    "turbo:lint": "swift build -c debug -Xswiftc -warnings-as-errors",
-    "turbo:test": "swift test"
+    "turbo:build": "tauri build --bundles app && rm -rf dist && mkdir -p dist && cp -R \"src/target/release/bundle/macos/Content Relay.app\" dist/",
+    "turbo:dev": "tauri dev",
+    "turbo:lint": "cargo fmt --manifest-path src/Cargo.toml --check && CARGO_TARGET_DIR=src/target/lint cargo clippy --manifest-path src/Cargo.toml --all-targets --all-features -- -D warnings",
+    "turbo:lint:fix": "cargo fmt --manifest-path src/Cargo.toml",
+    "turbo:test": "CARGO_TARGET_DIR=src/target/test cargo test --manifest-path src/Cargo.toml"
+  },
+  "dependencies": {
+    "@content-relay/web-app": "workspace:*"
   },
   "devDependencies": {
-    "@content-relay/client": "workspace:*"
+    "@tauri-apps/cli": "^2.11.2"
   }
 }

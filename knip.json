@@ -5,8 +5,7 @@
       "ignoreDependencies": ["husky", "@emnapi/core", "@emnapi/runtime"]
     },
     "apps/macos-app": {
-      "ignoreBinaries": ["swift"],
-      "ignoreDependencies": ["@content-relay/client"]
+      "ignoreDependencies": ["@content-relay/web-app"]
     },
     "apps/mobile-app": {
       "ignoreDependencies": ["@capacitor/ios", "@content-relay/config-typescript"],

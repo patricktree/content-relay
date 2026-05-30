@@ -20,6 +20,7 @@ import {
   useRefreshDeliveriesOnAndroidResume,
 } from "#pkg/data-fetching/deliveries.js";
 import { createRegisteredDeviceQuery } from "#pkg/data-fetching/register-device.js";
+import { openExternalUrl } from "#pkg/platform/open-url.js";
 
 export const DeliveryList: React.FC = () => {
   const { settings } = useSettingsContext();
@@ -98,6 +99,25 @@ const DeliveryListContent: React.FC<DeliveryListContentProps> = ({
     }
   }
 
+  async function openDelivery(delivery: DeliveryResource): Promise<void> {
+    if (delivery.item.type !== "url") {
+      setSelectedDelivery(delivery);
+      return;
+    }
+
+    if (delivery.item.url === null) {
+      setSelectedDelivery(delivery);
+      return;
+    }
+
+    try {
+      await openExternalUrl(delivery.item.url);
+      markDeliveryViewedMutation.mutate(delivery.deliveryId);
+    } catch {
+      setSelectedDelivery(delivery);
+    }
+  }
+
   return (
     <DeliverySection aria-labelledby="deliveries-heading">
       <SectionHeader>
@@ -136,7 +156,9 @@ const DeliveryListContent: React.FC<DeliveryListContentProps> = ({
                 deviceNicknamesById.get(delivery.item.sourceDeviceId) ??
                 delivery.item.sourceDeviceId
               }
-              onOpen={() => setSelectedDelivery(delivery)}
+              onOpen={() => {
+                void openDelivery(delivery);
+              }}
             />
           ))}
         </DeliveryRows>

@@ -1083,29 +1083,25 @@ test("collection routes only require explicit device parameters where needed", a
   });
 });
 
-test("relay hub CORS allows Capacitor Android localhost origin", async () => {
+test("relay hub CORS allows native app origins", async () => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const listDevicesResponse = await fetch(`${relayHubBaseUrl}/devices`, {
-      headers: {
-        Origin: "https://localhost",
-      },
-    });
-    expect(listDevicesResponse.headers.get("access-control-allow-origin")).toBe(
-      "https://localhost",
-    );
+    for (const origin of ["https://localhost", "tauri://localhost"]) {
+      const listDevicesResponse = await fetch(`${relayHubBaseUrl}/devices`, {
+        headers: { Origin: origin },
+      });
+      expect(listDevicesResponse.headers.get("access-control-allow-origin")).toBe(origin);
 
-    const registerPreflightResponse = await fetch(`${relayHubBaseUrl}/devices/register`, {
-      method: "OPTIONS",
-      headers: {
-        Origin: "https://localhost",
-        "Access-Control-Request-Method": "POST",
-        "Access-Control-Request-Headers": "content-type",
-      },
-    });
-    expect(registerPreflightResponse.status).toBe(204);
-    expect(registerPreflightResponse.headers.get("access-control-allow-origin")).toBe(
-      "https://localhost",
-    );
+      const registerPreflightResponse = await fetch(`${relayHubBaseUrl}/devices/register`, {
+        method: "OPTIONS",
+        headers: {
+          Origin: origin,
+          "Access-Control-Request-Method": "POST",
+          "Access-Control-Request-Headers": "content-type",
+        },
+      });
+      expect(registerPreflightResponse.status).toBe(204);
+      expect(registerPreflightResponse.headers.get("access-control-allow-origin")).toBe(origin);
+    }
   });
 });
 
