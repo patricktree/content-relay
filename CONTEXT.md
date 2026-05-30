@@ -25,6 +25,18 @@ _Avoid_: File message, attachment list, per-file item
 A per-target-Device record that tracks a recipient Device's handling of an Item.
 _Avoid_: Push, notification, message copy
 
+**Pending Delivery**:
+A Delivery that has not yet been acknowledged by the target Device.
+_Avoid_: Unread message, unack'd delivery
+
+**Acknowledged Delivery**:
+A Delivery that the target Device has received but the user has not necessarily opened.
+_Avoid_: Ack'd delivery
+
+**Viewed Delivery**:
+A Delivery that the user has opened; viewing a Delivery also means it has been acknowledged.
+_Avoid_: Opened message
+
 **Push Token**:
 The native mobile push-provider token stored for a mobile Device so the Relay Hub can wake or notify it.
 _Avoid_: Device credential, auth token
