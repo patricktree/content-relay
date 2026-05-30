@@ -161,7 +161,9 @@ export async function createHonoApp() {
     "/*",
     cors({
       origin: (origin) =>
-        origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")
+        origin.startsWith("http://localhost") ||
+        origin.startsWith("https://localhost") ||
+        origin.startsWith("http://127.0.0.1")
           ? origin
           : undefined,
       allowHeaders: ["content-type", "x-relay-device-id"],
