@@ -20,14 +20,14 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     return settingsStorage.load() ?? undefined;
   });
 
-  React.useEffect(
-    function syncSettingsToStorage() {
-      if (settings) {
-        settingsStorage.store(settings);
-      }
-    },
-    [settings],
-  );
+  function setSettingsAndStore(newSettings: Settings) {
+    setSettings(newSettings);
+    settingsStorage.store(newSettings);
+  }
 
-  return <context.Provider value={{ settings, setSettings }}>{children}</context.Provider>;
+  return (
+    <context.Provider value={{ settings, setSettings: setSettingsAndStore }}>
+      {children}
+    </context.Provider>
+  );
 };

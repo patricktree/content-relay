@@ -2,7 +2,8 @@
   "name": "@content-relay/config-oxlint",
   "private": true,
   "type": "module",
-  "devDependencies": {
+  "dependencies": {
+    "eslint-plugin-react-you-might-not-need-an-effect": "^1.0.1",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:"
   }
