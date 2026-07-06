@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 import path from "node:path";
 
-const PLAYWRIGHT_VERSION = "1.60.0";
+const PLAYWRIGHT_VERSION = "1.61.1";
 const PLAYWRIGHT_SERVER_PORT_ENV = "PLAYWRIGHT_SERVER_PORT";
 
 const isDebug = process.env["PWDEBUG"] === "1";

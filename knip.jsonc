@@ -9,7 +9,7 @@
       "ignoreDependencies": ["@content-relay/web-app"],
     },
     "apps/mobile-app": {
-      "ignoreDependencies": ["@capacitor/ios", "@content-relay/config-typescript"],
+      "ignoreDependencies": ["@content-relay/config-typescript"],
       "ignoreFiles": ["./android/**", "./ios/**"],
     },
     "apps/web-app": {

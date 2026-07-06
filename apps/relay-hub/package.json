@@ -35,22 +35,22 @@
     "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
   "dependencies": {
-    "@commander-js/extra-typings": "^14.0.0",
+    "@commander-js/extra-typings": "^15.0.0",
     "@content-relay/contracts": "workspace:*",
     "@content-relay/o11y.logs": "workspace:*",
     "@content-relay/o11y.node-sdk": "workspace:*",
     "@content-relay/utils-node": "workspace:*",
-    "@hono/node-server": "^2.0.0",
+    "@hono/node-server": "^2.0.8",
     "@hono/zod-openapi": "^1.4.0",
     "@patricktree/commons-ecma": "^3.1.1",
     "@patricktree/commons-node": "^3.1.1",
     "better-sqlite3": "^12.11.1",
-    "commander": "^14.0.3",
+    "commander": "^15.0.0",
     "dioma": "^0.4.6",
     "drizzle-orm": "^0.45.2",
     "hono": "catalog:",
-    "temporal-polyfill": "^0.3.2",
-    "zod": "^4.3.6"
+    "temporal-polyfill": "^1.0.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@content-relay/config-oxlint": "workspace:*",

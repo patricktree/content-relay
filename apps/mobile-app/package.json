@@ -7,13 +7,13 @@
     "turbo:build": "pnpm run native:sync"
   },
   "dependencies": {
-    "@capacitor/android": "^8.3.1",
-    "@capacitor/core": "^8.3.1",
-    "@capacitor/ios": "^8.3.1",
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/ios": "^8.4.1",
     "@content-relay/web-app": "workspace:*"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.3.1",
+    "@capacitor/cli": "^8.4.1",
     "@content-relay/config-typescript": "workspace:*",
     "@types/node": "catalog:"
   }

@@ -16,7 +16,9 @@ export async function setupNodeObservabilitySDK(
 ): Promise<NodeObservabilitySDK> {
   const nodeSdk = new NodeSDK({
     serviceName: options.serviceName,
-    logRecordProcessors: [new SimpleLogRecordProcessor(new ConsoleLogRecordExporter())],
+    logRecordProcessors: [
+      new SimpleLogRecordProcessor({ exporter: new ConsoleLogRecordExporter() }),
+    ],
   });
   nodeSdk.start();
 

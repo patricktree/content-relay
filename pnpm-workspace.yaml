@@ -7,18 +7,19 @@ packages:
 allowBuilds:
   better-sqlite3: true
   esbuild: true
+  msgpackr-extract: true
   node@runtime:26.4.0: true
   protobufjs: true
   unrs-resolver: true
 
 catalog:
-  "@typescript/native-preview": 7.0.0-dev.20260511.1
+  "@typescript/native-preview": 7.0.0-dev.20260706.1
   "@types/node": ^24
   oxlint: ^1.72.0
   oxlint-tsgolint: ^0.24.0
-  hono: ^4.12.18
+  hono: ^4.12.27
   typescript: ^6.0.3
-  vitest: ^4.1.5
+  vitest: ^4.1.9
 
 packageExtensions:
   eslint-plugin-react-you-might-not-need-an-effect@1.0.1:
@@ -41,3 +42,13 @@ updateNotifier: false
 
 # workspace-concurrency=0 will use amount of cores of the host to run tasks concurrently (https://pnpm.io/cli/recursive#--workspace-concurrency)
 workspaceConcurrency: 0
+
+minimumReleaseAgeExclude:
+  - '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260706.1'
+  - '@typescript/native-preview-darwin-x64@7.0.0-dev.20260706.1'
+  - '@typescript/native-preview-linux-arm64@7.0.0-dev.20260706.1'
+  - '@typescript/native-preview-linux-arm@7.0.0-dev.20260706.1'
+  - '@typescript/native-preview-linux-x64@7.0.0-dev.20260706.1'
+  - '@typescript/native-preview-win32-arm64@7.0.0-dev.20260706.1'
+  - '@typescript/native-preview-win32-x64@7.0.0-dev.20260706.1'
+  - '@typescript/native-preview@7.0.0-dev.20260706.1'
