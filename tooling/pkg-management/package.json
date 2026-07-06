@@ -3,11 +3,11 @@
   "private": true,
   "type": "module",
   "imports": {
-    "#pkg/*.ts": {
+    "#src/*.ts": {
       "types": "./dist/types/*.d.ts",
       "default": "./src/*.ts"
     },
-    "#pkg/*": {
+    "#src/*": {
       "types": "./dist/types/*",
       "default": "./src/*"
     }

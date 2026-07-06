@@ -2,11 +2,11 @@ import { randomUUID } from "node:crypto";
 
 import { type FileMetadata } from "@content-relay/contracts";
 
-import { getDiContainer } from "#pkg/dependency-container-context.ts";
-import { RelayInvalidInputError } from "#pkg/errors.ts";
-import { blobStoreToken } from "#pkg/interfaces/blob-store.interface.ts";
-import { relayRepositoryToken } from "#pkg/interfaces/relay-hub-repository.interface.ts";
-import { createItem, type CreateItemOutput } from "#pkg/use-cases/create-item.ts";
+import { getDiContainer } from "#src/dependency-container-context.ts";
+import { RelayInvalidInputError } from "#src/errors.ts";
+import { blobStoreToken } from "#src/interfaces/blob-store.interface.ts";
+import { relayRepositoryToken } from "#src/interfaces/relay-hub-repository.interface.ts";
+import { createItem, type CreateItemOutput } from "#src/use-cases/create-item.ts";
 
 type FileUpload = {
   fileName: string;

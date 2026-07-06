@@ -3,7 +3,7 @@ import { assertIsUnreachable } from "@patricktree/commons-ecma/util/assert";
 import { parseOkResponse, RpcClient } from "@content-relay/client";
 import type { DeliveryResource } from "@content-relay/contracts";
 
-import { transitionDeliveryToDelivered } from "#pkg/use-cases/transition-delivery-to-delivered.ts";
+import { transitionDeliveryToDelivered } from "#src/use-cases/transition-delivery-to-delivered.ts";
 
 export type OpenDeliveryResponse = {
   delivery: DeliveryResource;

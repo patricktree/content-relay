@@ -7,16 +7,16 @@ import z from "zod";
 import { parseOkResponse, RpcClient } from "@content-relay/client";
 import { deviceIdSchema, isValidAbsoluteUrl, relayItemTypeSchema } from "@content-relay/contracts";
 
-import { useSettingsContext } from "#pkg/app/components/settings-context.tsx";
-import { DSButton } from "#pkg/app/design-system/button.js";
-import { useAppForm } from "#pkg/app/form/use-app-form.js";
+import { useSettingsContext } from "#src/app/components/settings-context.tsx";
+import { DSButton } from "#src/app/design-system/button.js";
+import { useAppForm } from "#src/app/form/use-app-form.js";
 import {
   useCloseAndroidShareMutation,
   useCompleteAndroidShareMutation,
   createPendingAndroidShareQuery,
-} from "#pkg/data-fetching/android-share.js";
-import { createAvailableDevicesQuery } from "#pkg/data-fetching/available-devices.js";
-import { createRegisteredDeviceQuery } from "#pkg/data-fetching/register-device.js";
+} from "#src/data-fetching/android-share.js";
+import { createAvailableDevicesQuery } from "#src/data-fetching/available-devices.js";
+import { createRegisteredDeviceQuery } from "#src/data-fetching/register-device.js";
 
 export const SendTextForm: React.FC = () => {
   const { settings } = useSettingsContext();

@@ -31,12 +31,12 @@
 - Do not put runtime-only dynamic style logic into Linaria templates.
 - Use typed `data-*` attributes for styling variants when static CSS selectors are enough.
 
-Use `MapPropsToRequiredDataAttributeProps` from `#pkg/app/styling.utils.js` to derive typed required `data-*` props from public variant props.
+Use `MapPropsToRequiredDataAttributeProps` from `#src/app/styling.utils.js` to derive typed required `data-*` props from public variant props.
 
 Example from `apps/web-app/src/app/design-system/button.tsx`:
 
 ```tsx
-import type { MapPropsToRequiredDataAttributeProps } from "#pkg/app/styling.utils.js";
+import type { MapPropsToRequiredDataAttributeProps } from "#src/app/styling.utils.js";
 
 type DSButtonProps = React.ComponentProps<"button"> & DSButtonCustomProps;
 type DSButtonCustomProps = {

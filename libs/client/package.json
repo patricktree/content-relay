@@ -6,12 +6,12 @@
   ],
   "type": "module",
   "imports": {
-    "#pkg-test/*.ts": "./test/*.ts",
-    "#pkg/*.ts": {
+    "#test/*.ts": "./test/*.ts",
+    "#src/*.ts": {
       "types": "./dist/types/*.d.ts",
       "default": "./src/*.ts"
     },
-    "#pkg/*": {
+    "#src/*": {
       "types": "./dist/types/*",
       "default": "./src/*"
     }

@@ -5,7 +5,7 @@ import type {
   DeviceId,
 } from "@content-relay/contracts";
 
-import { createHonoClient, type HonoClient } from "#pkg/hono-client.ts";
+import { createHonoClient, type HonoClient } from "#src/hono-client.ts";
 
 export class RpcClient {
   #honoClient: HonoClient;

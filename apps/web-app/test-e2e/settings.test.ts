@@ -2,10 +2,10 @@ import { expect } from "@playwright/test";
 
 import { withRelayHubTestEnvironment } from "@content-relay/relay-hub-test-utils";
 
-import type { Settings } from "#pkg/settings-storage.js";
+import type { Settings } from "#src/settings-storage.js";
 
-import { test } from "#pkg-test-e2e/globals.ts";
-import { gotoWebApp, prepareWebApp } from "#pkg-test-e2e/helpers.ts";
+import { test } from "#test-e2e/globals.ts";
+import { gotoWebApp, prepareWebApp } from "#test-e2e/helpers.ts";
 
 test("save settings", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {

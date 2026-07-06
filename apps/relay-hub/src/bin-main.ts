@@ -5,11 +5,11 @@ import process from "node:process";
 
 import { createLogger } from "@content-relay/o11y.logs";
 
-import { runWithDiContainer } from "#pkg/dependency-container-context.ts";
-import { createDependencyContainer } from "#pkg/dependency-container.ts";
-import { createHonoApp } from "#pkg/http/hono-app.ts";
-import { startServer } from "#pkg/http/hono-server.ts";
-import { instrumentationScopeFromModuleURL } from "#pkg/observability/instrumentation-scope.ts";
+import { runWithDiContainer } from "#src/dependency-container-context.ts";
+import { createDependencyContainer } from "#src/dependency-container.ts";
+import { createHonoApp } from "#src/http/hono-app.ts";
+import { startServer } from "#src/http/hono-server.ts";
+import { instrumentationScopeFromModuleURL } from "#src/observability/instrumentation-scope.ts";
 
 const logger = createLogger(instrumentationScopeFromModuleURL(import.meta.url));
 

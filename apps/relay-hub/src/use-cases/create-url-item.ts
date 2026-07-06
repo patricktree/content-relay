@@ -1,6 +1,6 @@
 import { assertValidAbsoluteUrl } from "@content-relay/contracts";
 
-import { createItem, type CreateItemOutput } from "#pkg/use-cases/create-item.ts";
+import { createItem, type CreateItemOutput } from "#src/use-cases/create-item.ts";
 
 export async function createUrlItem(
   sourceDeviceId: string,

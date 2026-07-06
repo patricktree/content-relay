@@ -1,9 +1,9 @@
-import { getDiContainer } from "#pkg/dependency-container-context.ts";
-import { clockToken } from "#pkg/interfaces/clock.interface.ts";
+import { getDiContainer } from "#src/dependency-container-context.ts";
+import { clockToken } from "#src/interfaces/clock.interface.ts";
 import {
   relayRepositoryToken,
   type DeviceRecord,
-} from "#pkg/interfaces/relay-hub-repository.interface.ts";
+} from "#src/interfaces/relay-hub-repository.interface.ts";
 
 export type RenameDeviceOutput = DeviceRecord;
 

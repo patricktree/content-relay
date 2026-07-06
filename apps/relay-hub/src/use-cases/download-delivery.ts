@@ -1,13 +1,13 @@
 import { type FileMetadata } from "@content-relay/contracts";
 
-import { getDiContainer } from "#pkg/dependency-container-context.ts";
-import { RelayInvalidInputError } from "#pkg/errors.ts";
+import { getDiContainer } from "#src/dependency-container-context.ts";
+import { RelayInvalidInputError } from "#src/errors.ts";
 import {
   relayRepositoryToken,
   type ItemRecord,
-} from "#pkg/interfaces/relay-hub-repository.interface.ts";
-import { readStoredFiles } from "#pkg/use-cases/read-stored-files.ts";
-import { requireOwnedDelivery } from "#pkg/use-cases/require-owned-delivery.ts";
+} from "#src/interfaces/relay-hub-repository.interface.ts";
+import { readStoredFiles } from "#src/use-cases/read-stored-files.ts";
+import { requireOwnedDelivery } from "#src/use-cases/require-owned-delivery.ts";
 
 export type DownloadDeliveryOutput = {
   item: ItemRecord;

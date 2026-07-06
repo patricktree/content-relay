@@ -1,9 +1,9 @@
-import { getDiContainer } from "#pkg/dependency-container-context.ts";
-import { clockToken } from "#pkg/interfaces/clock.interface.ts";
-import { relayRepositoryToken } from "#pkg/interfaces/relay-hub-repository.interface.ts";
-import { deleteAcknowledgedFileBlobs } from "#pkg/use-cases/delete-acknowledged-file-blobs.ts";
-import { loadDelivery, type LoadedDelivery } from "#pkg/use-cases/load-delivery.ts";
-import { requireOwnedDelivery } from "#pkg/use-cases/require-owned-delivery.ts";
+import { getDiContainer } from "#src/dependency-container-context.ts";
+import { clockToken } from "#src/interfaces/clock.interface.ts";
+import { relayRepositoryToken } from "#src/interfaces/relay-hub-repository.interface.ts";
+import { deleteAcknowledgedFileBlobs } from "#src/use-cases/delete-acknowledged-file-blobs.ts";
+import { loadDelivery, type LoadedDelivery } from "#src/use-cases/load-delivery.ts";
+import { requireOwnedDelivery } from "#src/use-cases/require-owned-delivery.ts";
 
 export async function acknowledgeDelivery(
   targetDeviceId: string,

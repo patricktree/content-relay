@@ -1,1 +1,1 @@
-export { seed } from "#pkg/seed.ts";
+export { seed } from "#src/seed.ts";

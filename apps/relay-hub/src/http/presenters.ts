@@ -17,13 +17,13 @@ import type {
   DeliveryRecord,
   DeviceRecord,
   ItemRecord,
-} from "#pkg/interfaces/relay-hub-repository.interface.ts";
-import type { CreateFileItemOutput } from "#pkg/use-cases/create-file-item.ts";
-import type { CreateItemOutput } from "#pkg/use-cases/create-item.ts";
-import type { DownloadDeliveryOutput } from "#pkg/use-cases/download-delivery.ts";
-import type { LoadedDelivery } from "#pkg/use-cases/load-delivery.ts";
-import type { LoadedItem } from "#pkg/use-cases/load-item.ts";
-import type { RegisterDeviceOutput } from "#pkg/use-cases/register-device.ts";
+} from "#src/interfaces/relay-hub-repository.interface.ts";
+import type { CreateFileItemOutput } from "#src/use-cases/create-file-item.ts";
+import type { CreateItemOutput } from "#src/use-cases/create-item.ts";
+import type { DownloadDeliveryOutput } from "#src/use-cases/download-delivery.ts";
+import type { LoadedDelivery } from "#src/use-cases/load-delivery.ts";
+import type { LoadedItem } from "#src/use-cases/load-item.ts";
+import type { RegisterDeviceOutput } from "#src/use-cases/register-device.ts";
 
 export function presentRegisterDeviceOutput(result: RegisterDeviceOutput): RegisterDeviceResponse {
   return {

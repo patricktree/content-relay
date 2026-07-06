@@ -3,8 +3,8 @@ import { expect } from "@playwright/test";
 import { withRelayHubTestEnvironment } from "@content-relay/relay-hub-test-utils";
 import { seed } from "@content-relay/seeding-tool";
 
-import { test } from "#pkg-test-e2e/globals.ts";
-import { gotoWebApp, prepareWebApp } from "#pkg-test-e2e/helpers.ts";
+import { test } from "#test-e2e/globals.ts";
+import { gotoWebApp, prepareWebApp } from "#test-e2e/helpers.ts";
 
 test("keep send form unavailable when relay hub cannot be reached", async ({ page }) => {
   await prepareWebApp(page, {

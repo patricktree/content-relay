@@ -10,8 +10,8 @@
 ## Playwright Patterns
 
 - Put E2E tests under `apps/web-app/test-e2e/**`.
-- Use `test` from `#pkg-test-e2e/globals.ts`.
-- Use helpers from `#pkg-test-e2e/helpers.ts` for app preparation and navigation.
+- Use `test` from `#test-e2e/globals.ts`.
+- Use helpers from `#test-e2e/helpers.ts` for app preparation and navigation.
 - Never use CSS selectors for interactive elements.
 - Use accessible/user-facing locators for interactive elements, such as role/name, label text, visible text, or alt text.
 - If an interactive element is not locatable that way, change the UI code so it has the right accessible semantics or user-facing label.

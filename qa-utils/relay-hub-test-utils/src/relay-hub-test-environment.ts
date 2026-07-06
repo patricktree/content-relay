@@ -9,7 +9,7 @@ import {
   startServer,
 } from "@content-relay/relay-hub";
 
-import { allocatePort } from "#pkg/network.ts";
+import { allocatePort } from "#src/network.ts";
 
 export type RelayHubTestEnvironment = {
   rootDirectory: string;

@@ -1,6 +1,6 @@
-import { getDiContainer } from "#pkg/dependency-container-context.ts";
-import { relayRepositoryToken } from "#pkg/interfaces/relay-hub-repository.interface.ts";
-import { loadItem, type LoadedItem } from "#pkg/use-cases/load-item.ts";
+import { getDiContainer } from "#src/dependency-container-context.ts";
+import { relayRepositoryToken } from "#src/interfaces/relay-hub-repository.interface.ts";
+import { loadItem, type LoadedItem } from "#src/use-cases/load-item.ts";
 
 export async function listItems(sourceDeviceId: string, limit: number): Promise<LoadedItem[]> {
   const repository = getDiContainer().inject(relayRepositoryToken);

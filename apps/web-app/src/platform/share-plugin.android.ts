@@ -7,7 +7,7 @@ import {
   consumePendingShareResponseSchema,
   type ShareCompletion,
   type SharePlugin,
-} from "#pkg/platform/share-plugin.interface.js";
+} from "#src/platform/share-plugin.interface.js";
 
 const androidSharePlugin = registerPlugin<SharePlugin>("AndroidShare");
 

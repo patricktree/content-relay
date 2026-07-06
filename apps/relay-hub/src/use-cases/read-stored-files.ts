@@ -1,6 +1,6 @@
-import { getDiContainer } from "#pkg/dependency-container-context.ts";
-import { blobStoreToken } from "#pkg/interfaces/blob-store.interface.ts";
-import { relayRepositoryToken } from "#pkg/interfaces/relay-hub-repository.interface.ts";
+import { getDiContainer } from "#src/dependency-container-context.ts";
+import { blobStoreToken } from "#src/interfaces/blob-store.interface.ts";
+import { relayRepositoryToken } from "#src/interfaces/relay-hub-repository.interface.ts";
 
 export async function readStoredFiles(itemId: string) {
   const repository = getDiContainer().inject(relayRepositoryToken);

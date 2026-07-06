@@ -1,1 +1,1 @@
-export * from "#pkg/contracts.ts";
+export * from "#src/contracts.ts";

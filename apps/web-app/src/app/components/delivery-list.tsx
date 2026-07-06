@@ -10,17 +10,17 @@ import { Temporal } from "temporal-polyfill";
 
 import type { DeliveryResource, ItemResource } from "@content-relay/contracts";
 
-import { useSettingsContext } from "#pkg/app/components/settings-context.js";
-import { DSButton } from "#pkg/app/design-system/button.js";
-import { createAvailableDevicesQuery } from "#pkg/data-fetching/available-devices.js";
+import { useSettingsContext } from "#src/app/components/settings-context.js";
+import { DSButton } from "#src/app/design-system/button.js";
+import { createAvailableDevicesQuery } from "#src/data-fetching/available-devices.js";
 import {
   createDeliveriesQuery,
   refreshFirstDeliveryPage,
   useMarkDeliveryViewedMutation,
   useRefreshDeliveriesOnAndroidResume,
-} from "#pkg/data-fetching/deliveries.js";
-import { createRegisteredDeviceQuery } from "#pkg/data-fetching/register-device.js";
-import { openExternalUrl } from "#pkg/platform/open-url.js";
+} from "#src/data-fetching/deliveries.js";
+import { createRegisteredDeviceQuery } from "#src/data-fetching/register-device.js";
+import { openExternalUrl } from "#src/platform/open-url.js";
 
 export const DeliveryList: React.FC = () => {
   const { settings } = useSettingsContext();

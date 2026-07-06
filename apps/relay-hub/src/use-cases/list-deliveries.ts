@@ -2,14 +2,14 @@ import { z } from "zod";
 
 import { deliveryListStateSchema } from "@content-relay/contracts";
 
-import { getDiContainer } from "#pkg/dependency-container-context.ts";
-import { RelayInvalidInputError } from "#pkg/errors.ts";
+import { getDiContainer } from "#src/dependency-container-context.ts";
+import { RelayInvalidInputError } from "#src/errors.ts";
 import {
   relayRepositoryToken,
   type DeliveryListCursor,
   type DeliveryRecord,
-} from "#pkg/interfaces/relay-hub-repository.interface.ts";
-import { loadDelivery, type LoadedDelivery } from "#pkg/use-cases/load-delivery.ts";
+} from "#src/interfaces/relay-hub-repository.interface.ts";
+import { loadDelivery, type LoadedDelivery } from "#src/use-cases/load-delivery.ts";
 
 const deliveryListCursorSchema = z.object({
   createdAt: z.string().min(1),

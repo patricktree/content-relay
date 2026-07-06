@@ -4,10 +4,10 @@ import "@fontsource/rubik/700.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import { App } from "#pkg/app/app.js";
-import { AppErrorBoundary } from "#pkg/app/components/app-error-boundary.js";
-import { GlobalProviders } from "#pkg/app/global-providers.js";
-import { cssBase, cssReset } from "#pkg/app/global-styles.ts";
+import { App } from "#src/app/app.js";
+import { AppErrorBoundary } from "#src/app/components/app-error-boundary.js";
+import { GlobalProviders } from "#src/app/global-providers.js";
+import { cssBase, cssReset } from "#src/app/global-styles.ts";
 
 const rootElement = document.getElementById("root");
 

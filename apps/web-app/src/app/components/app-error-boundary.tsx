@@ -1,7 +1,7 @@
 import { styled } from "@linaria/react";
 import React from "react";
 
-import { DSButton } from "#pkg/app/design-system/button.js";
+import { DSButton } from "#src/app/design-system/button.js";
 
 export const AppErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <AppErrorBoundaryClass>{children}</AppErrorBoundaryClass>;

@@ -5,8 +5,8 @@ import type { DeliveryListResponse, DeviceListResponse } from "@content-relay/co
 import { withRelayHubTestEnvironment } from "@content-relay/relay-hub-test-utils";
 import { seed } from "@content-relay/seeding-tool";
 
-import { test } from "#pkg-test-e2e/globals.ts";
-import { gotoWebApp, prepareWebApp } from "#pkg-test-e2e/helpers.ts";
+import { test } from "#test-e2e/globals.ts";
+import { gotoWebApp, prepareWebApp } from "#test-e2e/helpers.ts";
 
 const MOCK_RELAY_HUB_URL = "https://relay-hub.test";
 const LONG_DELIVERY_TEXT =

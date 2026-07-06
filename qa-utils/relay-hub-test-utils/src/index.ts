@@ -1,2 +1,2 @@
-export * from "#pkg/network.ts";
-export * from "#pkg/relay-hub-test-environment.ts";
+export * from "#src/network.ts";
+export * from "#src/relay-hub-test-environment.ts";

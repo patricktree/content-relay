@@ -7,7 +7,7 @@ import {
   completeAndroidShareOverlay,
   consumePendingAndroidShare,
   type ShareDraft,
-} from "#pkg/platform/share-plugin.android.js";
+} from "#src/platform/share-plugin.android.js";
 
 const pendingAndroidShareQueryKey = ["android-share", "pending"] as const;
 

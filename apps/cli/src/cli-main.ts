@@ -21,9 +21,9 @@ import {
 } from "@content-relay/contracts";
 import * as numberUtils from "@content-relay/utils-ecma/number.utils";
 
-import { openDelivery } from "#pkg/use-cases/open-delivery.ts";
-import { receivePendingDeliveries } from "#pkg/use-cases/receive-pending-deliveries.ts";
-import { writeDownloadedDelivery } from "#pkg/use-cases/write-downloaded-delivery.ts";
+import { openDelivery } from "#src/use-cases/open-delivery.ts";
+import { receivePendingDeliveries } from "#src/use-cases/receive-pending-deliveries.ts";
+import { writeDownloadedDelivery } from "#src/use-cases/write-downloaded-delivery.ts";
 
 {
   const program = new Command()

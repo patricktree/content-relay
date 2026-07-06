@@ -1,3 +1,3 @@
-export * from "#pkg/git-test-helpers.ts";
-export * from "#pkg/visualize-directory-tree.ts";
-export * from "#pkg/write-directory-tree.ts";
+export * from "#src/git-test-helpers.ts";
+export * from "#src/visualize-directory-tree.ts";
+export * from "#src/write-directory-tree.ts";

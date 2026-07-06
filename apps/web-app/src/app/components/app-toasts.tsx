@@ -2,7 +2,7 @@ import { Toast } from "@base-ui/react/toast";
 import { styled } from "@linaria/react";
 import React from "react";
 
-import { DSButton } from "#pkg/app/design-system/button.js";
+import { DSButton } from "#src/app/design-system/button.js";
 
 export const AppToasts: React.FC = () => {
   return (

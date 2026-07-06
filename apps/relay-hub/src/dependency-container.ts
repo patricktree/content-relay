@@ -3,13 +3,13 @@ import path from "node:path";
 
 import { ensureDirectoryExists } from "@content-relay/utils-node/fs.utils";
 
-import { FileSystemBlobStore } from "#pkg/infrastructure/blob-store/file-system-blob-store.ts";
-import { SqliteRelayHubRepository } from "#pkg/infrastructure/db/sqlite-relay-hub-repository.ts";
-import { SystemClock } from "#pkg/infrastructure/system-clock.ts";
-import { blobStoreToken } from "#pkg/interfaces/blob-store.interface.ts";
-import { clockToken } from "#pkg/interfaces/clock.interface.ts";
-import { relayRepositoryToken } from "#pkg/interfaces/relay-hub-repository.interface.ts";
-import { relayHubBaseUrlToken } from "#pkg/use-cases/shared.ts";
+import { FileSystemBlobStore } from "#src/infrastructure/blob-store/file-system-blob-store.ts";
+import { SqliteRelayHubRepository } from "#src/infrastructure/db/sqlite-relay-hub-repository.ts";
+import { SystemClock } from "#src/infrastructure/system-clock.ts";
+import { blobStoreToken } from "#src/interfaces/blob-store.interface.ts";
+import { clockToken } from "#src/interfaces/clock.interface.ts";
+import { relayRepositoryToken } from "#src/interfaces/relay-hub-repository.interface.ts";
+import { relayHubBaseUrlToken } from "#src/use-cases/shared.ts";
 
 export type CreateDependencyContainerOptions = {
   relayHubBaseUrl: string;

@@ -6,7 +6,7 @@ import {
 } from "@content-relay/client";
 import type { DeliveryResource, DevicePlatform } from "@content-relay/contracts";
 
-import { transitionDeliveryToDelivered } from "#pkg/use-cases/transition-delivery-to-delivered.ts";
+import { transitionDeliveryToDelivered } from "#src/use-cases/transition-delivery-to-delivered.ts";
 
 export type ReceivedDeliveryResult = {
   delivery: DeliveryResource;

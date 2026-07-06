@@ -5,7 +5,7 @@ import { afterEach, expect, test } from "vitest";
 
 import { visualizeDirectoryTree, writeDirectoryTree } from "@content-relay/test-utils-node";
 
-import { createPrunedMonorepo } from "#pkg/create-pruned-monorepo.ts";
+import { createPrunedMonorepo } from "#src/create-pruned-monorepo.ts";
 
 const originalCwd = process.cwd();
 const temporaryDirs: string[] = [];

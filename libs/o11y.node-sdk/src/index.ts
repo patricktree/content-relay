@@ -1,5 +1,5 @@
 export {
   setupNodeObservabilitySDK,
   type NodeObservabilitySDK,
-} from "#pkg/node-observability-sdk.ts";
-export { instrumentationScopeFromModuleURLAndRootURL } from "#pkg/instrumentation-scope.ts";
+} from "#src/node-observability-sdk.ts";
+export { instrumentationScopeFromModuleURLAndRootURL } from "#src/instrumentation-scope.ts";

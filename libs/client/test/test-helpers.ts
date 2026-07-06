@@ -12,7 +12,7 @@ import type {
 import { isMobileDevicePlatform } from "@content-relay/contracts";
 import { allocatePort, listenOnPort } from "@content-relay/relay-hub-test-utils";
 
-import { RpcClient } from "#pkg/rpc-client.ts";
+import { RpcClient } from "#src/rpc-client.ts";
 
 export { allocatePort, listenOnPort };
 

@@ -4,8 +4,8 @@ import { parseOkResponse, RpcClient } from "@content-relay/client";
 import { withRelayHubTestEnvironment } from "@content-relay/relay-hub-test-utils";
 import { seed } from "@content-relay/seeding-tool";
 
-import { test } from "#pkg-test-e2e/globals.ts";
-import { gotoWebApp, prepareWebApp } from "#pkg-test-e2e/helpers.ts";
+import { test } from "#test-e2e/globals.ts";
+import { gotoWebApp, prepareWebApp } from "#test-e2e/helpers.ts";
 
 test("send text item", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {

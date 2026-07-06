@@ -19,8 +19,8 @@ import {
 } from "@content-relay/relay-hub";
 import { withRelayHubTestEnvironment } from "@content-relay/relay-hub-test-utils";
 
-import { isParseResponseError, parseOkResponse } from "#pkg/hono-client.ts";
-import { RpcClient } from "#pkg/rpc-client.ts";
+import { isParseResponseError, parseOkResponse } from "#src/hono-client.ts";
+import { RpcClient } from "#src/rpc-client.ts";
 
 import {
   allocatePort,
@@ -28,7 +28,7 @@ import {
   receivePendingDeliveries,
   registerTestDevice,
   writeDownloadedDelivery,
-} from "#pkg-test/test-helpers.ts";
+} from "#test/test-helpers.ts";
 
 test("milestone 0 flow covers registration, send, receive, viewed, and file download", async () => {
   await withRelayHubTestEnvironment(async ({ rootDirectory, relayHubBaseUrl }) => {

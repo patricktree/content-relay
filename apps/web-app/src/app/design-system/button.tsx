@@ -1,7 +1,7 @@
 import { Button as BaseUIButton } from "@base-ui/react/button";
 import { styled } from "@linaria/react";
 
-import type { MapPropsToRequiredDataAttributeProps } from "#pkg/app/styling.utils.js";
+import type { MapPropsToRequiredDataAttributeProps } from "#src/app/styling.utils.js";
 
 type DSButtonProps = React.ComponentProps<"button"> & DSButtonCustomProps;
 type DSButtonCustomProps = {

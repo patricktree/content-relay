@@ -1,9 +1,9 @@
-import { getDiContainer } from "#pkg/dependency-container-context.ts";
-import { RelayResourceNotFoundError } from "#pkg/errors.ts";
+import { getDiContainer } from "#src/dependency-container-context.ts";
+import { RelayResourceNotFoundError } from "#src/errors.ts";
 import {
   relayRepositoryToken,
   type DeliveryRecord,
-} from "#pkg/interfaces/relay-hub-repository.interface.ts";
+} from "#src/interfaces/relay-hub-repository.interface.ts";
 
 export async function requireOwnedDelivery(
   targetDeviceId: string,

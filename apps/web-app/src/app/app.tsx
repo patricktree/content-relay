@@ -1,12 +1,12 @@
 import { styled } from "@linaria/react";
 import React from "react";
 
-import { AppToasts } from "#pkg/app/components/app-toasts.tsx";
-import { DeliveryList } from "#pkg/app/components/delivery-list.tsx";
-import { SendTextForm } from "#pkg/app/components/send-text-form.tsx";
-import { SettingsProvider } from "#pkg/app/components/settings-context.tsx";
-import { SettingsForm } from "#pkg/app/components/settings-form.tsx";
-import { useSyncAndroidSharesToTanstackQuery } from "#pkg/data-fetching/android-share.js";
+import { AppToasts } from "#src/app/components/app-toasts.tsx";
+import { DeliveryList } from "#src/app/components/delivery-list.tsx";
+import { SendTextForm } from "#src/app/components/send-text-form.tsx";
+import { SettingsProvider } from "#src/app/components/settings-context.tsx";
+import { SettingsForm } from "#src/app/components/settings-form.tsx";
+import { useSyncAndroidSharesToTanstackQuery } from "#src/data-fetching/android-share.js";
 
 export const App: React.FC = () => {
   useSyncAndroidSharesToTanstackQuery();

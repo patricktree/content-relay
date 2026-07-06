@@ -8,7 +8,7 @@ import {
   devicesTable,
   itemsTable,
   pushTokensTable,
-} from "#pkg/infrastructure/db/schema.ts";
+} from "#src/infrastructure/db/schema.ts";
 
 export const relayRepositoryToken = new Token<IRelayHubRepository>("RelayRepository");
 

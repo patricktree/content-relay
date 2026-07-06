@@ -1,6 +1,6 @@
-import { RelayInvalidInputError } from "#pkg/errors.ts";
-import { createItem, type CreateItemOutput } from "#pkg/use-cases/create-item.ts";
-import { isLikelyUrl } from "#pkg/use-cases/shared.ts";
+import { RelayInvalidInputError } from "#src/errors.ts";
+import { createItem, type CreateItemOutput } from "#src/use-cases/create-item.ts";
+import { isLikelyUrl } from "#src/use-cases/shared.ts";
 
 export async function createTextItem(
   sourceDeviceId: string,

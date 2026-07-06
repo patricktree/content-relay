@@ -4,8 +4,8 @@ import util from "node:util";
 
 import { createLogger } from "@content-relay/o11y.logs";
 
-import type { createHonoApp } from "#pkg/http/hono-app.ts";
-import { instrumentationScopeFromModuleURL } from "#pkg/observability/instrumentation-scope.ts";
+import type { createHonoApp } from "#src/http/hono-app.ts";
+import { instrumentationScopeFromModuleURL } from "#src/observability/instrumentation-scope.ts";
 
 const logger = createLogger(instrumentationScopeFromModuleURL(import.meta.url));
 

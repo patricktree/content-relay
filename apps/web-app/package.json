@@ -3,16 +3,16 @@
   "private": true,
   "type": "module",
   "imports": {
-    "#pkg-test-e2e/*.ts": "./test-e2e/*.ts",
-    "#pkg/*.ts": {
+    "#test-e2e/*.ts": "./test-e2e/*.ts",
+    "#src/*.ts": {
       "types": "./dist/types/*.d.ts",
       "default": "./src/*.ts"
     },
-    "#pkg/*.tsx": {
+    "#src/*.tsx": {
       "types": "./dist/types/*.d.tsx",
       "default": "./src/*.tsx"
     },
-    "#pkg/*": {
+    "#src/*": {
       "types": "./dist/types/*",
       "default": "./src/*"
     }

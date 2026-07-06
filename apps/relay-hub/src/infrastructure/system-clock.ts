@@ -1,6 +1,6 @@
 import { Temporal } from "temporal-polyfill";
 
-import type { IClock } from "#pkg/interfaces/clock.interface.ts";
+import type { IClock } from "#src/interfaces/clock.interface.ts";
 
 export class SystemClock implements IClock {
   now(): string {

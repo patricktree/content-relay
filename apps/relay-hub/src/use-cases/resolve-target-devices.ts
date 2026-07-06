@@ -1,6 +1,6 @@
-import { getDiContainer } from "#pkg/dependency-container-context.ts";
-import { RelayInvalidInputError } from "#pkg/errors.ts";
-import { relayRepositoryToken } from "#pkg/interfaces/relay-hub-repository.interface.ts";
+import { getDiContainer } from "#src/dependency-container-context.ts";
+import { RelayInvalidInputError } from "#src/errors.ts";
+import { relayRepositoryToken } from "#src/interfaces/relay-hub-repository.interface.ts";
 
 export async function resolveTargetDevices(targetDeviceIds: string[]): Promise<string[]> {
   const repository = getDiContainer().inject(relayRepositoryToken);

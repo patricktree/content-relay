@@ -1,8 +1,8 @@
 import { filterPackages } from "@pnpm/filter-workspace-packages";
 import assert from "node:assert";
 
-import { findWorkspaceProjects, type Project } from "#pkg/find-workspace-projects.ts";
-import { monorepoPackagePrefix } from "#pkg/helpers.ts";
+import { findWorkspaceProjects, type Project } from "#src/find-workspace-projects.ts";
+import { monorepoPackagePrefix } from "#src/helpers.ts";
 
 /**
  * @param filter Pnpm-style filter, e.g. ["@content-relay/web-app...",

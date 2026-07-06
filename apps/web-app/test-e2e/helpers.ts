@@ -1,4 +1,4 @@
-import type { Settings } from "#pkg/settings-storage.js";
+import type { Settings } from "#src/settings-storage.js";
 
 import type { Page } from "@playwright/test";
 

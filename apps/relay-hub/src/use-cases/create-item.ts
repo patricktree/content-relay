@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto";
 
-import { getDiContainer } from "#pkg/dependency-container-context.ts";
-import { clockToken } from "#pkg/interfaces/clock.interface.ts";
+import { getDiContainer } from "#src/dependency-container-context.ts";
+import { clockToken } from "#src/interfaces/clock.interface.ts";
 import {
   relayRepositoryToken,
   type DeliveryRecord,
   type ItemRecord,
-} from "#pkg/interfaces/relay-hub-repository.interface.ts";
-import { resolveTargetDevices } from "#pkg/use-cases/resolve-target-devices.ts";
+} from "#src/interfaces/relay-hub-repository.interface.ts";
+import { resolveTargetDevices } from "#src/use-cases/resolve-target-devices.ts";
 
 export type CreateItemOutput = {
   item: ItemRecord;

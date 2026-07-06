@@ -18,7 +18,7 @@
 
 ## Local Conventions
 
-- Use package imports such as `#pkg/...` and `#pkg-test-e2e/...`.
+- Use package imports such as `#src/...` and `#test-e2e/...`.
 - Prefer `DSButton` over raw buttons for app UI.
 - Use `useAppForm` and shared form components for forms.
 - Keep Relay Hub queries/mutations in `src/data-fetching/**`.

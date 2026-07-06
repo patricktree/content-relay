@@ -2,6 +2,6 @@ export {
   extractErrorMessageFromParseResponseError,
   isParseResponseError,
   parseOkResponse,
-} from "#pkg/hono-client.ts";
-export * from "#pkg/platform.ts";
-export * from "#pkg/rpc-client.ts";
+} from "#src/hono-client.ts";
+export * from "#src/platform.ts";
+export * from "#src/rpc-client.ts";

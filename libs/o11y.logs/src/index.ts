@@ -4,4 +4,4 @@ export {
   type Logger,
   type LoggerMethod,
   createLogger,
-} from "#pkg/logger.ts";
+} from "#src/logger.ts";

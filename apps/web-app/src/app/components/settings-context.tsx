@@ -1,7 +1,7 @@
 import React from "react";
 
-import { reactUtils } from "#pkg/app/react.utils.tsx";
-import { settingsStorage, type Settings } from "#pkg/settings-storage.js";
+import { reactUtils } from "#src/app/react.utils.tsx";
+import { settingsStorage, type Settings } from "#src/settings-storage.js";
 
 type SettingsContextValue = {
   settings: Settings | undefined;

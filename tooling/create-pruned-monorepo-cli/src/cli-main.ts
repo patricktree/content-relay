@@ -2,7 +2,7 @@ import * as commander from "@commander-js/extra-typings";
 
 import { isContentRelayProjectName } from "@content-relay/pkg-management";
 
-import { createPrunedMonorepo } from "#pkg/create-pruned-monorepo.ts";
+import { createPrunedMonorepo } from "#src/create-pruned-monorepo.ts";
 
 const program = new commander.Command()
   .addOption(

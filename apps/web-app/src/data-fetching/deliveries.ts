@@ -10,7 +10,7 @@ import React from "react";
 import { parseOkResponse, RpcClient } from "@content-relay/client";
 import type { DeliveryListResponse, DeviceId } from "@content-relay/contracts";
 
-import { addAndroidResumeListener } from "#pkg/platform/app-lifecycle.android.js";
+import { addAndroidResumeListener } from "#src/platform/app-lifecycle.android.js";
 
 const DELIVERY_LIST_PAGE_SIZE = 50;
 const DELIVERY_LIST_STATE = "all";

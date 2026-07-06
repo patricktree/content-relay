@@ -13,7 +13,7 @@ import {
   itemsTable,
   pushTokensTable,
   schema,
-} from "#pkg/infrastructure/db/schema.ts";
+} from "#src/infrastructure/db/schema.ts";
 import type {
   IRelayHubRepository,
   CreateRegisteredDeviceInput,
@@ -22,7 +22,7 @@ import type {
   DeviceRecord,
   ItemRecord,
   PushTokenRecord,
-} from "#pkg/interfaces/relay-hub-repository.interface.ts";
+} from "#src/interfaces/relay-hub-repository.interface.ts";
 
 export type SqliteRelayHubRepositoryOptions = {
   databaseDirectory: string;

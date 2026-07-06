@@ -19,7 +19,7 @@ import {
 } from "@content-relay/contracts";
 import { createLogger } from "@content-relay/o11y.logs";
 
-import { RelayInvalidInputError, RelayResourceNotFoundError } from "#pkg/errors.ts";
+import { RelayInvalidInputError, RelayResourceNotFoundError } from "#src/errors.ts";
 import {
   presentCreateItemOutput,
   presentDeliveryAction,
@@ -30,23 +30,23 @@ import {
   presentLoadedItem,
   presentRegisterDeviceOutput,
   presentItemList,
-} from "#pkg/http/presenters.ts";
-import { instrumentationScopeFromModuleURL } from "#pkg/observability/instrumentation-scope.ts";
-import { acknowledgeDelivery } from "#pkg/use-cases/acknowledge-delivery.ts";
-import { createFileItem } from "#pkg/use-cases/create-file-item.ts";
-import { createTextItem } from "#pkg/use-cases/create-text-item.ts";
-import { createUrlItem } from "#pkg/use-cases/create-url-item.ts";
-import { deleteDevice } from "#pkg/use-cases/delete-device.ts";
-import { downloadDelivery } from "#pkg/use-cases/download-delivery.ts";
-import { getDelivery } from "#pkg/use-cases/get-delivery.ts";
-import { getItem } from "#pkg/use-cases/get-item.ts";
-import { listDeliveries } from "#pkg/use-cases/list-deliveries.ts";
-import { listDevices } from "#pkg/use-cases/list-devices.ts";
-import { listItems } from "#pkg/use-cases/list-items.ts";
-import { markDeliveryViewed } from "#pkg/use-cases/mark-delivery-viewed.ts";
-import { registerDevice } from "#pkg/use-cases/register-device.ts";
-import { renameDevice } from "#pkg/use-cases/rename-device.ts";
-import { upsertPushToken } from "#pkg/use-cases/upsert-push-token.ts";
+} from "#src/http/presenters.ts";
+import { instrumentationScopeFromModuleURL } from "#src/observability/instrumentation-scope.ts";
+import { acknowledgeDelivery } from "#src/use-cases/acknowledge-delivery.ts";
+import { createFileItem } from "#src/use-cases/create-file-item.ts";
+import { createTextItem } from "#src/use-cases/create-text-item.ts";
+import { createUrlItem } from "#src/use-cases/create-url-item.ts";
+import { deleteDevice } from "#src/use-cases/delete-device.ts";
+import { downloadDelivery } from "#src/use-cases/download-delivery.ts";
+import { getDelivery } from "#src/use-cases/get-delivery.ts";
+import { getItem } from "#src/use-cases/get-item.ts";
+import { listDeliveries } from "#src/use-cases/list-deliveries.ts";
+import { listDevices } from "#src/use-cases/list-devices.ts";
+import { listItems } from "#src/use-cases/list-items.ts";
+import { markDeliveryViewed } from "#src/use-cases/mark-delivery-viewed.ts";
+import { registerDevice } from "#src/use-cases/register-device.ts";
+import { renameDevice } from "#src/use-cases/rename-device.ts";
+import { upsertPushToken } from "#src/use-cases/upsert-push-token.ts";
 
 const logger = createLogger(instrumentationScopeFromModuleURL(import.meta.url));
 

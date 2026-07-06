@@ -6,6 +6,6 @@
  * @module
  */
 
-import "#pkg/observability/instrumentation.ts";
+import "#src/observability/instrumentation.ts";
 
-await import("#pkg/bin-main.ts");
+await import("#src/bin-main.ts");

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import type { IBlobStore } from "#pkg/interfaces/blob-store.interface.ts";
+import type { IBlobStore } from "#src/interfaces/blob-store.interface.ts";
 
 export type FileSystemBlobStoreOptions = {
   blobsDirectory: string;

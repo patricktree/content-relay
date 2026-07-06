@@ -23,7 +23,7 @@ export const config = defineConfig({
         patterns: [
           {
             group: ["./**", "../**"],
-            message: "Use `#pkg/*` subpath imports instead of relative imports.",
+            message: "Use `#src/*` subpath imports instead of relative imports.",
           },
         ],
       },

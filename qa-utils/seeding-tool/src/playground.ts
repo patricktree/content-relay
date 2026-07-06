@@ -1,4 +1,4 @@
-import { seed } from "#pkg/seed.ts";
+import { seed } from "#src/seed.ts";
 
 await seed.registerDevices("http://127.0.0.1:4000", [
   { nickname: "test-device-android", platform: "android" },
