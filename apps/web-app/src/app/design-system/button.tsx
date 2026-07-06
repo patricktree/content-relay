@@ -1,5 +1,6 @@
 import { Button as BaseUIButton } from "@base-ui/react/button";
 import { styled } from "@linaria/react";
+import React from "react";
 
 import type { MapPropsToRequiredDataAttributeProps } from "#src/app/styling.utils.js";
 

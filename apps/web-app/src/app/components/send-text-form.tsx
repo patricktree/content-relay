@@ -155,9 +155,8 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
       }}
     >
       <form.AppForm>
-        <form.AppField
-          name="itemType"
-          children={(field) => (
+        <form.AppField name="itemType">
+          {(field) => (
             <ItemTypeLabel>
               <ItemTypeLabelText>Item type:</ItemTypeLabelText>
               <ItemTypeSelect
@@ -173,16 +172,15 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
               </ItemTypeSelect>
             </ItemTypeLabel>
           )}
-        />
+        </form.AppField>
 
         {availableDevicesQuery.isPending ? (
           <>Loading devices...</>
         ) : availableDevicesQuery.isError ? (
           <>Could not load available devices.</>
         ) : (
-          <form.AppField
-            name="targetDeviceIds"
-            children={(field) => (
+          <form.AppField name="targetDeviceIds">
+            {(field) => (
               <TargetDevicesFieldset>
                 <TargetDevicesLegend>Target devices:</TargetDevicesLegend>
                 <TargetDevicesUl>
@@ -223,18 +221,17 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
                 )}
               </TargetDevicesFieldset>
             )}
-          />
+          </form.AppField>
         )}
 
-        <form.AppField name="title" children={(field) => <field.TextField label="Title:" />} />
-        <form.AppField
-          name="value"
-          children={(field) => (
+        <form.AppField name="title">{(field) => <field.TextField label="Title:" />}</form.AppField>
+        <form.AppField name="value">
+          {(field) => (
             <form.Subscribe selector={(state) => state.values.itemType}>
               {(itemType) => <field.TextField label={itemType === "url" ? "URL:" : "Text:"} />}
             </form.Subscribe>
           )}
-        />
+        </form.AppField>
 
         <form.Actions>
           {hasPendingAndroidShare && (

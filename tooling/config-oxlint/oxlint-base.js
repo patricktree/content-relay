@@ -7,7 +7,19 @@ export const config = defineConfig({
     correctness: "error",
     suspicious: "error",
   },
-  plugins: ["eslint", "typescript", "node", "import", "unicorn"],
+  plugins: [
+    "eslint",
+    "typescript",
+    "node",
+    "import",
+    "unicorn",
+    "react",
+    "react-perf",
+    "jsdoc",
+    "jsx-a11y",
+    "promise",
+    "vitest",
+  ],
   jsPlugins: ["eslint-plugin-react-you-might-not-need-an-effect"],
   rules: {
     "no-restricted-globals": [

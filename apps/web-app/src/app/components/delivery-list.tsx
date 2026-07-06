@@ -272,7 +272,7 @@ const DeliveryDetailDialog: React.FC<DeliveryDetailDialogProps> = ({
 
   return (
     <DialogBackdrop>
-      <Dialog role="dialog" aria-modal="true" aria-labelledby="delivery-detail-heading">
+      <Dialog open aria-modal="true" aria-labelledby="delivery-detail-heading">
         <DialogHeader>
           <h3 id="delivery-detail-heading">{getDeliveryPrimaryText(delivery.item)}</h3>
           <DSButton type="button" variant="text" onClick={onClose}>
@@ -308,29 +308,41 @@ type DeliveryListErrorBoundaryProps = {
 
 type DeliveryListErrorBoundaryState = {
   error: Error | null;
+  resetKey: unknown;
 };
 
 class DeliveryListErrorBoundary extends React.Component<
   DeliveryListErrorBoundaryProps,
   DeliveryListErrorBoundaryState
 > {
-  override state: DeliveryListErrorBoundaryState = { error: null };
+  override state: DeliveryListErrorBoundaryState = {
+    error: null,
+    resetKey: this.props.resetKey,
+  };
 
-  static getDerivedStateFromError(error: Error): DeliveryListErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): Partial<DeliveryListErrorBoundaryState> {
     return { error };
   }
 
-  override componentDidUpdate(previousProps: DeliveryListErrorBoundaryProps): void {
-    if (previousProps.resetKey !== this.props.resetKey && this.state.error !== null) {
-      this.setState({ error: null });
+  static getDerivedStateFromProps(
+    props: DeliveryListErrorBoundaryProps,
+    state: DeliveryListErrorBoundaryState,
+  ): Partial<DeliveryListErrorBoundaryState> | null {
+    if (props.resetKey === state.resetKey) {
+      return null;
     }
+
+    return {
+      error: null,
+      resetKey: props.resetKey,
+    };
   }
 
   override render(): React.ReactNode {
     if (this.state.error !== null) {
       const retry = () => {
         this.props.onReset();
-        this.setState({ error: null });
+        this.setState({ error: null, resetKey: this.props.resetKey });
       };
 
       return (
@@ -347,7 +359,7 @@ class DeliveryListErrorBoundary extends React.Component<
 
     return this.props.children(() => {
       this.props.onReset();
-      this.setState({ error: null });
+      this.setState({ error: null, resetKey: this.props.resetKey });
     });
   }
 }
@@ -557,7 +569,10 @@ const DialogBackdrop = styled.div`
   background: rgb(0 0 0 / 0.4);
 `;
 
-const Dialog = styled.div`
+const Dialog = styled.dialog`
+  position: static;
+  display: block;
+  margin: 0;
   max-width: min(640px, 100%);
   width: 100%;
   border: 1px solid var(--color-fg);

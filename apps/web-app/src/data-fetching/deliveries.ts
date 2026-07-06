@@ -52,18 +52,19 @@ export function useMarkDeliveryViewedMutation(opts: MarkDeliveryViewedMutationOp
 
 export function useRefreshDeliveriesOnAndroidResume(opts: DeliveriesQueryOpts): void {
   const queryClient = useQueryClient();
+  const { deviceId, relayHubUrl } = opts;
 
   React.useEffect(
     function subscribeToAndroidResume() {
       const listenerHandlePromise = addAndroidResumeListener(() => {
-        void refreshFirstDeliveryPage(queryClient, opts);
+        void refreshFirstDeliveryPage(queryClient, { deviceId, relayHubUrl });
       });
 
       return () => {
         void listenerHandlePromise.then((listenerHandle) => listenerHandle?.remove());
       };
     },
-    [opts.deviceId, opts.relayHubUrl, queryClient],
+    [deviceId, relayHubUrl, queryClient],
   );
 }
 

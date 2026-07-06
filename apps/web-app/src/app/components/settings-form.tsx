@@ -35,14 +35,12 @@ export const SettingsForm: React.FC<SettingsFormProps> = () => {
       }}
     >
       <form.AppForm>
-        <form.AppField
-          name="relayHubUrl"
-          children={(field) => <field.TextField label="Relay Hub URL:" />}
-        />
-        <form.AppField
-          name="deviceNickname"
-          children={(field) => <field.TextField label="Device Nickname:" />}
-        />
+        <form.AppField name="relayHubUrl">
+          {(field) => <field.TextField label="Relay Hub URL:" />}
+        </form.AppField>
+        <form.AppField name="deviceNickname">
+          {(field) => <field.TextField label="Device Nickname:" />}
+        </form.AppField>
         <form.Actions>
           <form.SubmitButton label="Save" />
         </form.Actions>
