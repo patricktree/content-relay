@@ -61,7 +61,7 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
       .where(and(eq(devicesTable.id, deviceId), isNull(devicesTable.deletedAt)))
       .get();
 
-    return (device as DeviceRecord | undefined) ?? null;
+    return (device satisfies DeviceRecord | undefined) ?? null;
   }
 
   async findActiveDeviceByNickname(nickname: string): Promise<DeviceRecord | null> {
@@ -71,7 +71,7 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
       .where(and(eq(devicesTable.nickname, nickname), isNull(devicesTable.deletedAt)))
       .get();
 
-    return (device as DeviceRecord | undefined) ?? null;
+    return (device satisfies DeviceRecord | undefined) ?? null;
   }
 
   async listActiveDevices(): Promise<DeviceRecord[]> {
@@ -80,7 +80,7 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
       .from(devicesTable)
       .where(isNull(devicesTable.deletedAt))
       .orderBy(devicesTable.nickname)
-      .all() as DeviceRecord[];
+      .all() satisfies DeviceRecord[];
   }
 
   async updateDeviceNickname(
@@ -159,7 +159,7 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
       .where(eq(itemsTable.id, itemId))
       .get();
 
-    return (item as ItemRecord | undefined) ?? null;
+    return (item satisfies ItemRecord | undefined) ?? null;
   }
 
   async getFileMetadataByItemId(itemId: string): Promise<FileMetadata[]> {
@@ -196,7 +196,7 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
       .where(eq(deliveriesTable.id, deliveryId))
       .get();
 
-    return (delivery as DeliveryRecord | undefined) ?? null;
+    return (delivery satisfies DeliveryRecord | undefined) ?? null;
   }
 
   async listDeliveriesForTarget(
@@ -232,7 +232,7 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
       .where(and(targetFilter, stateFilter, cursorFilter))
       .orderBy(desc(deliveriesTable.createdAt), desc(deliveriesTable.id))
       .limit(limit)
-      .all() ?? []) as DeliveryRecord[];
+      .all() ?? []) satisfies DeliveryRecord[];
   }
 
   async acknowledgeDelivery(deliveryId: string, acknowledgedAt: string): Promise<DeliveryRecord> {
@@ -297,7 +297,7 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
       .where(eq(itemsTable.sourceDeviceId, sourceDeviceId))
       .orderBy(desc(itemsTable.createdAt))
       .limit(limit)
-      .all() ?? []) as ItemRecord[];
+      .all() ?? []) satisfies ItemRecord[];
   }
 
   async listDeliveriesByItemId(itemId: string): Promise<DeliveryRecord[]> {
@@ -314,7 +314,7 @@ export class SqliteRelayHubRepository implements IRelayHubRepository {
       .from(deliveriesTable)
       .where(eq(deliveriesTable.itemId, itemId))
       .orderBy(deliveriesTable.createdAt)
-      .all() ?? []) as DeliveryRecord[];
+      .all() ?? []) satisfies DeliveryRecord[];
   }
 
   async upsertPushToken(pushToken: PushTokenRecord): Promise<void> {

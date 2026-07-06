@@ -3,11 +3,11 @@ WORKDIR /app
 
 # install pnpm (https://pnpm.io/installation#using-npm); the version doesn't matter, pnpm switches to the version specified in package.json#packageManager itself
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-RUN npm install --global pnpm@11.1.0
+RUN npm install --global pnpm@11.7.0
 
 # set some env vars to enable caching of pnpm fetch/install (https://pnpm.io/docker#example-1-build-a-bundle-in-a-docker-container)
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME/bin:$PATH"
 
 # install packages to enable building native dependencies
 RUN apk add --no-cache \

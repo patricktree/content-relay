@@ -7,7 +7,7 @@ export const config = defineConfig({
     correctness: "error",
     suspicious: "error",
   },
-  plugins: ["eslint", "typescript", "node", "import"],
+  plugins: ["eslint", "typescript", "node", "import", "unicorn"],
   jsPlugins: ["eslint-plugin-react-you-might-not-need-an-effect"],
   rules: {
     "no-restricted-globals": [
@@ -46,5 +46,7 @@ export const config = defineConfig({
     "react-you-might-not-need-an-effect/no-pass-data-to-parent": "error",
     "react-you-might-not-need-an-effect/no-external-store-subscription": "error",
     "react-you-might-not-need-an-effect/no-initialize-state": "error",
+    // oxlint seems to not support `languageOptions` which would allow us to configure the `ecmaVersion` to some older version and unicorn would then not complain about `Array.prototype.sort` being used. For now, we just disable the rule.
+    "unicorn/no-array-sort": "off",
   },
 });

@@ -45,12 +45,5 @@
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "typescript": "catalog:"
-  },
-  "engines": {
-    "runtime": {
-      "name": "node",
-      "version": "^24",
-      "onFail": "error"
-    }
   }
 }

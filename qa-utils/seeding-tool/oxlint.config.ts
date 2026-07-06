@@ -1,3 +1,5 @@
-import { config } from "@content-relay/config-oxlint/oxlint-base.js";
+import { defineConfig } from "oxlint";
 
-export default config;
+import { config as baseConfig } from "@content-relay/config-oxlint/oxlint-base.js";
+
+export default defineConfig({ extends: [baseConfig] });

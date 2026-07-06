@@ -21,10 +21,12 @@
     "dev": "turbo run turbo:dev",
     "lint": "turbo run turbo:lint",
     "lint:fix": "turbo run turbo:lint:fix",
+    "test:vitest": "vitest run",
     "turbo:build": "tsgo --build ./tsconfig.json",
     "turbo:dev": "tsgo --build ./tsconfig.json --watch",
     "turbo:lint": "oxlint --type-aware --max-warnings 0 .",
-    "turbo:lint:fix": "pnpm run turbo:lint --fix"
+    "turbo:lint:fix": "pnpm run turbo:lint --fix",
+    "turbo:test": "pnpm run test:vitest"
   },
   "dependencies": {
     "@commander-js/extra-typings": "^14.0.0",
@@ -36,17 +38,13 @@
   "devDependencies": {
     "@content-relay/config-oxlint": "workspace:*",
     "@content-relay/config-typescript": "workspace:*",
+    "@content-relay/config-vitest": "workspace:*",
+    "@content-relay/test-utils-node": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "typescript": "catalog:"
-  },
-  "engines": {
-    "runtime": {
-      "name": "node",
-      "version": "^24",
-      "onFail": "error"
-    }
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

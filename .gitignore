@@ -8,6 +8,7 @@
 **/target
 
 # turborepo
+.turbo
 **/.turbo
 
 # Playwright

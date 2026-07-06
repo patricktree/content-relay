@@ -2,26 +2,6 @@
 
 Content relay for sending text, URLs, and file bundles between personal devices over a Tailnet-hosted Relay Hub.
 
-- [What this project is for](#what-this-project-is-for)
-- [Development Setup](#development-setup)
-  - [Prerequisites](#prerequisites)
-  - [Build \& Run](#build--run)
-- [Example flows](#example-flows)
-  - [Run the macOS app on this Mac](#run-the-macos-app-on-this-mac)
-
-## What this project is for
-
-`content-relay` is a personal cross-device system for sending:
-
-- text
-- URLs
-- files and file bundles
-
-See more in:
-
-- [./docs/00-PLAN.md](./docs/00-PLAN.md)
-- [./docs/01-TECH-DECISIONS.md](./docs/01-TECH-DECISIONS.md)
-
 ## Development Setup
 
 ### Prerequisites

@@ -18,6 +18,7 @@ function createContext<ContextValue>(name: string) {
     return valueOfContext;
   }
 
+  // oxlint-disable-next-line unicorn/consistent-function-scoping -- false positive (we need to use type variable `ContextValue` from surrounding scope here)
   const Provider: React.FC<{
     children: React.ReactNode;
     value: ContextValue;

@@ -107,7 +107,7 @@ function resolveLogArguments(
     message: secondArgument,
     attributes: {
       ...serializeErrorAttributes(firstArgument.error),
-      ...(thirdArgument ?? {}),
+      ...thirdArgument,
     },
   };
 }

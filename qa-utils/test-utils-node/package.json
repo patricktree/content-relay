@@ -1,5 +1,5 @@
 {
-  "name": "@content-relay/relay-hub-test-utils",
+  "name": "@content-relay/test-utils-node",
   "private": true,
   "files": [
     "src/**"
@@ -32,9 +32,6 @@
     "turbo:dev": "tsgo --build ./tsconfig.json --watch",
     "turbo:lint": "oxlint --type-aware --max-warnings 0 .",
     "turbo:lint:fix": "pnpm run turbo:lint --fix"
-  },
-  "dependencies": {
-    "@content-relay/relay-hub": "workspace:*"
   },
   "devDependencies": {
     "@content-relay/config-oxlint": "workspace:*",
