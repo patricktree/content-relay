@@ -9,19 +9,20 @@ Use this skill for browser-based frontend work in Content Relay.
 
 ## First Actions
 
-1. Read `AGENTS.md` and follow its validation rules.
-2. Read `CONTEXT.md` when naming domain objects or user-facing behavior.
-3. Load `content-relay-architecture` when a change crosses app/lib boundaries, shared contracts, client APIs, native platform adapters, or Relay Hub behavior.
+1. Read repo root `../../../AGENTS.md` and follow its validation rules.
+2. Load `content-relay-architecture` before making cross-boundary changes.
+3. Read repo root `../../../CONTEXT.md` when naming domain objects or user-facing behavior.
 4. Inspect the nearest existing frontend files before adding new patterns.
 
 ## Reference Routing
 
-| Open when working on...                                   | Read                             |
-| --------------------------------------------------------- | -------------------------------- |
-| React components, state, effects, Suspense                | `references/react.md`            |
-| TanStack Query query factories, mutations, cache updates  | `references/tanstack-query.md`   |
-| Linaria, styled components, design tokens, global styles  | `references/linaria-styling.md`  |
-| Vitest, Playwright, visual snapshots, frontend validation | `references/frontend-testing.md` |
+| Open when working on...                                   | Read                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------- |
+| Cross-boundary architecture, contracts, adapters          | Load `content-relay-architecture`                                   |
+| React components, state, effects, Suspense                | `references/react.md`                                               |
+| TanStack Query query factories, mutations, cache updates  | `references/tanstack-query.md`                                      |
+| Linaria, styled components, design tokens, global styles  | `references/linaria-styling.md`                                     |
+| Vitest, Playwright, visual snapshots, frontend validation | Load `content-relay-testing`; read `references/frontend-testing.md` |
 
 ## General Frontend Rules
 
@@ -31,12 +32,12 @@ Use this skill for browser-based frontend work in Content Relay.
 - Prefer extending existing primitives before introducing parallel abstractions.
 - Validate data at trust boundaries with `zod` or shared contract schemas.
 - Pass parsed app-level values into UI code instead of raw external payloads.
-- Prefer E2E tests for user-visible behavior and cross-boundary integration.
+- Follow `content-relay-testing` when choosing test level; prefer integration tests before E2E tests unless the behavior needs full browser wiring.
 
-## Current Web App: `apps/web-app`
+## Current Web App: `../../../apps/web-app`
 
-- Read `apps/web-app/AGENTS.md` before changing files under `apps/web-app/**`.
-- Treat `apps/web-app/AGENTS.md` as the source of truth for app-local layout, imports, commands, and testing notes.
+- Read `../../../apps/web-app/AGENTS.md` before changing files under `../../../apps/web-app/**`.
+- Treat `../../../apps/web-app/AGENTS.md` as the source of truth for app-local layout, imports, commands, and testing notes.
 - Keep this skill focused on frontend conventions that should survive future web app reshapes.
 
 ## Discouraged
@@ -50,5 +51,5 @@ Use this skill for browser-based frontend work in Content Relay.
 ## Completion Checklist
 
 - Relevant reference files above were read for the touched area.
-- User-facing terminology matches `CONTEXT.md`.
-- Validation uses repo root commands from `AGENTS.md`: `pnpm run fix`, then `pnpm run validate`.
+- User-facing terminology matches repo root `../../../CONTEXT.md`.
+- Validation uses repo root commands from `../../../AGENTS.md`: `pnpm run fix`, then `pnpm run validate`.
