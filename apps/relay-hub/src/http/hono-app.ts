@@ -1,4 +1,5 @@
 import { $, createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createLogger } from "@patricktree-stack/o11y.logs";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 
@@ -17,7 +18,6 @@ import {
   registerDeviceResponseSchema,
   updateDeviceRequestSchema,
 } from "@content-relay/contracts";
-import { createLogger } from "@content-relay/o11y.logs";
 
 import { RelayInvalidInputError, RelayResourceNotFoundError } from "#src/errors.ts";
 import {

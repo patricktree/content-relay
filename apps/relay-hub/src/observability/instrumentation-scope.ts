@@ -1,4 +1,4 @@
-import { instrumentationScopeFromModuleURLAndRootURL } from "@content-relay/o11y.node-sdk";
+import { instrumentationScopeFromModuleURLAndRootURL } from "@patricktree-stack/o11y.node-sdk";
 
 const rootURL = new URL("../../", import.meta.url);
 

@@ -2,6 +2,8 @@ import { defineConfig } from "oxfmt";
 
 export default defineConfig({
   ignorePatterns: [
+    /* ignore the patricktree-stack packages themselves, since they are not part of this monorepo */
+    "/.patricktree-stack/**",
     /* pnpm-workspace.yaml is managed by pnpm */
     "/pnpm-workspace.yaml",
     /* macos-app tauri generated files */

@@ -1,4 +1,4 @@
 {
   "$schema": "../../node_modules/turbo/schema.json",
-  "extends": ["//", "@content-relay/config-turbo-typescript"],
+  "extends": ["//", "@patricktree-stack/config-turbo-typescript"],
 }

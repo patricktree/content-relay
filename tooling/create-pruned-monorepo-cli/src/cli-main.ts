@@ -1,8 +1,7 @@
 import * as commander from "@commander-js/extra-typings";
+import { createPrunedMonorepo } from "@patricktree-stack/create-pruned-monorepo";
 
-import { isContentRelayProjectName } from "@content-relay/pkg-management";
-
-import { createPrunedMonorepo } from "#src/create-pruned-monorepo.ts";
+import { isContentRelayProjectName, monorepoPackagePrefix } from "@content-relay/pkg-management";
 
 const program = new commander.Command()
   .addOption(
@@ -10,9 +9,7 @@ const program = new commander.Command()
       .makeOptionMandatory()
       .argParser((value) => {
         if (!isContentRelayProjectName(value)) {
-          throw new commander.InvalidArgumentError(
-            `Must be a valid content-relay project name, but is not.`,
-          );
+          throw new commander.InvalidArgumentError(`Must be a valid project name, but is not.`);
         }
         return value;
       }),
@@ -21,4 +18,8 @@ const program = new commander.Command()
 program.parse();
 const opts = program.opts();
 
-await createPrunedMonorepo(opts);
+await createPrunedMonorepo({
+  ...opts,
+  monorepoPackagePrefix,
+  monorepoRootProjectName: "@content-relay/monorepo-root",
+});

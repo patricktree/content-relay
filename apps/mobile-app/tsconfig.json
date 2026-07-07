@@ -2,8 +2,8 @@
   /* just for IDE support for capacitor.config.ts */
 
   "extends": [
-    "@content-relay/config-typescript/tsconfig.defaults.json",
-    "@content-relay/config-typescript/tsconfig.node-direct-ts-execution.json"
+    "@patricktree-stack/config-typescript/tsconfig.defaults.json",
+    "@patricktree-stack/config-typescript/tsconfig.node-direct-ts-execution.json"
   ],
   "compilerOptions": {
     /* Modules */

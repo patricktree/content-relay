@@ -1,8 +1,0 @@
-{
-  "name": "@content-relay/config-vitest",
-  "private": true,
-  "type": "module",
-  "devDependencies": {
-    "vitest": "catalog:"
-  }
-}

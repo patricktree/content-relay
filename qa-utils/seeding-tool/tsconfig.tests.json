@@ -1,8 +1,8 @@
 {
   "extends": [
-    "@content-relay/config-typescript/tsconfig.defaults.json",
-    "@content-relay/config-typescript/tsconfig.node-direct-ts-execution.json",
-    "@content-relay/config-typescript/tsconfig.vitest.json"
+    "@patricktree-stack/config-typescript/tsconfig.defaults.json",
+    "@patricktree-stack/config-typescript/tsconfig.node-direct-ts-execution.json",
+    "@patricktree-stack/config-typescript/tsconfig.vitest.json"
   ],
   "compilerOptions": {
     "rootDir": "./test",

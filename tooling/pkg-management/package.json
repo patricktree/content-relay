@@ -30,19 +30,12 @@
     "turbo:lint": "oxlint --type-aware --max-warnings 0 .",
     "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
-  "dependencies": {
-    "@pnpm/filter-workspace-packages": "^1000.1.6",
-    "@pnpm/find-workspace-dir": "^1000.1.5",
-    "@pnpm/logger": "^1001",
-    "@pnpm/worker": "^1000",
-    "@pnpm/workspace.find-packages": "^1000.0.65",
-    "js-yaml": "^5.2.1"
-  },
   "devDependencies": {
-    "@content-relay/config-oxlint": "workspace:*",
-    "@content-relay/config-typescript": "workspace:*",
+    "@patricktree-stack/config-oxlint": "link:../../.patricktree-stack/tooling/config-oxlint",
+    "@patricktree-stack/config-typescript": "link:../../.patricktree-stack/tooling/config-typescript",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
+    "eslint-plugin-react-you-might-not-need-an-effect": "catalog:patricktree-stack-config-oxlint",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "typescript": "catalog:"

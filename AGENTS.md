@@ -3,7 +3,7 @@
 ## Read first
 
 - Product language: `CONTEXT.md`.
-- Development: `docs/development.md`.
+- Development: `.patricktree-stack/docs/development.md`.
 - Architecture: `docs/architecture.md`.
 - Runbooks: `docs/runbooks/`.
 

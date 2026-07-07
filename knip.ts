@@ -2,7 +2,10 @@ import type { KnipConfig } from "knip";
 
 const config: KnipConfig = {
   $schema: "./node_modules/knip/schema.json",
-  ignoreDependencies: ["eslint-plugin-react-you-might-not-need-an-effect"],
+  ignore: [
+    /* ignore the patricktree-stack packages themselves, since they are not part of this monorepo */
+    ".patricktree-stack/**",
+  ],
   workspaces: {
     ".": {
       ignoreDependencies: ["husky", "@emnapi/core", "@emnapi/runtime"],
@@ -11,7 +14,7 @@ const config: KnipConfig = {
       ignoreDependencies: ["@content-relay/web-app"],
     },
     "apps/mobile-app": {
-      ignoreDependencies: ["@content-relay/config-typescript"],
+      ignoreDependencies: ["@patricktree-stack/config-typescript"],
       ignoreFiles: ["./android/**", "./ios/**"],
     },
     "apps/web-app": {
@@ -19,9 +22,6 @@ const config: KnipConfig = {
     },
     "qa-utils/seeding-tool": {
       ignoreFiles: ["./src/playground.ts"],
-    },
-    "tooling/pkg-management": {
-      ignoreDependencies: ["@pnpm/worker"],
     },
   },
 };

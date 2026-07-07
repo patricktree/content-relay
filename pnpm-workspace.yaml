@@ -20,6 +20,10 @@ catalog:
   typescript: ^6.0.3
   vitest: ^4.1.9
 
+catalogs:
+  patricktree-stack-config-oxlint:
+    eslint-plugin-react-you-might-not-need-an-effect: ^1.0.1
+
 packageExtensions:
   eslint-plugin-react-you-might-not-need-an-effect@1.0.1:
     # "eslint-plugin-react-you-might-not-need-an-effect" defines eslint as peer dependency, but that is not required when used by oxlint --> make it optional

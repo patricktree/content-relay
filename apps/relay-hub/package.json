@@ -37,11 +37,11 @@
   "dependencies": {
     "@commander-js/extra-typings": "^15.0.0",
     "@content-relay/contracts": "workspace:*",
-    "@content-relay/o11y.logs": "workspace:*",
-    "@content-relay/o11y.node-sdk": "workspace:*",
-    "@content-relay/utils-node": "workspace:*",
     "@hono/node-server": "^2.0.8",
     "@hono/zod-openapi": "^1.4.0",
+    "@patricktree-stack/o11y.logs": "link:../../.patricktree-stack/libs/o11y.logs",
+    "@patricktree-stack/o11y.node-sdk": "link:../../.patricktree-stack/libs/o11y.node-sdk",
+    "@patricktree-stack/utils-node": "link:../../.patricktree-stack/libs/utils-node",
     "@patricktree/commons-ecma": "^3.1.1",
     "@patricktree/commons-node": "^3.1.1",
     "better-sqlite3": "^12.11.1",
@@ -53,11 +53,12 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@content-relay/config-oxlint": "workspace:*",
-    "@content-relay/config-typescript": "workspace:*",
+    "@patricktree-stack/config-oxlint": "link:../../.patricktree-stack/tooling/config-oxlint",
+    "@patricktree-stack/config-typescript": "link:../../.patricktree-stack/tooling/config-typescript",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
+    "eslint-plugin-react-you-might-not-need-an-effect": "catalog:patricktree-stack-config-oxlint",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "typescript": "catalog:"

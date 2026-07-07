@@ -1,8 +1,7 @@
 import { serve } from "@hono/node-server";
+import { createLogger } from "@patricktree-stack/o11y.logs";
 import { processUtil } from "@patricktree/commons-node/utils/process";
 import util from "node:util";
-
-import { createLogger } from "@content-relay/o11y.logs";
 
 import type { createHonoApp } from "#src/http/hono-app.ts";
 import { instrumentationScopeFromModuleURL } from "#src/observability/instrumentation-scope.ts";

@@ -1,4 +1,5 @@
 import { Command, InvalidOptionArgumentError, Option } from "@commander-js/extra-typings";
+import * as numberUtils from "@patricktree-stack/utils-ecma/number.utils";
 import { jsonUtil } from "@patricktree/commons-ecma/util/json";
 import fs from "node:fs";
 import path from "node:path";
@@ -19,7 +20,6 @@ import {
   type DevicePlatform,
   type PushRegistration,
 } from "@content-relay/contracts";
-import * as numberUtils from "@content-relay/utils-ecma/number.utils";
 
 import { openDelivery } from "#src/use-cases/open-delivery.ts";
 import { receivePendingDeliveries } from "#src/use-cases/receive-pending-deliveries.ts";

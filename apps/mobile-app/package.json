@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.1",
-    "@content-relay/config-typescript": "workspace:*",
+    "@patricktree-stack/config-typescript": "link:../../.patricktree-stack/tooling/config-typescript",
     "@types/node": "catalog:"
   }
 }

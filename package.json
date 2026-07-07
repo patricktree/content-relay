@@ -7,7 +7,8 @@
     "./.pnpmfile.mjs",
     "./pnpm-lock.yaml",
     "./pnpm-workspace.yaml",
-    "./postinstall.sh"
+    "./postinstall.sh",
+    "./preinstall.sh"
   ],
   "type": "module",
   "scripts": {
@@ -21,6 +22,7 @@
     "lint": "turbo run turbo:lint",
     "lint:fix": "turbo run turbo:lint:fix",
     "postinstall": "sh ./postinstall.sh",
+    "preinstall": "sh ./preinstall.sh",
     "test": "turbo run turbo:test",
     "validate": "turbo run turbo:build turbo:lint turbo:test && pnpm run declutter"
   },

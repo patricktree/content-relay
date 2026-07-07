@@ -1,7 +1,6 @@
+import { ensureDirectoryExists } from "@patricktree-stack/utils-node/fs.utils";
 import { Container } from "dioma";
 import path from "node:path";
-
-import { ensureDirectoryExists } from "@content-relay/utils-node/fs.utils";
 
 import { FileSystemBlobStore } from "#src/infrastructure/blob-store/file-system-blob-store.ts";
 import { SqliteRelayHubRepository } from "#src/infrastructure/db/sqlite-relay-hub-repository.ts";
