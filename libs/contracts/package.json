@@ -40,7 +40,6 @@
     "@patricktree-stack/config-oxlint": "link:../../.patricktree-stack/tooling/config-oxlint",
     "@patricktree-stack/config-typescript": "link:../../.patricktree-stack/tooling/config-typescript",
     "@typescript/native-preview": "catalog:",
-    "eslint-plugin-react-you-might-not-need-an-effect": "catalog:patricktree-stack-config-oxlint",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "typescript": "catalog:"

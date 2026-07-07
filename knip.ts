@@ -8,13 +8,18 @@ const config: KnipConfig = {
   ],
   workspaces: {
     ".": {
-      ignoreDependencies: ["husky", "@emnapi/core", "@emnapi/runtime"],
+      ignoreDependencies: [
+        "husky",
+        "@emnapi/core",
+        "@emnapi/runtime",
+        /* oxlint doesn't resolve dependencies correctly, we need it in the root node_modules */
+        "eslint-plugin-react-you-might-not-need-an-effect",
+      ],
     },
     "apps/macos-app": {
       ignoreDependencies: ["@content-relay/web-app"],
     },
     "apps/mobile-app": {
-      ignoreDependencies: ["@patricktree-stack/config-typescript"],
       ignoreFiles: ["./android/**", "./ios/**"],
     },
     "apps/web-app": {

@@ -58,7 +58,6 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
-    "eslint-plugin-react-you-might-not-need-an-effect": "catalog:patricktree-stack-config-oxlint",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "typescript": "catalog:"

@@ -20,16 +20,17 @@ catalog:
   typescript: ^6.0.3
   vitest: ^4.1.9
 
-catalogs:
-  patricktree-stack-config-oxlint:
-    eslint-plugin-react-you-might-not-need-an-effect: ^1.0.1
-
 packageExtensions:
   eslint-plugin-react-you-might-not-need-an-effect@1.0.1:
     # "eslint-plugin-react-you-might-not-need-an-effect" defines eslint as peer dependency, but that is not required when used by oxlint --> make it optional
     peerDependenciesMeta:
       eslint:
         optional: true
+
+# hoist only flawed packages to node_modules/.pnpm/node_modules
+hoistPattern: 
+  # "@linaria/react" needs "@types/react" to be hoisted, otherwise TypeScript errors ("This expression is not callable.")
+  - "@types/react"
 
 # handle peer dependencies in a strict way
 autoInstallPeers: false

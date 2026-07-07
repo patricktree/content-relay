@@ -27,10 +27,6 @@ catalogs:
     vitest:
       specifier: ^4.1.9
       version: 4.1.9
-  patricktree-stack-config-oxlint:
-    eslint-plugin-react-you-might-not-need-an-effect:
-      specifier: ^1.0.1
-      version: 1.0.1
 
 packageExtensionsChecksum: sha256-ln1mxfoY7aYHt6+k2EPFuVB3Slg4eqDmbEguqsTxwbA=
 
@@ -47,6 +43,9 @@ importers:
       del-cli:
         specifier: ^7.0.0
         version: 7.0.0
+      eslint-plugin-react-you-might-not-need-an-effect:
+        specifier: ^1.0.1
+        version: 1.0.1
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -108,9 +107,6 @@ importers:
       '@typescript/native-preview':
         specifier: 'catalog:'
         version: 7.0.0-dev.20260706.1
-      eslint-plugin-react-you-might-not-need-an-effect:
-        specifier: catalog:patricktree-stack-config-oxlint
-        version: 1.0.1
       oxlint:
         specifier: 'catalog:'
         version: 1.72.0(oxlint-tsgolint@0.24.0)
@@ -161,6 +157,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.13.2
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   apps/relay-hub:
     dependencies:
@@ -228,9 +227,6 @@ importers:
       '@typescript/native-preview':
         specifier: 'catalog:'
         version: 7.0.0-dev.20260706.1
-      eslint-plugin-react-you-might-not-need-an-effect:
-        specifier: catalog:patricktree-stack-config-oxlint
-        version: 1.0.1
       oxlint:
         specifier: 'catalog:'
         version: 1.72.0(oxlint-tsgolint@0.24.0)
@@ -322,9 +318,6 @@ importers:
       '@wyw-in-js/vite':
         specifier: ^2.1.3
         version: 2.1.3(typescript@6.0.3)(vite@8.1.3(@types/node@24.13.2))
-      eslint-plugin-react-you-might-not-need-an-effect:
-        specifier: catalog:patricktree-stack-config-oxlint
-        version: 1.0.1
       oxlint:
         specifier: 'catalog:'
         version: 1.72.0(oxlint-tsgolint@0.24.0)
@@ -368,9 +361,6 @@ importers:
       '@typescript/native-preview':
         specifier: 'catalog:'
         version: 7.0.0-dev.20260706.1
-      eslint-plugin-react-you-might-not-need-an-effect:
-        specifier: catalog:patricktree-stack-config-oxlint
-        version: 1.0.1
       oxlint:
         specifier: 'catalog:'
         version: 1.72.0(oxlint-tsgolint@0.24.0)
@@ -399,9 +389,6 @@ importers:
       '@typescript/native-preview':
         specifier: 'catalog:'
         version: 7.0.0-dev.20260706.1
-      eslint-plugin-react-you-might-not-need-an-effect:
-        specifier: catalog:patricktree-stack-config-oxlint
-        version: 1.0.1
       oxlint:
         specifier: 'catalog:'
         version: 1.72.0(oxlint-tsgolint@0.24.0)
@@ -430,9 +417,6 @@ importers:
       '@typescript/native-preview':
         specifier: 'catalog:'
         version: 7.0.0-dev.20260706.1
-      eslint-plugin-react-you-might-not-need-an-effect:
-        specifier: catalog:patricktree-stack-config-oxlint
-        version: 1.0.1
       oxlint:
         specifier: 'catalog:'
         version: 1.72.0(oxlint-tsgolint@0.24.0)
@@ -464,9 +448,6 @@ importers:
       '@typescript/native-preview':
         specifier: 'catalog:'
         version: 7.0.0-dev.20260706.1
-      eslint-plugin-react-you-might-not-need-an-effect:
-        specifier: catalog:patricktree-stack-config-oxlint
-        version: 1.0.1
       oxlint:
         specifier: 'catalog:'
         version: 1.72.0(oxlint-tsgolint@0.24.0)
@@ -509,9 +490,6 @@ importers:
       '@typescript/native-preview':
         specifier: 'catalog:'
         version: 7.0.0-dev.20260706.1
-      eslint-plugin-react-you-might-not-need-an-effect:
-        specifier: catalog:patricktree-stack-config-oxlint
-        version: 1.0.1
       oxlint:
         specifier: 'catalog:'
         version: 1.72.0(oxlint-tsgolint@0.24.0)
@@ -536,9 +514,6 @@ importers:
       '@typescript/native-preview':
         specifier: 'catalog:'
         version: 7.0.0-dev.20260706.1
-      eslint-plugin-react-you-might-not-need-an-effect:
-        specifier: catalog:patricktree-stack-config-oxlint
-        version: 1.0.1
       oxlint:
         specifier: 'catalog:'
         version: 1.72.0(oxlint-tsgolint@0.24.0)
