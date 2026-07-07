@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import os from "node:os";
 import path from "node:path";
 
 const PLAYWRIGHT_VERSION = "1.61.1";
@@ -18,6 +19,8 @@ export default defineConfig({
   forbidOnly: isCI,
   outputDir: testResultsOutputDir,
   retries: isCI ? 2 : 0,
+  // More than 4 parallel test workers run into timeouts even on beefy machines.
+  workers: Math.min(4, os.availableParallelism()),
   timeout: 10_000,
   reporter: isCI
     ? [["html", { open: "never", outputFolder: htmlReportOutputDir }], ["github"]]
