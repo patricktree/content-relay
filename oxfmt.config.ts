@@ -1,37 +1,39 @@
-{
-  "ignorePatterns": [
+import { defineConfig } from "oxfmt";
+
+export default defineConfig({
+  ignorePatterns: [
     /* pnpm-workspace.yaml is managed by pnpm */
     "/pnpm-workspace.yaml",
     /* macos-app tauri generated files */
     "/apps/macos-app/src/gen/**",
   ],
-  "sortPackageJson": {
-    "sortScripts": true,
+  sortPackageJson: {
+    sortScripts: true,
   },
-  "sortImports": {
-    "customGroups": [
+  sortImports: {
+    customGroups: [
       /* create a group for content-relay packages to separate them from other external dependencies */
       {
-        "groupName": "content-relay-packages",
-        "elementNamePattern": ["@content-relay/**"],
+        groupName: "content-relay-packages",
+        elementNamePattern: ["@content-relay/**"],
       },
       /* create a group for subpath imports = internal dependencies */
       {
-        "groupName": "subpath-imports",
-        "elementNamePattern": ["#src/**"],
+        groupName: "subpath-imports",
+        elementNamePattern: ["#src/**"],
       },
       /* create a group for subpath imports for test modules */
       {
-        "groupName": "subpath-imports-test-modules",
-        "elementNamePattern": ["#test/**"],
+        groupName: "subpath-imports-test-modules",
+        elementNamePattern: ["#test/**"],
       },
       /* create a group for subpath imports for E2E test modules */
       {
-        "groupName": "subpath-imports-test-modules-e2e",
-        "elementNamePattern": ["#test-e2e/**"],
+        groupName: "subpath-imports-test-modules-e2e",
+        elementNamePattern: ["#test-e2e/**"],
       },
     ],
-    "groups": [
+    groups: [
       ["value-builtin", "value-external"],
       "value-external",
       "value-internal",
@@ -43,5 +45,5 @@
       "unknown",
     ],
   },
-  "jsdoc": true,
-}
+  jsdoc: true,
+});

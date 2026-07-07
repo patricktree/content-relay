@@ -1,0 +1,29 @@
+import type { KnipConfig } from "knip";
+
+const config: KnipConfig = {
+  $schema: "./node_modules/knip/schema.json",
+  ignoreDependencies: ["eslint-plugin-react-you-might-not-need-an-effect"],
+  workspaces: {
+    ".": {
+      ignoreDependencies: ["husky", "@emnapi/core", "@emnapi/runtime"],
+    },
+    "apps/macos-app": {
+      ignoreDependencies: ["@content-relay/web-app"],
+    },
+    "apps/mobile-app": {
+      ignoreDependencies: ["@content-relay/config-typescript"],
+      ignoreFiles: ["./android/**", "./ios/**"],
+    },
+    "apps/web-app": {
+      ignoreFiles: ["./wyw-in-js.config.cjs"],
+    },
+    "qa-utils/seeding-tool": {
+      ignoreFiles: ["./src/playground.ts"],
+    },
+    "tooling/pkg-management": {
+      ignoreDependencies: ["@pnpm/worker"],
+    },
+  },
+};
+
+export default config;
