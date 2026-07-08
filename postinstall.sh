@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 if [ "$CI" = "true" ]; then
     # in CI/CD (i.e. GitHub Actions runners and Docker builds), we are finished

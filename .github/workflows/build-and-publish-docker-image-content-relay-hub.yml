@@ -31,6 +31,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6.0.2
         with:
+          submodules: true
           # Affected checks need the compared git refs to exist locally.
           # We fetch a reasonable number of commits to cover typical PRs, while avoiding excessive fetch time and data usage.
           # In case of unusually long-running PRs, if the base commit is not found, we treat the workflow as affected, so the workflow will still work correctly.
