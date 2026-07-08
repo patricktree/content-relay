@@ -29,13 +29,13 @@
   "dependencies": {
     "@commander-js/extra-typings": "^15.0.0",
     "@content-relay/pkg-management": "workspace:*",
-    "@patricktree-stack/create-pruned-monorepo": "link:../../.patricktree-stack/tooling/create-pruned-monorepo",
-    "@patricktree-stack/o11y.node-sdk": "link:../../.patricktree-stack/libs/o11y.node-sdk",
+    "@patricktree-stack/create-pruned-monorepo": "workspace:*",
+    "@patricktree-stack/o11y.node-sdk": "workspace:*",
     "commander": "^15.0.0"
   },
   "devDependencies": {
-    "@patricktree-stack/config-oxlint": "link:../../.patricktree-stack/tooling/config-oxlint",
-    "@patricktree-stack/config-typescript": "link:../../.patricktree-stack/tooling/config-typescript",
+    "@patricktree-stack/config-oxlint": "workspace:*",
+    "@patricktree-stack/config-typescript": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "oxlint": "catalog:",

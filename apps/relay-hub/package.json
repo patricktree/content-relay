@@ -39,9 +39,9 @@
     "@content-relay/contracts": "workspace:*",
     "@hono/node-server": "^2.0.8",
     "@hono/zod-openapi": "^1.4.0",
-    "@patricktree-stack/o11y.logs": "link:../../.patricktree-stack/libs/o11y.logs",
-    "@patricktree-stack/o11y.node-sdk": "link:../../.patricktree-stack/libs/o11y.node-sdk",
-    "@patricktree-stack/utils-node": "link:../../.patricktree-stack/libs/utils-node",
+    "@patricktree-stack/o11y.logs": "workspace:*",
+    "@patricktree-stack/o11y.node-sdk": "workspace:*",
+    "@patricktree-stack/utils-node": "workspace:*",
     "@patricktree/commons-ecma": "^3.1.1",
     "@patricktree/commons-node": "^3.1.1",
     "better-sqlite3": "^12.11.1",
@@ -53,8 +53,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@patricktree-stack/config-oxlint": "link:../../.patricktree-stack/tooling/config-oxlint",
-    "@patricktree-stack/config-typescript": "link:../../.patricktree-stack/tooling/config-typescript",
+    "@patricktree-stack/config-oxlint": "workspace:*",
+    "@patricktree-stack/config-typescript": "workspace:*",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",

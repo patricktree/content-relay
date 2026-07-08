@@ -7,8 +7,7 @@
     "./.pnpmfile.mjs",
     "./pnpm-lock.yaml",
     "./pnpm-workspace.yaml",
-    "./postinstall.sh",
-    "./preinstall.sh"
+    "./postinstall.sh"
   ],
   "type": "module",
   "scripts": {
@@ -22,19 +21,18 @@
     "lint": "turbo run turbo:lint",
     "lint:fix": "turbo run turbo:lint:fix",
     "postinstall": "sh ./postinstall.sh",
-    "preinstall": "sh ./preinstall.sh",
     "test": "turbo run turbo:test",
     "validate": "turbo run turbo:build turbo:lint turbo:test && pnpm run declutter"
   },
   "devDependencies": {
     "@emnapi/core": "^1.11.2",
     "@emnapi/runtime": "^1.11.2",
-    "@patricktree-stack/config-oxfmt": "link:./.patricktree-stack/tooling/config-oxfmt",
+    "@patricktree-stack/config-oxfmt": "workspace:*",
     "del-cli": "^7.0.0",
     "eslint-plugin-react-you-might-not-need-an-effect": "^1.0.1",
     "husky": "^9.1.7",
     "knip": "^6.24.0",
-    "oxfmt": "^0.58.0",
+    "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "turbo": "^2.10.3"

@@ -3,6 +3,18 @@ packages:
   - libs/*
   - qa-utils/*
   - tooling/*
+  - .patricktree-stack/libs/o11y.logs
+  - .patricktree-stack/libs/o11y.node-sdk
+  - .patricktree-stack/libs/utils-ecma
+  - .patricktree-stack/libs/utils-node
+  - .patricktree-stack/qa-utils/test-utils-node
+  - .patricktree-stack/tooling/config-oxfmt
+  - .patricktree-stack/tooling/config-oxlint
+  - .patricktree-stack/tooling/config-turbo-typescript
+  - .patricktree-stack/tooling/config-typescript
+  - .patricktree-stack/tooling/config-vitest
+  - .patricktree-stack/tooling/create-pruned-monorepo
+  - .patricktree-stack/tooling/pkg-management
 
 allowBuilds:
   better-sqlite3: true
@@ -14,11 +26,19 @@ allowBuilds:
 catalog:
   "@typescript/native-preview": 7.0.0-dev.20260706.1
   "@types/node": ^24
+  oxfmt: ^0.58.0
   oxlint: ^1.72.0
   oxlint-tsgolint: ^0.24.0
   hono: ^4.12.27
   typescript: ^6.0.3
   vitest: ^4.1.9
+
+catalogs:
+  o11y:
+    "@opentelemetry/api": ^1.9.1
+    "@opentelemetry/api-logs": ^0.220.0
+    "@opentelemetry/sdk-logs": ^0.220.0
+    "@opentelemetry/sdk-node": ^0.220.0
 
 packageExtensions:
   eslint-plugin-react-you-might-not-need-an-effect@1.0.1:
@@ -28,7 +48,7 @@ packageExtensions:
         optional: true
 
 # hoist only flawed packages to node_modules/.pnpm/node_modules
-hoistPattern: 
+hoistPattern:
   # "@linaria/react" needs "@types/react" to be hoisted, otherwise TypeScript errors ("This expression is not callable.")
   - "@types/react"
 
