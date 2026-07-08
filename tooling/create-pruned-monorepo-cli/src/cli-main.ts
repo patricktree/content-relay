@@ -14,6 +14,9 @@ const program = new commander.Command()
         return value;
       }),
   )
+  .addOption(
+    new commander.Option("--linked-monorepo-dir-name <directory-name>").makeOptionMandatory(),
+  )
   .addOption(new commander.Option("--target-dir <path>").makeOptionMandatory());
 program.parse();
 const opts = program.opts();
@@ -22,4 +25,5 @@ await createPrunedMonorepo({
   ...opts,
   monorepoPackagePrefix,
   monorepoRootProjectName: "@content-relay/monorepo-root",
+  projectNames: [opts.projectName],
 });
