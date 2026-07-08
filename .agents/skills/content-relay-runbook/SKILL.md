@@ -10,18 +10,18 @@ Use this skill when running Content Relay locally or following a device flow.
 ## First Actions
 
 1. Read repo root `../../../AGENTS.md` for commands and validation expectations.
-2. Read repo root `../../../.patricktree-stack/docs/development.md` for setup and common commands.
+2. Read repo root `../../../docs/development.md` for setup and common commands.
 3. Read repo root `../../../CONTEXT.md` for domain terms used in flows.
 4. Pick the nearest runbook in repo root `../../../docs/runbooks/` before inventing commands.
 
 ## Runbook Routing
 
-| Task                                     | Read                                              |
-| ---------------------------------------- | ------------------------------------------------- |
-| Launch and verify the macOS menu bar app | `../../../docs/runbooks/macos-app.md`             |
-| General setup, build, CLI smoke check    | `../../../.patricktree-stack/docs/development.md` |
-| Architecture-sensitive troubleshooting   | Load `content-relay-architecture`                 |
-| Browser UI smoke testing                 | Load `content-relay-frontend`                     |
+| Task                                     | Read                                  |
+| ---------------------------------------- | ------------------------------------- |
+| Launch and verify the macOS menu bar app | `../../../docs/runbooks/macos-app.md` |
+| General setup, build, CLI smoke check    | `../../../docs/development.md`        |
+| Architecture-sensitive troubleshooting   | Load `content-relay-architecture`     |
+| Browser UI smoke testing                 | Load `content-relay-frontend`         |
 
 ## Rules
 

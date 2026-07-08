@@ -10,7 +10,7 @@ Use when running, smoke-testing, or troubleshooting local Relay Hub, CLI, macOS 
 
 ## Runtime contract
 
-- Route agents to `.patricktree-stack/docs/development.md`, `docs/runbooks/`, and `CONTEXT.md`.
+- Route agents to `docs/development.md`, `docs/runbooks/`, and `CONTEXT.md`.
 - Prefer documented commands over ad hoc flows.
 - Keep local processes observable and avoid backgrounding long-running commands in tool calls.
 - Capture missing runbook steps as documentation follow-up.
