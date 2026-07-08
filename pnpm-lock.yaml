@@ -40,6 +40,9 @@ importers:
       '@emnapi/runtime':
         specifier: ^1.11.2
         version: 1.11.2
+      '@patricktree-stack/config-oxfmt':
+        specifier: link:./.patricktree-stack/tooling/config-oxfmt
+        version: link:.patricktree-stack/tooling/config-oxfmt
       del-cli:
         specifier: ^7.0.0
         version: 7.0.0

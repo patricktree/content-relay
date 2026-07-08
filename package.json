@@ -29,6 +29,7 @@
   "devDependencies": {
     "@emnapi/core": "^1.11.2",
     "@emnapi/runtime": "^1.11.2",
+    "@patricktree-stack/config-oxfmt": "link:./.patricktree-stack/tooling/config-oxfmt",
     "del-cli": "^7.0.0",
     "eslint-plugin-react-you-might-not-need-an-effect": "^1.0.1",
     "husky": "^9.1.7",

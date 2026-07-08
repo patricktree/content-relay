@@ -1,17 +1,15 @@
+import { config as baseConfig } from "@patricktree-stack/config-oxfmt/oxfmt-base.js";
 import { defineConfig } from "oxfmt";
 
 export default defineConfig({
+  ...baseConfig,
   ignorePatterns: [
+    ...baseConfig.ignorePatterns,
     /* ignore the patricktree-stack packages themselves, since they are not part of this monorepo */
     "/.patricktree-stack/**",
-    /* pnpm-workspace.yaml is managed by pnpm */
-    "/pnpm-workspace.yaml",
     /* macos-app tauri generated files */
     "/apps/macos-app/src/gen/**",
   ],
-  sortPackageJson: {
-    sortScripts: true,
-  },
   sortImports: {
     customGroups: [
       /* create a group for content-relay packages to separate them from other external dependencies */
@@ -47,5 +45,4 @@ export default defineConfig({
       "unknown",
     ],
   },
-  jsdoc: true,
 });
