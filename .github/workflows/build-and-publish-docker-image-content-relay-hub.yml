@@ -37,18 +37,7 @@ jobs:
           # In case of unusually long-running PRs, if the base commit is not found, we treat the workflow as affected, so the workflow will still work correctly.
           fetch-depth: 100
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6.0.5
-        with:
-          cache: true
-          # `standalone: true` so that we don't need to care about the installed Node.js version
-          standalone: true
-
-      - name: Install dependencies and Node.js (via package.json#devEngines.runtime)
-        run: |
-          node_version=$(jq -r '.devEngines.runtime.version' package.json)
-          pnpm runtime set node "${node_version}" -g
-          pnpm install --frozen-lockfile
+      - uses: ./.patricktree-stack/.github/actions/bootstrap-repo
 
       - name: Determine if run is manual dispatch
         id: run-is-manual-dispatch
