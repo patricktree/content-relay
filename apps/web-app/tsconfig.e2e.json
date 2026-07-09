@@ -15,6 +15,6 @@
     /* Language and Environment */
     "jsx": "react-jsx"
   },
-  "include": ["playwright.config.ts", "tests/**/*"],
+  "include": ["playwright.config.ts", "test-e2e/**/*"],
   "references": [{ "path": "./tsconfig.build.json" }]
 }

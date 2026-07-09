@@ -9,9 +9,10 @@ import { gotoWebApp, prepareWebApp } from "#test-e2e/helpers.ts";
 
 test("send text item", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const [{ deviceId: receiverDeviceId }] = await seed.registerDevices(relayHubBaseUrl, [
+    const [receiver] = await seed.registerDevices(relayHubBaseUrl, [
       { nickname: "test-device-generic", platform: "cli" },
     ]);
+    const receiverDeviceId = expectSeededDevice(receiver).deviceId;
 
     await prepareWebApp(page, {
       settings: {
@@ -45,9 +46,10 @@ test("send text item", async ({ page }) => {
 
 test("send URL item", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const [{ deviceId: receiverDeviceId }] = await seed.registerDevices(relayHubBaseUrl, [
+    const [receiver] = await seed.registerDevices(relayHubBaseUrl, [
       { nickname: "test-device-generic", platform: "cli" },
     ]);
+    const receiverDeviceId = expectSeededDevice(receiver).deviceId;
 
     await prepareWebApp(page, {
       settings: {
@@ -199,9 +201,10 @@ test("switch item type between text and URL inputs", async ({ page }) => {
 
 test("trim text item values and omit blank title", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const [{ deviceId: receiverDeviceId }] = await seed.registerDevices(relayHubBaseUrl, [
+    const [receiver] = await seed.registerDevices(relayHubBaseUrl, [
       { nickname: "test-device-generic", platform: "cli" },
     ]);
+    const receiverDeviceId = expectSeededDevice(receiver).deviceId;
     await prepareWebApp(page, {
       settings: {
         relayHubUrl: relayHubBaseUrl,
@@ -232,10 +235,15 @@ test("trim text item values and omit blank title", async ({ page }) => {
 
 test("send an item to multiple target devices", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const [firstReceiver, secondReceiver] = await seed.registerDevices(relayHubBaseUrl, [
-      { nickname: "first-receiver", platform: "cli" },
-      { nickname: "second-receiver", platform: "android" },
-    ]);
+    const [firstSeededReceiver, secondSeededReceiver] = await seed.registerDevices(
+      relayHubBaseUrl,
+      [
+        { nickname: "first-receiver", platform: "cli" },
+        { nickname: "second-receiver", platform: "android" },
+      ],
+    );
+    const firstReceiver = expectSeededDevice(firstSeededReceiver);
+    const secondReceiver = expectSeededDevice(secondSeededReceiver);
     await prepareWebApp(page, {
       settings: {
         relayHubUrl: relayHubBaseUrl,
@@ -296,9 +304,10 @@ test("disable send button while text item submission is pending", async ({ page 
 
 test("do not show success notification when text item submission fails", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
-    const [{ deviceId: receiverDeviceId }] = await seed.registerDevices(relayHubBaseUrl, [
+    const [receiver] = await seed.registerDevices(relayHubBaseUrl, [
       { nickname: "test-device-generic", platform: "cli" },
     ]);
+    const receiverDeviceId = expectSeededDevice(receiver).deviceId;
     await prepareWebApp(page, {
       settings: {
         relayHubUrl: relayHubBaseUrl,
@@ -347,10 +356,20 @@ function expectItemSentNotification(page: Page): Locator {
     .getByRole("dialog", { name: "Item sent" });
 }
 
+type RegisteredDevice = Awaited<ReturnType<typeof seed.registerDevices>>[number];
+
 type Deferred<T> = {
   promise: Promise<T>;
   resolve: (value: T) => void;
 };
+
+function expectSeededDevice(device: RegisteredDevice | undefined): RegisteredDevice {
+  if (device === undefined) {
+    throw new Error("Expected Device to be seeded.");
+  }
+
+  return device;
+}
 
 function createDeferred<T>(): Deferred<T> {
   let resolve: Deferred<T>["resolve"] | undefined;
