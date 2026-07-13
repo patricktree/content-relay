@@ -22,11 +22,9 @@
   "scripts": {
     "build": "turbo run turbo:build",
     "clean": "del-cli --dot=true \"dist\" \"*.tsbuildinfo\"",
-    "dev": "turbo run turbo:dev",
     "lint": "turbo run turbo:lint",
     "lint:fix": "turbo run turbo:lint:fix",
     "turbo:build": "tsc --build ./tsconfig.json",
-    "turbo:dev": "tsc --build ./tsconfig.json --watch",
     "turbo:lint": "oxlint --type-aware --max-warnings 0 .",
     "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
