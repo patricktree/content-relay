@@ -28,8 +28,8 @@
     "dev": "turbo run turbo:dev",
     "lint": "turbo run turbo:lint",
     "lint:fix": "turbo run turbo:lint:fix",
-    "turbo:build": "tsgo --build ./tsconfig.json",
-    "turbo:dev": "tsgo --build ./tsconfig.json --watch",
+    "turbo:build": "tsc --build ./tsconfig.json",
+    "turbo:dev": "tsc --build ./tsconfig.json --watch",
     "turbo:lint": "oxlint --type-aware --max-warnings 0 .",
     "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
@@ -40,7 +40,7 @@
     "@patricktree-stack/config-oxlint": "workspace:*",
     "@patricktree-stack/config-typescript": "workspace:*",
     "@types/node": "catalog:",
-    "@typescript/native-preview": "catalog:",
+    "@typescript/native": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "typescript": "catalog:"
