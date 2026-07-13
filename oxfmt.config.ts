@@ -1,12 +1,14 @@
-import { config as baseConfig } from "@patricktree-stack/config-oxfmt/oxfmt-base.js";
+import { createBaseConfig } from "@patricktree-stack/config-oxfmt/oxfmt-base.js";
 import { defineConfig } from "oxfmt";
+
+const baseConfig = createBaseConfig({
+  patricktreeStackGitSubmoduleRelativePath: ".patricktree-stack",
+});
 
 export default defineConfig({
   ...baseConfig,
   ignorePatterns: [
     ...baseConfig.ignorePatterns,
-    /* ignore the patricktree-stack packages themselves, since they are not part of this monorepo */
-    "/.patricktree-stack/**",
     /* macos-app tauri generated files */
     "/apps/macos-app/src/gen/**",
   ],
