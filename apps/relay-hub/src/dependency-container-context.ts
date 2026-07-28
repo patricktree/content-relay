@@ -1,6 +1,5 @@
-import { AsyncLocalStorage } from "node:async_hooks";
-
 import type { Container } from "dioma";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 const diContainerStorage = new AsyncLocalStorage<Container>();
 

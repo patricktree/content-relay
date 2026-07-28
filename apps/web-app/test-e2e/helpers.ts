@@ -1,6 +1,6 @@
-import type { Settings } from "#src/settings-storage.js";
-
 import type { Page } from "@playwright/test";
+
+import type { Settings } from "#src/settings-storage.js";
 
 export async function prepareWebApp(page: Page, opts: { settings: Settings }): Promise<void> {
   await page.addInitScript((storedSettings) => {
