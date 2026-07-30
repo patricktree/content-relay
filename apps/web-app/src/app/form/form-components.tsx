@@ -25,7 +25,7 @@ type SubmitButtonProps = {
   label: string;
 };
 
-export function SubmitButton({ label }: SubmitButtonProps) {
+export const SubmitButton: React.FC<SubmitButtonProps> = ({ label }) => {
   const form = useFormContext();
   return (
     <form.Subscribe selector={(state) => state.isSubmitting}>
@@ -36,13 +36,13 @@ export function SubmitButton({ label }: SubmitButtonProps) {
       )}
     </form.Subscribe>
   );
-}
+};
 
 type TextFieldProps = {
   label: string;
 };
 
-export function TextField({ label }: TextFieldProps) {
+export const TextField: React.FC<TextFieldProps> = ({ label }) => {
   const field = useFieldContext<string>();
 
   return (
@@ -58,7 +58,7 @@ export function TextField({ label }: TextFieldProps) {
       )}
     </FieldLabel>
   );
-}
+};
 
 const FieldLabel = styled.label`
   display: flex;
