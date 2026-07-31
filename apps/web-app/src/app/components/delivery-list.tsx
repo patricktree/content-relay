@@ -572,6 +572,7 @@ const DialogBackdrop = styled.div`
 const Dialog = styled.dialog`
   position: static;
   display: block;
+  min-width: 0;
   margin: 0;
   max-width: min(640px, 100%);
   width: 100%;
@@ -587,6 +588,11 @@ const DialogHeader = styled.div`
   align-items: start;
   justify-content: space-between;
   gap: var(--spacing-base);
+
+  h3 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 `;
 
 const DialogText = styled.pre`

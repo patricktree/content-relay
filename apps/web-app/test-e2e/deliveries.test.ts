@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { devices, expect, type Page } from "@playwright/test";
 
 import { parseOkResponse, RpcClient } from "@content-relay/client";
 import type { DeliveryListResponse, DeviceListResponse } from "@content-relay/contracts";
@@ -9,6 +9,8 @@ import { test } from "#test-e2e/globals.ts";
 import { gotoWebApp, prepareWebApp } from "#test-e2e/helpers.ts";
 
 const MOCK_RELAY_HUB_URL = "https://relay-hub.test";
+const PIXEL_10_VIEWPORT = devices["Pixel 10"].viewport;
+const LONG_DELIVERY_URL = `https://example.com/${"a".repeat(80)}`;
 const LONG_DELIVERY_TEXT =
   "ThisDeliveryTextHasNoSpacesAndShouldStayInsideTheViewportButCurrentlyStretchesOutsideOfIt".repeat(
     4,
@@ -69,6 +71,32 @@ test("matches populated Deliveries screenshot", async ({ page }) => {
   await expect(deliveryRegion.getByText("File delivery not supported yet")).toBeVisible();
 
   await expect(deliveryRegion).toHaveScreenshot("deliveries-populated.png");
+});
+
+test("matches long URL Delivery detail screenshot in a narrow viewport", async ({ page }) => {
+  await page.setViewportSize(PIXEL_10_VIEWPORT);
+  await page.addInitScript(() => {
+    window.open = () => {
+      throw new Error("Prevent navigation while capturing the Delivery detail.");
+    };
+  });
+  await prepareWebApp(page, {
+    settings: {
+      relayHubUrl: MOCK_RELAY_HUB_URL,
+      deviceNickname: "test-device-browser",
+    },
+  });
+  await routeStaticDeliveryDependencies(page, createLongUrlDeliveryListResponse());
+
+  await gotoWebApp(page);
+  const deliveryRow = page.getByRole("listitem").filter({ hasText: LONG_DELIVERY_URL });
+  await expect(deliveryRow.getByText(LONG_DELIVERY_URL)).toBeVisible();
+  await deliveryRow.getByRole("button", { name: "Open" }).click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText(LONG_DELIVERY_URL);
+
+  await expect(page).toHaveScreenshot("delivery-long-url-detail-narrow.png");
 });
 
 test("matches long text Delivery detail screenshot", async ({ page }) => {
@@ -470,6 +498,36 @@ function createStaticDeviceListResponse(): DeviceListResponse {
       updatedAt: "2026-05-30T08:00:00.000Z",
     },
   ];
+}
+
+function createLongUrlDeliveryListResponse(): DeliveryListResponse {
+  return {
+    deliveries: [
+      {
+        deliveryId: "del_url_long",
+        itemId: "item_url_long",
+        targetDeviceId: "dev_browser",
+        state: "pending",
+        createdAt: "2026-05-30T08:45:00.000Z",
+        acknowledgedAt: null,
+        viewedAt: null,
+        item: {
+          itemId: "item_url_long",
+          type: "url",
+          title: null,
+          sourceDeviceId: "dev_source_cli",
+          text: null,
+          url: LONG_DELIVERY_URL,
+          files: [],
+          createdAt: "2026-05-30T08:45:00.000Z",
+        },
+      },
+    ],
+    pageInfo: {
+      nextCursor: null,
+      hasNextPage: false,
+    },
+  };
 }
 
 function createLongTextDeliveryListResponse(): DeliveryListResponse {
