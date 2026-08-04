@@ -2,6 +2,10 @@
 
 Content Relay follows strict ports-and-adapters / Clean Architecture boundaries. Keep domain and application logic independent from UI frameworks, native platform APIs, persistence details, and network transports.
 
+Implementation guides:
+
+- [Web app architecture](web-app-architecture.md)
+
 ## Core rules
 
 - Preserve dependency direction toward domain and application code.
