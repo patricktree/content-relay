@@ -1,10 +1,5 @@
 import { styled } from "@linaria/react";
-import {
-  QueryErrorResetBoundary,
-  useQueryClient,
-  useSuspenseInfiniteQuery,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { QueryErrorResetBoundary, useSuspenseQuery } from "@tanstack/react-query";
 import React from "react";
 import { Temporal } from "temporal-polyfill";
 
@@ -12,14 +7,8 @@ import type { DeliveryResource, ItemResource } from "@content-relay/contracts";
 
 import { useSettingsContext } from "#src/app/components/settings-context.js";
 import { DSButton } from "#src/app/design-system/button.js";
-import { createAvailableDevicesQuery } from "#src/data-fetching/available-devices.js";
-import {
-  createDeliveriesQuery,
-  refreshFirstDeliveryPage,
-  useMarkDeliveryViewedMutation,
-  useRefreshDeliveriesOnAndroidResume,
-} from "#src/data-fetching/deliveries.js";
-import { createRegisteredDeviceQuery } from "#src/data-fetching/register-device.js";
+import { createCurrentDeviceQuery } from "#src/data-fetching/current-device.js";
+import { useDeliveryHistory } from "#src/data-fetching/deliveries.js";
 import { openExternalUrl } from "#src/platform/open-url.js";
 
 export const DeliveryList: React.FC = () => {
@@ -63,41 +52,12 @@ const DeliveryListContent: React.FC<DeliveryListContentProps> = ({
   relayHubUrl,
   deviceNickname,
 }) => {
-  const queryClient = useQueryClient();
-  const registeredDeviceQuery = useSuspenseQuery(
-    createRegisteredDeviceQuery({ relayHubUrl, deviceNickname }),
+  const currentDeviceQuery = useSuspenseQuery(
+    createCurrentDeviceQuery({ relayHubUrl, deviceNickname }),
   );
-  const availableDevicesQuery = useSuspenseQuery(createAvailableDevicesQuery({ relayHubUrl }));
-  const { deviceId } = registeredDeviceQuery.data;
-  const deliveriesQuery = useSuspenseInfiniteQuery(
-    createDeliveriesQuery({ relayHubUrl, deviceId }),
-  );
-  const markDeliveryViewedMutation = useMarkDeliveryViewedMutation({ relayHubUrl, deviceId });
+  const { deviceId } = currentDeviceQuery.data.currentDevice;
+  const deliveryHistory = useDeliveryHistory({ relayHubUrl, deviceId });
   const [selectedDelivery, setSelectedDelivery] = React.useState<DeliveryResource | null>(null);
-  const [isRefreshingNewestPage, setIsRefreshingNewestPage] = React.useState(false);
-  const [refreshError, setRefreshError] = React.useState<unknown>(null);
-
-  useRefreshDeliveriesOnAndroidResume({ relayHubUrl, deviceId });
-
-  const deliveries = dedupeDeliveries(
-    deliveriesQuery.data.pages.flatMap((page) => page.deliveries),
-  );
-  const deviceNicknamesById = new Map(
-    availableDevicesQuery.data.map((device) => [device.deviceId, device.nickname]),
-  );
-
-  async function refreshNewestDeliveries(): Promise<void> {
-    setIsRefreshingNewestPage(true);
-    setRefreshError(null);
-
-    try {
-      await refreshFirstDeliveryPage(queryClient, { relayHubUrl, deviceId });
-    } catch (error) {
-      setRefreshError(error);
-    } finally {
-      setIsRefreshingNewestPage(false);
-    }
-  }
 
   async function openDelivery(delivery: DeliveryResource): Promise<void> {
     if (delivery.item.type !== "url") {
@@ -112,7 +72,7 @@ const DeliveryListContent: React.FC<DeliveryListContentProps> = ({
 
     try {
       await openExternalUrl(delivery.item.url);
-      markDeliveryViewedMutation.mutate(delivery.deliveryId);
+      deliveryHistory.markViewed(delivery.deliveryId);
     } catch {
       setSelectedDelivery(delivery);
     }
@@ -125,35 +85,31 @@ const DeliveryListContent: React.FC<DeliveryListContentProps> = ({
         <DSButton
           type="button"
           variant="text"
-          disabled={
-            isRefreshingNewestPage ||
-            deliveriesQuery.isFetching ||
-            deliveriesQuery.isFetchingNextPage
-          }
+          disabled={!deliveryHistory.canRefresh}
           onClick={() => {
-            void refreshNewestDeliveries();
+            void deliveryHistory.refreshNewest();
           }}
         >
-          {isRefreshingNewestPage ? "Refreshing…" : "Refresh"}
+          {deliveryHistory.isRefreshingNewest ? "Refreshing…" : "Refresh"}
         </DSButton>
       </SectionHeader>
 
-      {refreshError !== null && (
+      {deliveryHistory.refreshNewestError !== null && (
         <ErrorMessage>
-          Could not refresh deliveries. <RetryButton onRetry={refreshNewestDeliveries} />
+          Could not refresh deliveries. <RetryButton onRetry={deliveryHistory.refreshNewest} />
         </ErrorMessage>
       )}
 
-      {deliveries.length === 0 ? (
+      {deliveryHistory.deliveries.length === 0 ? (
         <EmptyState>No deliveries for this device yet.</EmptyState>
       ) : (
         <DeliveryRows aria-label="Deliveries">
-          {deliveries.map((delivery) => (
+          {deliveryHistory.deliveries.map((delivery) => (
             <DeliveryRow
               key={delivery.deliveryId}
               delivery={delivery}
               sourceDeviceLabel={
-                deviceNicknamesById.get(delivery.item.sourceDeviceId) ??
+                currentDeviceQuery.data.deviceNicknamesById[delivery.item.sourceDeviceId] ??
                 delivery.item.sourceDeviceId
               }
               onOpen={() => {
@@ -164,41 +120,37 @@ const DeliveryListContent: React.FC<DeliveryListContentProps> = ({
         </DeliveryRows>
       )}
 
-      {deliveriesQuery.hasNextPage && (
+      {deliveryHistory.hasOlder && (
         <LoadMoreWrapper>
           <DSButton
             type="button"
-            disabled={deliveriesQuery.isFetchingNextPage}
+            disabled={deliveryHistory.isLoadingOlder}
             onClick={() => {
-              if (deliveriesQuery.isFetchingNextPage) {
-                return;
-              }
-
-              void deliveriesQuery.fetchNextPage();
+              void deliveryHistory.loadOlder();
             }}
           >
-            {deliveriesQuery.isFetchingNextPage ? "Loading more…" : "Load more"}
+            {deliveryHistory.isLoadingOlder ? "Loading more…" : "Load more"}
           </DSButton>
         </LoadMoreWrapper>
       )}
 
-      {deliveriesQuery.isFetchNextPageError && (
+      {deliveryHistory.loadOlderError !== null && (
         <ErrorMessage>
-          Could not load more deliveries. <RetryButton onRetry={deliveriesQuery.fetchNextPage} />
+          Could not load more deliveries. <RetryButton onRetry={deliveryHistory.loadOlder} />
         </ErrorMessage>
       )}
 
       {selectedDelivery !== null && (
         <DeliveryDetailDialog
           delivery={selectedDelivery}
-          markViewedError={markDeliveryViewedMutation.error}
-          isMarkingViewed={markDeliveryViewedMutation.isPending}
+          markViewedError={deliveryHistory.markViewedError}
+          isMarkingViewed={deliveryHistory.isMarkingViewed}
           onClose={() => {
-            markDeliveryViewedMutation.reset();
+            deliveryHistory.resetMarkViewed();
             setSelectedDelivery(null);
           }}
           onOpened={() => {
-            markDeliveryViewedMutation.mutate(selectedDelivery.deliveryId);
+            deliveryHistory.markViewed(selectedDelivery.deliveryId);
           }}
         />
       )}
@@ -387,23 +339,6 @@ const RetryButton: React.FC<RetryButtonProps> = ({ onRetry }) => (
     Retry
   </InlineButton>
 );
-
-function dedupeDeliveries(deliveries: DeliveryResource[]): DeliveryResource[] {
-  const deliveriesById = new Map<string, DeliveryResource>();
-
-  for (const delivery of deliveries) {
-    if (!deliveriesById.has(delivery.deliveryId)) {
-      deliveriesById.set(delivery.deliveryId, delivery);
-    }
-  }
-
-  return [...deliveriesById.values()].sort((left, right) => {
-    return (
-      Temporal.Instant.from(right.createdAt).epochMilliseconds -
-      Temporal.Instant.from(left.createdAt).epochMilliseconds
-    );
-  });
-}
 
 function getDeliveryPrimaryText(item: ItemResource): string {
   return item.title ?? getDeliveryPreview(item);

@@ -33,7 +33,7 @@
     "turbo:build": "tsc --build ./tsconfig.json && vite build",
     "turbo:lint": "oxlint --type-aware --max-warnings 0 .",
     "turbo:lint:fix": "pnpm run turbo:lint --fix",
-    "turbo:test": "pnpm run test:e2e"
+    "turbo:test": "vitest run --dir test && pnpm run test:e2e"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -67,6 +67,7 @@
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "typescript": "catalog:",
-    "vite": "^8.1.3"
+    "vite": "^8.1.3",
+    "vitest": "catalog:"
   }
 }

@@ -6,11 +6,8 @@ import { DeliveryList } from "#src/app/components/delivery-list.tsx";
 import { SendTextForm } from "#src/app/components/send-text-form.tsx";
 import { SettingsProvider } from "#src/app/components/settings-context.tsx";
 import { SettingsForm } from "#src/app/components/settings-form.tsx";
-import { useSyncAndroidSharesToTanstackQuery } from "#src/data-fetching/android-share.js";
 
 export const App: React.FC = () => {
-  useSyncAndroidSharesToTanstackQuery();
-
   return (
     <>
       <SettingsProvider>

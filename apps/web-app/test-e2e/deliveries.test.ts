@@ -1,7 +1,12 @@
 import { devices, expect, type Page } from "@playwright/test";
+import { Temporal } from "temporal-polyfill";
 
 import { parseOkResponse, RpcClient } from "@content-relay/client";
-import type { DeliveryListResponse, DeviceListResponse } from "@content-relay/contracts";
+import type {
+  DeliveryListResponse,
+  DeliveryResource,
+  DeviceListResponse,
+} from "@content-relay/contracts";
 import { withRelayHubTestEnvironment } from "@content-relay/relay-hub-test-utils";
 import { seed } from "@content-relay/seeding-tool";
 
@@ -289,6 +294,58 @@ test("render text, URL, and unsupported File Deliveries", async ({ page }) => {
   });
 });
 
+test("refresh all loaded Delivery pages without omitting shifted Deliveries", async ({ page }) => {
+  await prepareWebApp(page, {
+    settings: {
+      relayHubUrl: MOCK_RELAY_HUB_URL,
+      deviceNickname: "test-device-browser",
+    },
+  });
+  await routeStaticDeviceDependencies(page);
+
+  let firstPageRequestCount = 0;
+  await page.route(`${MOCK_RELAY_HUB_URL}/deliveries?*`, async (route) => {
+    const cursor = new URL(route.request().url()).searchParams.get("cursor");
+    let response: DeliveryListResponse;
+
+    if (cursor === null) {
+      response =
+        firstPageRequestCount === 0
+          ? createNumberedDeliveryPage(100, 51, "initial-page-2")
+          : createNumberedDeliveryPage(101, 52, "refreshed-page-2");
+      firstPageRequestCount += 1;
+    } else if (cursor === "initial-page-2") {
+      response = createNumberedDeliveryPage(50, 1, null);
+    } else if (cursor === "refreshed-page-2") {
+      response = createNumberedDeliveryPage(51, 2, "refreshed-page-3");
+    } else if (cursor === "refreshed-page-3") {
+      response = createNumberedDeliveryPage(1, 1, null);
+    } else {
+      throw new Error(`Unexpected Delivery cursor: ${cursor}`);
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(response),
+    });
+  });
+
+  await gotoWebApp(page);
+  const deliveryRegion = page.getByRole("region", { name: "Deliveries" });
+  await deliveryRegion.getByRole("button", { name: "Load more" }).click();
+  await expect(deliveryRegion.getByText("Delivery 001", { exact: true })).toBeVisible();
+
+  await deliveryRegion.getByRole("button", { name: "Refresh" }).click();
+
+  await expect(deliveryRegion.getByText("Delivery 101", { exact: true })).toBeVisible();
+  await expect(deliveryRegion.getByText("Delivery 051", { exact: true })).toBeVisible();
+  await expect(deliveryRegion.getByText("Delivery 001", { exact: true })).not.toBeVisible();
+
+  await deliveryRegion.getByRole("button", { name: "Load more" }).click();
+  await expect(deliveryRegion.getByText("Delivery 001", { exact: true })).toBeVisible();
+});
+
 test("open a text Delivery and mark it Viewed", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
     const [sourceDevice, targetDevice] = await seed.registerDevices(relayHubBaseUrl, [
@@ -421,26 +478,7 @@ async function routeStaticDeliveryDependencies(
   page: Page,
   deliveriesResponse: DeliveryListResponse | "delivery-list-error",
 ): Promise<void> {
-  await page.route(`${MOCK_RELAY_HUB_URL}/devices/register`, async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        deviceId: "dev_browser",
-        nickname: "test-device-browser",
-        platform: "generic",
-        relayHubBaseUrl: MOCK_RELAY_HUB_URL,
-        createdAt: "2026-05-30T08:00:00.000Z",
-      }),
-    });
-  });
-  await page.route(`${MOCK_RELAY_HUB_URL}/devices`, async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(createStaticDeviceListResponse()),
-    });
-  });
+  await routeStaticDeviceDependencies(page);
   await page.route(`${MOCK_RELAY_HUB_URL}/deliveries?*`, async (route) => {
     if (deliveriesResponse === "delivery-list-error") {
       await route.fulfill({
@@ -465,6 +503,76 @@ async function routeStaticDeliveryDependencies(
       body: JSON.stringify({ ok: true }),
     });
   });
+}
+
+async function routeStaticDeviceDependencies(page: Page): Promise<void> {
+  await page.route(`${MOCK_RELAY_HUB_URL}/devices/register`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        deviceId: "dev_browser",
+        nickname: "test-device-browser",
+        platform: "generic",
+        relayHubBaseUrl: MOCK_RELAY_HUB_URL,
+        createdAt: "2026-05-30T08:00:00.000Z",
+      }),
+    });
+  });
+  await page.route(`${MOCK_RELAY_HUB_URL}/devices`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(createStaticDeviceListResponse()),
+    });
+  });
+}
+
+function createNumberedDeliveryPage(
+  newestDeliveryNumber: number,
+  oldestDeliveryNumber: number,
+  nextCursor: string | null,
+): DeliveryListResponse {
+  const deliveries: DeliveryResource[] = [];
+
+  for (
+    let deliveryNumber = newestDeliveryNumber;
+    deliveryNumber >= oldestDeliveryNumber;
+    deliveryNumber -= 1
+  ) {
+    const paddedDeliveryNumber = deliveryNumber.toString().padStart(3, "0");
+    const createdAt = Temporal.Instant.from("2026-05-30T08:00:00Z")
+      .add({ seconds: deliveryNumber })
+      .toString();
+
+    deliveries.push({
+      deliveryId: `del_${paddedDeliveryNumber}`,
+      itemId: `item_${paddedDeliveryNumber}`,
+      targetDeviceId: "dev_browser",
+      state: "pending",
+      createdAt,
+      acknowledgedAt: null,
+      viewedAt: null,
+      item: {
+        itemId: `item_${paddedDeliveryNumber}`,
+        type: "text",
+        title: `Delivery ${paddedDeliveryNumber}`,
+        sourceDeviceId: "dev_source_cli",
+        text: `Delivery body ${paddedDeliveryNumber}`,
+        url: null,
+        files: [],
+        createdAt,
+      },
+    });
+  }
+
+  return {
+    deliveries,
+    pageInfo: {
+      nextCursor,
+      hasNextPage: nextCursor !== null,
+    },
+  };
 }
 
 function createStaticDeviceListResponse(): DeviceListResponse {

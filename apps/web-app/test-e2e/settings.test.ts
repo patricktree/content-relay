@@ -64,6 +64,11 @@ test("change settings", async ({ page }) => {
 
     await gotoWebApp(page);
 
+    const sendItemForm = page.getByRole("form", { name: "Send item" });
+    await expect(
+      sendItemForm.getByRole("checkbox", { name: "test-old-device-browser (generic)" }),
+    ).toHaveCount(0);
+
     await page.getByRole("textbox", { name: "Relay Hub URL:" }).fill(relayHubBaseUrl);
     await page.getByRole("textbox", { name: "Device Nickname:" }).fill("test-new-device-browser");
     await page.getByRole("button", { name: "Save" }).click();
@@ -80,6 +85,12 @@ test("change settings", async ({ page }) => {
         deviceNickname: "test-new-device-browser",
       } satisfies Settings),
     );
+    await expect(
+      sendItemForm.getByRole("checkbox", { name: "test-old-device-browser (generic)" }),
+    ).toBeVisible();
+    await expect(
+      sendItemForm.getByRole("checkbox", { name: "test-new-device-browser (generic)" }),
+    ).toHaveCount(0);
   });
 });
 

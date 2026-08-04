@@ -1,40 +1,33 @@
 import { Toast } from "@base-ui/react/toast";
 import { styled } from "@linaria/react";
-import { useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import React from "react";
-import z from "zod";
 
-import { parseOkResponse, RpcClient } from "@content-relay/client";
-import { deviceIdSchema, isValidAbsoluteUrl, relayItemTypeSchema } from "@content-relay/contracts";
+import { relayItemTypeSchema } from "@content-relay/contracts";
 
 import { useSettingsContext } from "#src/app/components/settings-context.tsx";
 import { DSButton } from "#src/app/design-system/button.js";
 import { useAppForm } from "#src/app/form/use-app-form.js";
-import {
-  useCloseAndroidShareMutation,
-  useCompleteAndroidShareMutation,
-  createPendingAndroidShareQuery,
-} from "#src/data-fetching/android-share.js";
-import { createAvailableDevicesQuery } from "#src/data-fetching/available-devices.js";
-import { createRegisteredDeviceQuery } from "#src/data-fetching/register-device.js";
+import { useAndroidShareIntent } from "#src/app/use-android-share-intent.js";
+import { sendItemSchema, type SendItemInput } from "#src/application/send-item.js";
+import { createCurrentDeviceQuery } from "#src/data-fetching/current-device.js";
+import { createRelayHubItemSender } from "#src/data-fetching/send-item.js";
 
 export const SendTextForm: React.FC = () => {
   const { settings } = useSettingsContext();
-  const pendingAndroidShareQuery = useSuspenseQuery(createPendingAndroidShareQuery());
+  const androidShareIntent = useAndroidShareIntent();
 
-  if (!settings) {
+  if (!settings || androidShareIntent.isLoading) {
     return null;
   }
 
   return (
     <SendTextFormContent
-      key={pendingAndroidShareQuery.data?.shareId}
+      key={androidShareIntent.draft?.shareId}
       relayHubUrl={settings.relayHubUrl}
       deviceNickname={settings.deviceNickname}
-      formDefaultValues={pendingAndroidShareQuery.data ?? undefined}
-      hasPendingAndroidShare={
-        pendingAndroidShareQuery.data !== null && pendingAndroidShareQuery.data !== undefined
-      }
+      formDefaultValues={androidShareIntent.draft ?? undefined}
+      androidShareIntent={androidShareIntent}
     />
   );
 };
@@ -43,10 +36,10 @@ type SendTextFormContentProps = {
   relayHubUrl: string;
   deviceNickname: string;
   formDefaultValues: Omit<SendItemFormValues, "targetDeviceIds"> | undefined;
-  hasPendingAndroidShare: boolean;
+  androidShareIntent: ReturnType<typeof useAndroidShareIntent>;
 };
 
-type SendItemFormValues = z.infer<typeof sendItemFormSchema>;
+type SendItemFormValues = SendItemInput;
 
 const defaultSendItemFormValues: SendItemFormValues = {
   itemType: "text",
@@ -55,54 +48,28 @@ const defaultSendItemFormValues: SendItemFormValues = {
   value: "",
 };
 
-const sendItemFormSchema = z
-  .object({
-    itemType: relayItemTypeSchema,
-    targetDeviceIds: z.set(deviceIdSchema).min(1, "Select a target device."),
-    title: z.string(),
-    value: z.string(),
-  })
-  .superRefine((value, context) => {
-    const trimmedValue = value.value.trim();
-
-    if (value.itemType === "text" && trimmedValue.length === 0) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["value"],
-        message: "Enter the text to send.",
-      });
-    }
-
-    if (value.itemType === "url" && !isValidAbsoluteUrl(trimmedValue)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["value"],
-        message: "Enter a valid absolute URL.",
-      });
-    }
-  });
-
 const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
   relayHubUrl,
   deviceNickname,
   formDefaultValues,
-  hasPendingAndroidShare,
+  androidShareIntent,
 }) => {
   const toastManager = Toast.useToastManager();
-  const completeAndroidShareMutation = useCompleteAndroidShareMutation();
-  const closeAndroidShareMutation = useCloseAndroidShareMutation();
-  const [registeredDeviceQuery, availableDevicesQuery] = useSuspenseQueries({
-    queries: [
-      createRegisteredDeviceQuery({
-        relayHubUrl,
-        deviceNickname,
-      }),
-      createAvailableDevicesQuery({ relayHubUrl }),
-    ],
+  const currentDeviceQuery = useSuspenseQuery(
+    createCurrentDeviceQuery({ relayHubUrl, deviceNickname }),
+  );
+  const { deviceId } = currentDeviceQuery.data.currentDevice;
+  const sendItem = createRelayHubItemSender({
+    relayHubUrl,
+    sourceDeviceId: deviceId,
+    ...(androidShareIntent.draft === null
+      ? {}
+      : {
+          completePendingAndroidShare: async () => {
+            await androidShareIntent.complete();
+          },
+        }),
   });
-  const { deviceId } = registeredDeviceQuery.data;
-  const availableDevices =
-    availableDevicesQuery.data.filter((device) => device.deviceId !== deviceId) ?? [];
 
   const form = useAppForm({
     defaultValues: {
@@ -110,36 +77,10 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
       ...formDefaultValues,
     } satisfies SendItemFormValues,
     validators: {
-      onChange: sendItemFormSchema,
+      onChange: sendItemSchema,
     },
-    onSubmit: async function sendItem({ value }) {
-      const deviceRpcClient = new RpcClient(relayHubUrl).createDeviceRpcClient(deviceId);
-      const title = value.title.trim();
-      const itemValue = value.value.trim();
-      const commonRequest = {
-        targetDeviceIds: [...value.targetDeviceIds],
-        ...(title === "" ? {} : { title }),
-      };
-
-      if (value.itemType === "text") {
-        await parseOkResponse(
-          deviceRpcClient.sendText({
-            ...commonRequest,
-            text: itemValue,
-          }),
-        );
-      } else {
-        await parseOkResponse(
-          deviceRpcClient.sendUrl({
-            ...commonRequest,
-            url: itemValue,
-          }),
-        );
-      }
-
-      if (hasPendingAndroidShare) {
-        await completeAndroidShareMutation.mutateAsync({ message: "Item sent" });
-      }
+    onSubmit: async function submitItem({ value }) {
+      await sendItem(value);
 
       toastManager.add({ title: "Item sent" });
     },
@@ -174,55 +115,49 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
           )}
         </form.AppField>
 
-        {availableDevicesQuery.isPending ? (
-          <>Loading devices...</>
-        ) : availableDevicesQuery.isError ? (
-          <>Could not load available devices.</>
-        ) : (
-          <form.AppField name="targetDeviceIds">
-            {(field) => (
-              <TargetDevicesFieldset>
-                <TargetDevicesLegend>Target devices:</TargetDevicesLegend>
-                <TargetDevicesUl>
-                  {availableDevices.map((device) => (
-                    <TargetDeviceLi key={device.deviceId}>
-                      <TargetDeviceLabel>
-                        <TargetDeviceCheckbox
-                          type="checkbox"
-                          name="targetDeviceId"
-                          value={device.deviceId}
-                          checked={field.state.value.has(device.deviceId)}
-                          aria-label={`${device.nickname} (${device.platform})`}
-                          onBlur={() => field.handleBlur()}
-                          onChange={(event) =>
-                            field.handleChange((oldValue) => {
-                              const newSet = new Set(oldValue);
+        <form.AppField name="targetDeviceIds">
+          {(field) => (
+            <TargetDevicesFieldset>
+              <TargetDevicesLegend>Target devices:</TargetDevicesLegend>
+              <TargetDevicesUl>
+                {currentDeviceQuery.data.eligibleTargetDevices.map((device) => (
+                  <TargetDeviceLi key={device.deviceId}>
+                    <TargetDeviceLabel>
+                      <TargetDeviceCheckbox
+                        type="checkbox"
+                        name="targetDeviceId"
+                        value={device.deviceId}
+                        checked={field.state.value.has(device.deviceId)}
+                        aria-label={`${device.nickname} (${device.platform})`}
+                        onBlur={() => field.handleBlur()}
+                        onChange={(event) =>
+                          field.handleChange((oldValue) => {
+                            const newSet = new Set(oldValue);
 
-                              if (event.target.checked) {
-                                newSet.add(event.target.value);
-                              } else {
-                                newSet.delete(event.target.value);
-                              }
+                            if (event.target.checked) {
+                              newSet.add(event.target.value);
+                            } else {
+                              newSet.delete(event.target.value);
+                            }
 
-                              return newSet;
-                            })
-                          }
-                        />
-                        <TargetDeviceName>{device.nickname}</TargetDeviceName>
-                      </TargetDeviceLabel>
-                    </TargetDeviceLi>
-                  ))}
-                </TargetDevicesUl>
+                            return newSet;
+                          })
+                        }
+                      />
+                      <TargetDeviceName>{device.nickname}</TargetDeviceName>
+                    </TargetDeviceLabel>
+                  </TargetDeviceLi>
+                ))}
+              </TargetDevicesUl>
 
-                {!field.state.meta.isValid && (
-                  <form.FieldError>
-                    {field.state.meta.errors.map((error) => error?.message).join(", ")}
-                  </form.FieldError>
-                )}
-              </TargetDevicesFieldset>
-            )}
-          </form.AppField>
-        )}
+              {!field.state.meta.isValid && (
+                <form.FieldError>
+                  {field.state.meta.errors.map((error) => error?.message).join(", ")}
+                </form.FieldError>
+              )}
+            </TargetDevicesFieldset>
+          )}
+        </form.AppField>
 
         <form.AppField name="title">{(field) => <field.TextField label="Title:" />}</form.AppField>
         <form.AppField name="value">
@@ -234,15 +169,13 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
         </form.AppField>
 
         <form.Actions>
-          {hasPendingAndroidShare && (
+          {androidShareIntent.draft !== null && (
             <DSButton
               type="button"
               variant="text"
-              disabled={
-                closeAndroidShareMutation.isPending || completeAndroidShareMutation.isPending
-              }
+              disabled={androidShareIntent.isSettling}
               onClick={() => {
-                void closeAndroidShareMutation.mutateAsync();
+                void androidShareIntent.cancel();
               }}
             >
               Cancel
