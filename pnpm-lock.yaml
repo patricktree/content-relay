@@ -368,6 +368,9 @@ importers:
       '@patricktree-stack/config-typescript':
         specifier: workspace:*
         version: link:../../.patricktree-stack/tooling/config-typescript
+      '@patricktree-stack/config-vitest':
+        specifier: workspace:*
+        version: link:../../.patricktree-stack/tooling/config-vitest
       '@types/node':
         specifier: 'catalog:'
         version: 24.13.2
@@ -564,6 +567,9 @@ importers:
       '@patricktree-stack/config-typescript':
         specifier: workspace:*
         version: link:../../.patricktree-stack/tooling/config-typescript
+      '@patricktree-stack/config-vitest':
+        specifier: workspace:*
+        version: link:../../.patricktree-stack/tooling/config-vitest
       '@playwright/test':
         specifier: 1.61.1
         version: 1.61.1
@@ -625,6 +631,9 @@ importers:
       '@patricktree-stack/config-typescript':
         specifier: workspace:*
         version: link:../../.patricktree-stack/tooling/config-typescript
+      '@patricktree-stack/config-vitest':
+        specifier: workspace:*
+        version: link:../../.patricktree-stack/tooling/config-vitest
       '@types/node':
         specifier: 'catalog:'
         version: 24.13.2
