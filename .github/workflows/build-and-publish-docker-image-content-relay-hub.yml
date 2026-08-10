@@ -29,8 +29,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           submodules: true
           # Affected checks need the compared git refs to exist locally.
           # We fetch a reasonable number of commits to cover typical PRs, while avoiding excessive fetch time and data usage.
@@ -98,8 +99,12 @@ jobs:
 
       - name: Determine if build is necessary
         id: build-is-necessary
+        env:
+          RUN_IS_MANUAL: ${{ steps.run-is-manual-dispatch.outputs.manual }}
+          WORKFLOW_IS_AFFECTED: ${{ steps.workflow-is-affected.outputs.affected }}
+          WORKSPACE_PROJECT_IS_AFFECTED: ${{ steps.workspace-project-is-affected.outputs.affected }}
         run: |
-          if [ "${{ steps.run-is-manual-dispatch.outputs.manual }}" = "true" ] || [ "${{ steps.workflow-is-affected.outputs.affected }}" = "true" ] || [ "${{ steps.workspace-project-is-affected.outputs.affected }}" = "true" ]; then
+          if [ "${RUN_IS_MANUAL}" = "true" ] || [ "${WORKFLOW_IS_AFFECTED}" = "true" ] || [ "${WORKSPACE_PROJECT_IS_AFFECTED}" = "true" ]; then
             echo "necessary=true" >> "${GITHUB_OUTPUT}"
           else
             echo "necessary=false" >> "${GITHUB_OUTPUT}"
@@ -121,19 +126,21 @@ jobs:
       - name: Create pruned monorepo and copy Dockerfile to build context
         id: create-pruned-monorepo
         if: steps.build-is-necessary.outputs.necessary == 'true'
+        env:
+          DOCKER_BUILD_CONTEXT_DIR: ${{ steps.create-docker-build-context-dir.outputs.docker-build-context-dir }}
         run: |
           pnpm exec node ./tooling/create-pruned-monorepo-cli/src/cli.ts \
             --project-name '${{ env.WORKSPACE_PROJECT_NAME }}' \
-            --target-dir "${{ steps.create-docker-build-context-dir.outputs.docker-build-context-dir }}"
-          cp ./apps/relay-hub/Dockerfile "${{ steps.create-docker-build-context-dir.outputs.docker-build-context-dir }}/Dockerfile"
+            --target-dir "${DOCKER_BUILD_CONTEXT_DIR}"
+          cp ./apps/relay-hub/Dockerfile "${DOCKER_BUILD_CONTEXT_DIR}/Dockerfile"
 
       - name: Set up Docker Buildx
         if: steps.build-is-necessary.outputs.necessary == 'true'
-        uses: docker/setup-buildx-action@v4.0.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       - name: Log in to GitHub Container Registry
         if: steps.build-is-necessary.outputs.necessary == 'true'
-        uses: docker/login-action@v4.1.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -155,7 +162,7 @@ jobs:
 
       - name: Run Docker build and push
         if: steps.build-is-necessary.outputs.necessary == 'true'
-        uses: docker/build-push-action@v7.1.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: "${{ steps.create-docker-build-context-dir.outputs.docker-build-context-dir }}"
           push: true

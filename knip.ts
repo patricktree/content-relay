@@ -8,6 +8,8 @@ const config: KnipConfig = {
   ],
   workspaces: {
     ".": {
+      /* Zizmor is an external validation tool installed through uvx, not a Node dependency */
+      ignoreBinaries: ["gh", "uvx"],
       ignoreDependencies: [
         "husky",
         "@emnapi/core",

@@ -22,7 +22,8 @@
     "lint:fix": "turbo run turbo:lint:fix",
     "postinstall": "sh ./postinstall.sh",
     "test": "turbo run turbo:test",
-    "validate": "turbo run turbo:build turbo:lint turbo:test && pnpm run declutter"
+    "validate": "turbo run turbo:build turbo:lint turbo:test && pnpm run declutter",
+    "zizmor": "uvx zizmor@1.29.0 --gh-token \"$(gh auth token)\" ."
   },
   "devDependencies": {
     "@emnapi/core": "^1.11.2",
