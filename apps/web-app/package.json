@@ -58,6 +58,7 @@
     "@patricktree-stack/config-oxlint": "workspace:*",
     "@patricktree-stack/config-typescript": "workspace:*",
     "@patricktree-stack/config-vitest": "workspace:*",
+    "@patricktree-stack/config-wyw-in-js": "workspace:*",
     "@playwright/test": "1.61.1",
     "@types/node": "catalog:",
     "@types/react": "^19.2.17",

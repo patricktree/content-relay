@@ -13,6 +13,7 @@ packages:
   - .patricktree-stack/tooling/config-turbo-typescript
   - .patricktree-stack/tooling/config-typescript
   - .patricktree-stack/tooling/config-vitest
+  - .patricktree-stack/tooling/config-wyw-in-js
   - .patricktree-stack/tooling/create-pruned-monorepo
   - .patricktree-stack/tooling/pkg-management
 

@@ -27,7 +27,6 @@ const config: KnipConfig = {
     "apps/web-app": {
       /* ambient module augmentations, never imported */
       entry: ["src/types.ts"],
-      ignoreFiles: ["./wyw-in-js.config.cjs"],
     },
     "qa-utils/seeding-tool": {
       ignoreFiles: ["./src/playground.ts"],
