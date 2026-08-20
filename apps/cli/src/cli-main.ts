@@ -1,6 +1,6 @@
 import { Command, InvalidOptionArgumentError, Option } from "@commander-js/extra-typings";
-import * as numberUtils from "@patricktree-stack/utils-ecma/number.utils";
-import { jsonUtil } from "@patricktree/commons-ecma/util/json";
+import { jsonUtil } from "@patricktree-stack/utils-ecma/json.utils";
+import { numbers } from "@patricktree-stack/utils-ecma/number.utils";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -259,7 +259,7 @@ import { writeDownloadedDelivery } from "#src/use-cases/write-downloaded-deliver
     .option(
       "--limit <count>",
       "maximum number of deliveries to return",
-      numberUtils.parsePositiveInteger,
+      numbers.parsePositiveInteger,
     )
     .option("--target-device-id <device-id>", "target device id")
     .option("--target-device-nickname <nickname>", "target device nickname")
@@ -380,11 +380,7 @@ import { writeDownloadedDelivery } from "#src/use-cases/write-downloaded-deliver
   itemCommand
     .command("list")
     .description("List sent items")
-    .option(
-      "--limit <count>",
-      "maximum number of items to return",
-      numberUtils.parsePositiveInteger,
-    )
+    .option("--limit <count>", "maximum number of items to return", numbers.parsePositiveInteger)
     .option("--source-device-id <device-id>", "source device id")
     .option("--source-device-nickname <nickname>", "source device nickname")
     .action(async (options) => {

@@ -1,7 +1,7 @@
 import { Command, InvalidOptionArgumentError, Option } from "@commander-js/extra-typings";
 import { createLogger } from "@patricktree-stack/o11y.logs";
-import { numbers } from "@patricktree/commons-ecma/util/numbers";
-import { processUtil } from "@patricktree/commons-node/utils/process";
+import { numbers } from "@patricktree-stack/utils-ecma/number.utils";
+import { processUtil } from "@patricktree-stack/utils-node/process.utils";
 import process from "node:process";
 
 import { runWithDiContainer } from "#src/dependency-container-context.ts";

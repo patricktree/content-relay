@@ -1,6 +1,6 @@
 import { serve } from "@hono/node-server";
 import { createLogger } from "@patricktree-stack/o11y.logs";
-import { processUtil } from "@patricktree/commons-node/utils/process";
+import { processUtil } from "@patricktree-stack/utils-node/process.utils";
 import util from "node:util";
 
 import type { createHonoApp } from "#src/http/hono-app.ts";

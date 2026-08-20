@@ -1,4 +1,4 @@
-import { ensureDirectoryExists } from "@patricktree-stack/utils-node/fs.utils";
+import { fsUtils } from "@patricktree-stack/utils-node/fs.utils";
 import { Container } from "dioma";
 import path from "node:path";
 
@@ -22,8 +22,8 @@ export async function createDependencyContainer(
   const blobsDirectory = path.join(options.dataDirectory, "blobs");
 
   await Promise.all([
-    ensureDirectoryExists(databaseDirectory),
-    ensureDirectoryExists(blobsDirectory),
+    fsUtils.ensureDirectoryExists(databaseDirectory),
+    fsUtils.ensureDirectoryExists(blobsDirectory),
   ]);
 
   const container = new Container(null, "content-relay-hub");

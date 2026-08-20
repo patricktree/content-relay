@@ -1,4 +1,4 @@
-import { assertIsUnreachable } from "@patricktree/commons-ecma/util/assert";
+import { check } from "@patricktree-stack/utils-ecma/assert.utils";
 
 import { parseOkResponse, RpcClient } from "@content-relay/client";
 import type { DeliveryResource } from "@content-relay/contracts";
@@ -51,6 +51,6 @@ function describeOpenAction(delivery: DeliveryResource): string {
     case "file":
       return `Opened file delivery ${delivery.deliveryId}`;
     default:
-      return assertIsUnreachable(delivery.item.type);
+      return check.assertIsUnreachable(delivery.item.type);
   }
 }
