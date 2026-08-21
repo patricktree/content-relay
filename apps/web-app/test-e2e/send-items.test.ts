@@ -158,6 +158,13 @@ test("require text content before sending text item", async ({ page }) => {
       .getByRole("alert")
       .filter({ hasText: "Enter the text to send." });
     await expect(sendItemForm.getByRole("button", { name: "Send" })).toBeDisabled();
+    await expect(textInput).not.toHaveAttribute("aria-invalid", "true");
+    await expect(textInput).not.toHaveAttribute("aria-describedby", /.+/);
+    await expect(textError).not.toBeVisible();
+
+    await textInput.focus();
+    await textInput.blur();
+
     await expect(textInput).toHaveAttribute("aria-invalid", "true");
     await expect(textInput).toHaveAttribute("aria-describedby", /.+/);
     expect(await textInput.getAttribute("aria-describedby")).toBe(
@@ -190,6 +197,12 @@ test("require an absolute URL before sending URL item", async ({ page }) => {
       .getByRole("alert")
       .filter({ hasText: "Enter a valid absolute URL." });
     await expect(sendItemForm.getByRole("button", { name: "Send" })).toBeDisabled();
+    await expect(urlInput).not.toHaveAttribute("aria-invalid", "true");
+    await expect(urlInput).not.toHaveAttribute("aria-describedby", /.+/);
+    await expect(urlError).not.toBeVisible();
+
+    await urlInput.blur();
+
     await expect(urlInput).toHaveAttribute("aria-invalid", "true");
     await expect(urlInput).toHaveAttribute("aria-describedby", /.+/);
     expect(await urlInput.getAttribute("aria-describedby")).toBe(await urlError.getAttribute("id"));

@@ -46,7 +46,7 @@ export const TextField: React.FC<TextFieldProps> = ({ label }) => {
   const field = useFieldContext<string>();
   const fieldId = React.useId();
   const errorId = `${fieldId}-error`;
-  const isInvalid = !field.state.meta.isValid;
+  const isInvalid = field.state.meta.isBlurred && !field.state.meta.isValid;
 
   return (
     <FieldLabel>
