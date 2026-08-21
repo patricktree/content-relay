@@ -36,8 +36,8 @@
   "dependencies": {
     "@commander-js/extra-typings": "^15.0.0",
     "@content-relay/contracts": "workspace:*",
-    "@hono/node-server": "^2.0.8",
-    "@hono/zod-openapi": "^1.4.0",
+    "@content-relay/relay-hub-api": "workspace:*",
+    "@hono/node-server": "catalog:hono",
     "@patricktree-stack/o11y.logs": "workspace:*",
     "@patricktree-stack/o11y.node-sdk": "workspace:*",
     "@patricktree-stack/utils-ecma": "workspace:*",
@@ -46,7 +46,7 @@
     "commander": "^15.0.0",
     "dioma": "^0.4.6",
     "drizzle-orm": "^0.45.2",
-    "hono": "catalog:",
+    "hono": "catalog:hono",
     "temporal-polyfill": "^1.0.1",
     "zod": "^4.4.3"
   },

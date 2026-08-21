@@ -31,11 +31,14 @@ catalog:
   # oxlint >=1.75 requires the renumbered oxlint-tsgolint 7.x line (it tracks the TypeScript version)
   oxlint: ^1.75.0
   oxlint-tsgolint: ^7.0.2001
-  hono: ^4.12.27
   typescript: "npm:@typescript/typescript6@^6.0.2"
   vitest: ^4.1.9
 
 catalogs:
+  hono:
+    "@hono/node-server": ^2.0.8
+    "@hono/zod-openapi": ^1.4.0
+    hono: ^4.12.27
   o11y:
     "@opentelemetry/api": ^1.9.1
     "@opentelemetry/api-logs": ^0.220.0

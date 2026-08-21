@@ -1,12 +1,11 @@
 {
-  "name": "@content-relay/client",
+  "name": "@content-relay/relay-hub-api",
   "private": true,
   "files": [
     "src/**"
   ],
   "type": "module",
   "imports": {
-    "#test/*.ts": "./test/*.ts",
     "#src/*.ts": {
       "types": "./dist/types/*.d.ts",
       "default": "./src/*.ts"
@@ -28,29 +27,22 @@
     "clean": "del-cli --dot=true \"dist\" \"*.tsbuildinfo\"",
     "lint": "turbo run turbo:lint",
     "lint:fix": "turbo run turbo:lint:fix",
-    "test": "turbo run turbo:test",
-    "turbo:build": "tsc --build ./tsconfig.json && node ./scripts/export-openapi-json.ts && oxfmt ./dist/content-relay-hub-openapi.json",
+    "turbo:build": "tsc --build ./tsconfig.json",
     "turbo:lint": "oxlint --type-aware --max-warnings 0 .",
-    "turbo:lint:fix": "pnpm run turbo:lint --fix",
-    "turbo:test": "vitest run"
+    "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
   "dependencies": {
     "@content-relay/contracts": "workspace:*",
-    "@content-relay/relay-hub-api": "workspace:*",
+    "@hono/zod-openapi": "catalog:hono",
     "hono": "catalog:hono",
-    "type-fest": "^5.8.0"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@content-relay/relay-hub": "workspace:*",
-    "@content-relay/relay-hub-test-utils": "workspace:*",
     "@patricktree-stack/config-oxlint": "workspace:*",
     "@patricktree-stack/config-typescript": "workspace:*",
-    "@patricktree-stack/config-vitest": "workspace:*",
-    "@types/node": "catalog:",
     "@typescript/native": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "typescript": "catalog:"
   }
 }

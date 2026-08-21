@@ -1,7 +1,7 @@
 import { hc, parseResponse, DetailedError as HonoDetailedError } from "hono/client";
 import type { IsAny } from "type-fest";
 
-import type { Client, RelayApiApp } from "@content-relay/relay-hub";
+import type { Client, RelayApiApp } from "@content-relay/relay-hub-api";
 
 export { parseResponse as parseOkResponse };
 

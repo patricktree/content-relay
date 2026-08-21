@@ -1,8 +1,11 @@
 import type {
-  DevicePlatform,
-  DeliveryListState,
-  PushRegistration,
+  CreateTextItemRequest,
+  CreateUrlItemRequest,
   DeviceId,
+  DeliveryListState,
+  PushTokenRequest,
+  RegisterDeviceRequest,
+  UpdateDeviceRequest,
 } from "@content-relay/contracts";
 
 import { createHonoClient, type HonoClient } from "#src/hono-client.ts";
@@ -14,11 +17,7 @@ export class RpcClient {
     this.#honoClient = createHonoClient({ relayHubBaseUrl });
   }
 
-  async registerDevice(params: {
-    nickname: string;
-    platform: DevicePlatform;
-    pushRegistration?: PushRegistration;
-  }) {
+  async registerDevice(params: RegisterDeviceRequest) {
     return this.#honoClient.devices.register.$post({ json: params });
   }
 
@@ -40,40 +39,40 @@ class DeviceRpcClient {
     this.#deviceId = deviceId;
   }
 
-  async renameDevice(params: { deviceId?: string; nickname: string }) {
+  async renameDevice(params: UpdateDeviceRequest & { deviceId?: DeviceId }) {
     return this.#honoClient.devices[":deviceId"].$patch({
       param: { deviceId: params.deviceId ?? this.#deviceId },
       json: { nickname: params.nickname },
     });
   }
 
-  async deleteDevice(params: { deviceId?: string } = {}) {
+  async deleteDevice(params: { deviceId?: DeviceId } = {}) {
     return this.#honoClient.devices[":deviceId"].$delete({
       param: { deviceId: params.deviceId ?? this.#deviceId },
     });
   }
 
-  async setPushToken(params: { deviceId?: string; token: string }) {
+  async setPushToken(params: PushTokenRequest & { deviceId?: DeviceId }) {
     return this.#honoClient.devices[":deviceId"]["push-token"].$post({
       param: { deviceId: params.deviceId ?? this.#deviceId },
       json: { token: params.token },
     });
   }
 
-  async sendText(params: { text: string; targetDeviceIds: string[]; title?: string }) {
+  async sendText(params: Omit<CreateTextItemRequest, "sourceDeviceId">) {
     return this.#honoClient.items.text.$post({
       json: { sourceDeviceId: this.#deviceId, ...params },
     });
   }
 
-  async sendUrl(params: { url: string; targetDeviceIds: string[]; title?: string }) {
+  async sendUrl(params: Omit<CreateUrlItemRequest, "sourceDeviceId">) {
     return this.#honoClient.items.url.$post({
       json: { sourceDeviceId: this.#deviceId, ...params },
     });
   }
 
   async sendFiles(params: {
-    targetDeviceIds: string[];
+    targetDeviceIds: DeviceId[];
     title?: string;
     files: { content: Uint8Array<ArrayBuffer>; basename: string }[];
   }) {

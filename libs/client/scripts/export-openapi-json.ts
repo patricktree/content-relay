@@ -2,11 +2,11 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createHonoApp } from "@content-relay/relay-hub";
+import { createRelayHubApiContractApp } from "@content-relay/relay-hub-api";
 
 const OUTPUT_FILE_URL = new URL("../dist/content-relay-hub-openapi.json", import.meta.url);
 
-const app = await createHonoApp();
+const app = createRelayHubApiContractApp();
 const response = await app.request("http://127.0.0.1/doc");
 
 if (!response.ok) {
