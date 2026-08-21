@@ -122,9 +122,18 @@ test("require a target device before sending", async ({ page }) => {
     await gotoWebApp(page);
     const sendItemForm = page.getByRole("form", { name: "Send item" });
     await sendItemForm.getByRole("textbox", { name: "Text:" }).fill("test-text");
-    await sendItemForm.getByRole("button", { name: "Send" }).click();
 
-    await expect(sendItemForm.getByText("Select a target device.")).toBeVisible();
+    const targetDevices = sendItemForm.getByRole("group", { name: "Target devices:" });
+    const targetDevicesError = sendItemForm
+      .getByRole("alert")
+      .filter({ hasText: "Select a target device." });
+    await expect(sendItemForm.getByRole("button", { name: "Send" })).toBeDisabled();
+    await expect(targetDevices).toHaveAttribute("aria-invalid", "true");
+    await expect(targetDevices).toHaveAttribute("aria-describedby", /.+/);
+    expect(await targetDevices.getAttribute("aria-describedby")).toBe(
+      await targetDevicesError.getAttribute("id"),
+    );
+    await expect(targetDevicesError).toBeVisible();
     await expect(expectItemSentNotification(page)).not.toBeVisible();
   });
 });
@@ -143,9 +152,18 @@ test("require text content before sending text item", async ({ page }) => {
 
     await gotoWebApp(page);
     const sendItemForm = await chooseTargetDevice(page, "test-device-generic (cli)");
-    await sendItemForm.getByRole("button", { name: "Send" }).click();
 
-    await expect(sendItemForm.getByText("Enter the text to send.")).toBeVisible();
+    const textInput = sendItemForm.getByRole("textbox", { name: "Text:" });
+    const textError = sendItemForm
+      .getByRole("alert")
+      .filter({ hasText: "Enter the text to send." });
+    await expect(sendItemForm.getByRole("button", { name: "Send" })).toBeDisabled();
+    await expect(textInput).toHaveAttribute("aria-invalid", "true");
+    await expect(textInput).toHaveAttribute("aria-describedby", /.+/);
+    expect(await textInput.getAttribute("aria-describedby")).toBe(
+      await textError.getAttribute("id"),
+    );
+    await expect(textError).toBeVisible();
     await expect(expectItemSentNotification(page)).not.toBeVisible();
   });
 });
@@ -166,9 +184,16 @@ test("require an absolute URL before sending URL item", async ({ page }) => {
     const sendItemForm = await chooseTargetDevice(page, "test-device-generic (cli)");
     await sendItemForm.getByRole("combobox", { name: "Item type:" }).selectOption("url");
     await sendItemForm.getByRole("textbox", { name: /URL:/ }).fill("example.com/article");
-    await sendItemForm.getByRole("button", { name: "Send" }).click();
 
-    await expect(sendItemForm.getByText("Enter a valid absolute URL.")).toBeVisible();
+    const urlInput = sendItemForm.getByRole("textbox", { name: "URL:" });
+    const urlError = sendItemForm
+      .getByRole("alert")
+      .filter({ hasText: "Enter a valid absolute URL." });
+    await expect(sendItemForm.getByRole("button", { name: "Send" })).toBeDisabled();
+    await expect(urlInput).toHaveAttribute("aria-invalid", "true");
+    await expect(urlInput).toHaveAttribute("aria-describedby", /.+/);
+    expect(await urlInput.getAttribute("aria-describedby")).toBe(await urlError.getAttribute("id"));
+    await expect(urlError).toBeVisible();
     await expect(expectItemSentNotification(page)).not.toBeVisible();
   });
 });
@@ -302,7 +327,7 @@ test("disable send button while text item submission is pending", async ({ page 
   });
 });
 
-test("do not show success notification when text item submission fails", async ({ page }) => {
+test("show an error notification when text item submission fails", async ({ page }) => {
   await withRelayHubTestEnvironment(async ({ relayHubBaseUrl }) => {
     const [receiver] = await seed.registerDevices(relayHubBaseUrl, [
       { nickname: "test-device-generic", platform: "cli" },
@@ -328,6 +353,12 @@ test("do not show success notification when text item submission fails", async (
     await sendItemForm.getByRole("button", { name: "Send" }).click();
 
     await expect(expectItemSentNotification(page)).not.toBeVisible();
+    await expect(
+      page
+        .getByRole("region", { name: "Notifications" })
+        .getByRole("dialog", { name: "Item could not be sent" }),
+    ).toBeVisible();
+    await expect(sendItemForm.getByRole("button", { name: "Send" })).toBeEnabled();
     const receivedDeliveries = await parseOkResponse(
       new RpcClient(relayHubBaseUrl)
         .createDeviceRpcClient(receiverDeviceId)

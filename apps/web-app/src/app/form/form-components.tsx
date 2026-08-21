@@ -28,9 +28,9 @@ type SubmitButtonProps = {
 export const SubmitButton: React.FC<SubmitButtonProps> = ({ label }) => {
   const form = useFormContext();
   return (
-    <form.Subscribe selector={(state) => state.isSubmitting}>
-      {(isSubmitting) => (
-        <DSButton type="submit" variant="contained" disabled={isSubmitting}>
+    <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+      {([canSubmit, isSubmitting]) => (
+        <DSButton type="submit" variant="contained" disabled={!canSubmit || isSubmitting}>
           {isSubmitting ? "Sending…" : label}
         </DSButton>
       )}
@@ -44,17 +44,26 @@ type TextFieldProps = {
 
 export const TextField: React.FC<TextFieldProps> = ({ label }) => {
   const field = useFieldContext<string>();
+  const fieldId = React.useId();
+  const errorId = `${fieldId}-error`;
+  const isInvalid = !field.state.meta.isValid;
 
   return (
     <FieldLabel>
       <FieldLabelText>{label}</FieldLabelText>
       <FieldInput
+        aria-describedby={isInvalid ? errorId : undefined}
+        aria-invalid={isInvalid || undefined}
+        id={fieldId}
+        name={field.name}
         value={field.state.value}
         onBlur={() => field.handleBlur()}
         onChange={(event) => field.handleChange(event.target.value)}
       />
-      {!field.state.meta.isValid && (
-        <FieldError>{field.state.meta.errors.map((error) => error.message).join(", ")}</FieldError>
+      {isInvalid && (
+        <FieldError id={errorId} role="alert">
+          {field.state.meta.errors.map((error) => error.message).join(", ")}
+        </FieldError>
       )}
     </FieldLabel>
   );

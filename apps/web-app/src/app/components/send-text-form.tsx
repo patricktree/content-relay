@@ -55,6 +55,7 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
   androidShareIntent,
 }) => {
   const toastManager = Toast.useToastManager();
+  const targetDeviceIdsErrorId = React.useId();
   const currentDeviceQuery = useSuspenseQuery(
     createCurrentDeviceQuery({ relayHubUrl, deviceNickname }),
   );
@@ -92,7 +93,12 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
       onSubmit={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        void form.handleSubmit();
+        void form.handleSubmit().catch((error: unknown) => {
+          toastManager.add({
+            title: "Item could not be sent",
+            description: error instanceof Error ? error.message : "An unexpected error occurred.",
+          });
+        });
       }}
     >
       <form.AppForm>
@@ -116,47 +122,54 @@ const SendTextFormContent: React.FC<SendTextFormContentProps> = ({
         </form.AppField>
 
         <form.AppField name="targetDeviceIds">
-          {(field) => (
-            <TargetDevicesFieldset>
-              <TargetDevicesLegend>Target devices:</TargetDevicesLegend>
-              <TargetDevicesUl>
-                {currentDeviceQuery.data.eligibleTargetDevices.map((device) => (
-                  <TargetDeviceLi key={device.deviceId}>
-                    <TargetDeviceLabel>
-                      <TargetDeviceCheckbox
-                        type="checkbox"
-                        name="targetDeviceId"
-                        value={device.deviceId}
-                        checked={field.state.value.has(device.deviceId)}
-                        aria-label={`${device.nickname} (${device.platform})`}
-                        onBlur={() => field.handleBlur()}
-                        onChange={(event) =>
-                          field.handleChange((oldValue) => {
-                            const newSet = new Set(oldValue);
+          {(field) => {
+            const isInvalid = !field.state.meta.isValid;
 
-                            if (event.target.checked) {
-                              newSet.add(event.target.value);
-                            } else {
-                              newSet.delete(event.target.value);
-                            }
+            return (
+              <TargetDevicesFieldset
+                aria-describedby={isInvalid ? targetDeviceIdsErrorId : undefined}
+                aria-invalid={isInvalid || undefined}
+              >
+                <TargetDevicesLegend>Target devices:</TargetDevicesLegend>
+                <TargetDevicesUl>
+                  {currentDeviceQuery.data.eligibleTargetDevices.map((device) => (
+                    <TargetDeviceLi key={device.deviceId}>
+                      <TargetDeviceLabel>
+                        <TargetDeviceCheckbox
+                          type="checkbox"
+                          name="targetDeviceId"
+                          value={device.deviceId}
+                          checked={field.state.value.has(device.deviceId)}
+                          aria-label={`${device.nickname} (${device.platform})`}
+                          onBlur={() => field.handleBlur()}
+                          onChange={(event) =>
+                            field.handleChange((oldValue) => {
+                              const newSet = new Set(oldValue);
 
-                            return newSet;
-                          })
-                        }
-                      />
-                      <TargetDeviceName>{device.nickname}</TargetDeviceName>
-                    </TargetDeviceLabel>
-                  </TargetDeviceLi>
-                ))}
-              </TargetDevicesUl>
+                              if (event.target.checked) {
+                                newSet.add(event.target.value);
+                              } else {
+                                newSet.delete(event.target.value);
+                              }
 
-              {!field.state.meta.isValid && (
-                <form.FieldError>
-                  {field.state.meta.errors.map((error) => error?.message).join(", ")}
-                </form.FieldError>
-              )}
-            </TargetDevicesFieldset>
-          )}
+                              return newSet;
+                            })
+                          }
+                        />
+                        <TargetDeviceName>{device.nickname}</TargetDeviceName>
+                      </TargetDeviceLabel>
+                    </TargetDeviceLi>
+                  ))}
+                </TargetDevicesUl>
+
+                {isInvalid && (
+                  <form.FieldError id={targetDeviceIdsErrorId} role="alert">
+                    {field.state.meta.errors.map((error) => error?.message).join(", ")}
+                  </form.FieldError>
+                )}
+              </TargetDevicesFieldset>
+            );
+          }}
         </form.AppField>
 
         <form.AppField name="title">{(field) => <field.TextField label="Title:" />}</form.AppField>

@@ -31,7 +31,12 @@ export const SettingsForm: React.FC<SettingsFormProps> = () => {
       onSubmit={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        void form.handleSubmit();
+        void form.handleSubmit().catch((error: unknown) => {
+          toastManager.add({
+            title: "Settings could not be saved",
+            description: error instanceof Error ? error.message : "An unexpected error occurred.",
+          });
+        });
       }}
     >
       <form.AppForm>
