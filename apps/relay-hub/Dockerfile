@@ -14,7 +14,7 @@ RUN apk add --no-cache \
 	# core packages needed for node-gyp and others
 	build-base=0.5-r3 \
 	g++=15.2.0-r2 \
-	python3=3.12.13-r0
+	python3=3.12.14-r0
 
 # copy everything from Docker context into the container
 COPY ./ ./
