@@ -13,3 +13,6 @@
 
 # Playwright
 **/playwright-output/
+
+# Test coverage
+**/coverage
