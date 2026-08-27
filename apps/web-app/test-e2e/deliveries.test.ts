@@ -382,7 +382,7 @@ test("open a text Delivery and mark it Viewed", async ({ page }) => {
     await expect(page.getByRole("dialog", { name: "Readable text" })).toContainText(
       "Full text body",
     );
-    await expect(page.getByText("viewed")).toBeVisible();
+    await expect(page.getByText("viewed", { exact: true })).toBeVisible();
   });
 });
 
