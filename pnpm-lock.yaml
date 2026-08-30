@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@playwright/test':
+      specifier: 1.61.1
+      version: 1.61.1
     '@types/node':
       specifier: ^24
       version: 24.13.2
@@ -262,6 +265,12 @@ importers:
       oxlint-tsgolint:
         specifier: 'catalog:'
         version: 7.0.2001
+
+  .patricktree-stack/tooling/config-playwright:
+    dependencies:
+      '@playwright/test':
+        specifier: 'catalog:'
+        version: 1.61.1
 
   .patricktree-stack/tooling/config-turbo-typescript: {}
 
@@ -584,6 +593,9 @@ importers:
       '@patricktree-stack/config-oxlint':
         specifier: workspace:*
         version: link:../../.patricktree-stack/tooling/config-oxlint
+      '@patricktree-stack/config-playwright':
+        specifier: workspace:*
+        version: link:../../.patricktree-stack/tooling/config-playwright
       '@patricktree-stack/config-typescript':
         specifier: workspace:*
         version: link:../../.patricktree-stack/tooling/config-typescript
@@ -594,7 +606,7 @@ importers:
         specifier: workspace:*
         version: link:../../.patricktree-stack/tooling/config-wyw-in-js
       '@playwright/test':
-        specifier: 1.61.1
+        specifier: 'catalog:'
         version: 1.61.1
       '@types/node':
         specifier: 'catalog:'

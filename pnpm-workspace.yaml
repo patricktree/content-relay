@@ -10,6 +10,7 @@ packages:
   - .patricktree-stack/qa-utils/test-utils-node
   - .patricktree-stack/tooling/config-oxfmt
   - .patricktree-stack/tooling/config-oxlint
+  - .patricktree-stack/tooling/config-playwright
   - .patricktree-stack/tooling/config-turbo-typescript
   - .patricktree-stack/tooling/config-typescript
   - .patricktree-stack/tooling/config-vitest
@@ -25,6 +26,7 @@ allowBuilds:
   unrs-resolver: true
 
 catalog:
+  "@playwright/test": 1.61.1
   "@typescript/native": "npm:typescript@^7.0.2"
   "@types/node": ^24
   "@vitest/coverage-v8": 4.1.9
