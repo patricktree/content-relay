@@ -45,5 +45,8 @@
       "onFail": "download"
     }
   },
-  "packageManager": "pnpm@11.1.0"
+  "engines": {
+    "pnpm": "12.2.1"
+  },
+  "packageManager": "pnpm@12.2.1"
 }

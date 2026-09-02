@@ -1,9 +1,9 @@
 FROM node:24.15.0-alpine@sha256:693101c77e947e45e001910202dcb37a659c0b1a4c27619848f1b8b7eaee0def AS builder
 WORKDIR /app
 
-# install pnpm (https://pnpm.io/installation#using-npm); the version doesn't matter, pnpm switches to the version specified in package.json#packageManager itself
+# install the pnpm version pinned in package.json#packageManager (https://pnpm.io/installation#using-npm)
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-RUN npm install --global pnpm@11.7.0
+RUN npm install --global pnpm@12.2.1
 
 # set some env vars to enable caching of pnpm fetch/install (https://pnpm.io/docker#example-1-build-a-bundle-in-a-docker-container)
 ENV PNPM_HOME="/pnpm"
