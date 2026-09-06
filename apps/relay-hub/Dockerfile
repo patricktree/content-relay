@@ -3,7 +3,7 @@ WORKDIR /app
 
 # install the pnpm version pinned in package.json#packageManager (https://pnpm.io/installation#using-npm)
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-RUN npm install --global pnpm@12.2.1
+RUN npm install --global pnpm@12.3.4
 
 # set some env vars to enable caching of pnpm fetch/install (https://pnpm.io/docker#example-1-build-a-bundle-in-a-docker-container)
 ENV PNPM_HOME="/pnpm"
