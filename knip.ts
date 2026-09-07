@@ -10,13 +10,7 @@ const config: KnipConfig = {
     ".": {
       /* Zizmor is an external validation tool installed through uvx, not a Node dependency */
       ignoreBinaries: ["gh", "uvx"],
-      ignoreDependencies: [
-        "husky",
-        "@emnapi/core",
-        "@emnapi/runtime",
-        /* oxlint doesn't resolve dependencies correctly, we need it in the root node_modules */
-        "eslint-plugin-react-you-might-not-need-an-effect",
-      ],
+      ignoreDependencies: ["husky", "@emnapi/core", "@emnapi/runtime"],
     },
     "apps/macos-app": {
       ignoreDependencies: ["@content-relay/web-app"],

@@ -30,7 +30,6 @@
     "@emnapi/runtime": "^1.11.2",
     "@patricktree-stack/config-oxfmt": "workspace:*",
     "del-cli": "^7.0.0",
-    "eslint-plugin-react-you-might-not-need-an-effect": "^1.0.1",
     "husky": "^9.1.7",
     "knip": "^6.24.0",
     "oxfmt": "catalog:",
