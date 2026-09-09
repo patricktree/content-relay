@@ -2,9 +2,9 @@
   "name": "@content-relay/mobile-app",
   "private": true,
   "scripts": {
-    "build": "turbo run turbo:build",
+    "build": "turbo run turbo:build && pnpm run native:sync",
     "native:sync": "cap sync",
-    "turbo:build": "pnpm run native:sync"
+    "turbo:build": "tsc --build --noEmit"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
@@ -16,6 +16,7 @@
     "@capacitor/cli": "^8.4.1",
     "@patricktree-stack/config-typescript": "workspace:*",
     "@types/node": "catalog:",
+    "@typescript/native": "catalog:",
     "typescript": "catalog:"
   }
 }

@@ -15,7 +15,9 @@ From the repo root:
 pnpm --filter '@content-relay/mobile-app' build
 ```
 
-That builds `@content-relay/web-app` first and then syncs its web assets into the native Capacitor projects.
+This runs the cached shared web build and Capacitor configuration check, then syncs web assets into both native projects. Sync runs outside Turbo and always executes, even when both build tasks hit the cache.
+
+The repository-wide `pnpm build` and `pnpm validate` run `turbo:build` without syncing native projects. Use the mobile package's `build` command above before building or installing a native app.
 
 If you already built the shared web app and only want to refresh the native shells:
 
