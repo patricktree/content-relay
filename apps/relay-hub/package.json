@@ -42,18 +42,18 @@
     "@patricktree-stack/o11y.node-sdk": "workspace:*",
     "@patricktree-stack/utils-ecma": "workspace:*",
     "@patricktree-stack/utils-node": "workspace:*",
-    "better-sqlite3": "^12.11.1",
+    "better-sqlite3": "^13.0.3",
     "commander": "^15.0.0",
     "dioma": "^0.4.6",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "^0.45.4",
     "hono": "catalog:hono",
-    "temporal-polyfill": "^1.0.1",
-    "zod": "^4.4.3"
+    "temporal-polyfill": "^1.0.5",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@patricktree-stack/config-oxlint": "workspace:*",
     "@patricktree-stack/config-typescript": "workspace:*",
-    "@types/better-sqlite3": "^7.6.13",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",
     "oxlint": "catalog:",

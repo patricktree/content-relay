@@ -142,6 +142,8 @@ const DeliveryListContent: React.FC<DeliveryListContentProps> = ({
 
       {selectedDelivery !== null && (
         <DeliveryDetailDialog
+          // remount per delivery so that each opened delivery is marked as viewed
+          key={selectedDelivery.deliveryId}
           delivery={selectedDelivery}
           markViewedError={deliveryHistory.markViewedError}
           isMarkingViewed={deliveryHistory.isMarkingViewed}
@@ -215,12 +217,9 @@ const DeliveryDetailDialog: React.FC<DeliveryDetailDialogProps> = ({
     [onOpened],
   );
 
-  React.useEffect(
-    function markDeliveryViewedOnOpen() {
-      onOpenedRef.current();
-    },
-    [delivery.deliveryId],
-  );
+  React.useEffect(function markDeliveryViewedOnOpen() {
+    onOpenedRef.current();
+  }, []);
 
   return (
     <DialogBackdrop>

@@ -39,7 +39,7 @@
     "@content-relay/contracts": "workspace:*",
     "@content-relay/relay-hub-api": "workspace:*",
     "hono": "catalog:hono",
-    "type-fest": "^5.8.0"
+    "type-fest": "^5.10.0"
   },
   "devDependencies": {
     "@content-relay/relay-hub": "workspace:*",
@@ -53,6 +53,7 @@
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "typescript": "catalog:",
+    "vite": "catalog:",
     "vitest": "catalog:"
   }
 }

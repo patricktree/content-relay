@@ -7,13 +7,13 @@
     "turbo:build": "tsc --build --noEmit"
   },
   "dependencies": {
-    "@capacitor/android": "^8.4.1",
-    "@capacitor/core": "^8.4.1",
-    "@capacitor/ios": "^8.4.1",
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/ios": "^8.5.3",
     "@content-relay/web-app": "workspace:*"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.4.1",
+    "@capacitor/cli": "^8.5.3",
     "@patricktree-stack/config-typescript": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",

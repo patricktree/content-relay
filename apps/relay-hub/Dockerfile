@@ -3,7 +3,7 @@ WORKDIR /app
 
 # install the pnpm version pinned in package.json#packageManager (https://pnpm.io/installation#using-npm)
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-RUN npm install --global pnpm@12.3.4
+RUN npm install --global pnpm@12.11.2
 
 # set some env vars to enable caching of pnpm fetch/install (https://pnpm.io/docker#example-1-build-a-bundle-in-a-docker-container)
 ENV PNPM_HOME="/pnpm"
@@ -14,7 +14,7 @@ RUN apk add --no-cache \
 	# core packages needed for node-gyp and others
 	build-base=0.5-r3 \
 	g++=15.2.0-r2 \
-	python3=3.12.14-r0
+	python3=3.12.15-r0
 
 # copy everything from Docker context into the container
 COPY ./ ./

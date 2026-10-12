@@ -26,26 +26,26 @@
     "zizmor": "uvx zizmor@1.29.0 --gh-token \"$(gh auth token)\" ."
   },
   "devDependencies": {
-    "@emnapi/core": "^1.11.2",
-    "@emnapi/runtime": "^1.11.2",
+    "@emnapi/core": "^1.11.3",
+    "@emnapi/runtime": "^1.11.3",
     "@patricktree-stack/config-oxfmt": "workspace:*",
-    "del-cli": "^7.0.0",
+    "del-cli": "^8.0.1",
     "husky": "^9.1.7",
-    "knip": "^6.24.0",
+    "knip": "^6.41.0",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "turbo": "^2.10.12"
+    "turbo": "^2.11.7"
   },
   "devEngines": {
     "runtime": {
       "name": "node",
-      "version": "^24.18.0",
+      "version": "^24.21.0",
       "onFail": "download"
     }
   },
   "engines": {
-    "pnpm": "12.3.4"
+    "pnpm": "12.11.2"
   },
-  "packageManager": "pnpm@12.3.4"
+  "packageManager": "pnpm@12.11.2"
 }
