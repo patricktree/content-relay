@@ -15,6 +15,7 @@
     "build:watch": "turbo watch turbo:build",
     "clean": "pnpm run --parallel clean && pnpm exec del-cli \"**/node_modules\" \"**/.turbo\"",
     "declutter": "knip",
+    "docs:check:mermaid": "mermaid-check",
     "fix": "pnpm run format && pnpm run lint:fix",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
@@ -22,13 +23,14 @@
     "lint:fix": "turbo run turbo:lint:fix",
     "postinstall": "sh ./postinstall.sh",
     "test": "turbo run turbo:test",
-    "validate": "turbo run turbo:build turbo:lint turbo:test && pnpm run declutter",
+    "validate": "turbo run turbo:build turbo:lint turbo:test && pnpm run declutter && pnpm run docs:check:mermaid",
     "zizmor": "uvx zizmor@1.29.0 --gh-token \"$(gh auth token)\" ."
   },
   "devDependencies": {
     "@emnapi/core": "^1.11.3",
     "@emnapi/runtime": "^1.11.3",
     "@patricktree-stack/config-oxfmt": "workspace:*",
+    "@patricktree-stack/mermaid-check": "workspace:*",
     "del-cli": "^8.0.1",
     "husky": "^9.1.7",
     "knip": "^6.41.0",

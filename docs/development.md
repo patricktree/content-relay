@@ -34,4 +34,4 @@ pnpm run fix
 pnpm run validate
 ```
 
-`pnpm run fix` runs formatting and autofixable linting. `pnpm run validate` runs build, lint, tests, and dependency/dead-code checks.
+`pnpm run fix` runs formatting and autofixable linting. `pnpm run validate` runs build, lint, tests, dependency/dead-code checks, and a parse check of Mermaid diagrams in Markdown.
