@@ -31,6 +31,7 @@
     "@emnapi/runtime": "^1.11.3",
     "@patricktree-stack/config-oxfmt": "workspace:*",
     "@patricktree-stack/mermaid-check": "workspace:*",
+    "@patricktree-stack/submodule-check": "workspace:*",
     "del-cli": "^8.0.1",
     "husky": "^9.1.7",
     "knip": "^6.41.0",

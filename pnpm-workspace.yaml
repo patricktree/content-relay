@@ -18,6 +18,7 @@ packages:
   - .patricktree-stack/tooling/create-pruned-monorepo
   - .patricktree-stack/tooling/mermaid-check
   - .patricktree-stack/tooling/pkg-management
+  - .patricktree-stack/tooling/submodule-check
 
 allowBuilds:
   better-sqlite3: true
