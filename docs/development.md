@@ -35,3 +35,5 @@ pnpm run validate
 ```
 
 `pnpm run fix` runs formatting and autofixable linting. `pnpm run validate` runs build, lint, tests, dependency/dead-code checks, and a parse check of Mermaid diagrams in Markdown.
+
+The Husky pre-commit and pre-push hooks also run `submodule-check`, which rejects staged changes and pushed commits that move the `.patricktree-stack` submodule pointer backwards.
