@@ -42,9 +42,9 @@
     "type-fest": "^5.10.0"
   },
   "devDependencies": {
+    "@content-relay/config-oxlint": "workspace:*",
     "@content-relay/relay-hub": "workspace:*",
     "@content-relay/relay-hub-test-utils": "workspace:*",
-    "@patricktree-stack/config-oxlint": "workspace:*",
     "@patricktree-stack/config-typescript": "workspace:*",
     "@patricktree-stack/config-vitest": "workspace:*",
     "@types/node": "catalog:",

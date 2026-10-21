@@ -54,9 +54,9 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@content-relay/config-oxlint": "workspace:*",
     "@content-relay/relay-hub-test-utils": "workspace:*",
     "@content-relay/seeding-tool": "workspace:*",
-    "@patricktree-stack/config-oxlint": "workspace:*",
     "@patricktree-stack/config-playwright": "workspace:*",
     "@patricktree-stack/config-typescript": "workspace:*",
     "@patricktree-stack/config-vitest": "workspace:*",

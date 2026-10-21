@@ -29,7 +29,7 @@
     "turbo:lint:fix": "pnpm run turbo:lint --fix"
   },
   "devDependencies": {
-    "@patricktree-stack/config-oxlint": "workspace:*",
+    "@content-relay/config-oxlint": "workspace:*",
     "@patricktree-stack/config-typescript": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",

@@ -51,7 +51,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@patricktree-stack/config-oxlint": "workspace:*",
+    "@content-relay/config-oxlint": "workspace:*",
     "@patricktree-stack/config-typescript": "workspace:*",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "catalog:",
